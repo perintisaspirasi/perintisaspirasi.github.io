@@ -4,421 +4,57 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Tutoring Center Management System | Official Portal</title>
-    <!-- Favicon & Icon -->
     <link rel="icon" type="image/png" href="icon.png">
     <link rel="apple-touch-icon" href="icon.png">
-    <!-- Google Fonts & Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background: #f0f4f8;
-            color: #1a2c3e;
-            line-height: 1.4;
-        }
-
-        /* ========= LOGIN OVERLAY ========= */
-        #login-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.75);
-            backdrop-filter: blur(10px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 2000;
-            transition: all 0.2s ease;
-        }
-
-        .login-card {
-            background: white;
-            max-width: 420px;
-            width: 90%;
-            padding: 2rem 2rem 2.2rem;
-            border-radius: 32px;
-            box-shadow: 0 30px 50px rgba(0, 0, 0, 0.25);
-            text-align: center;
-            border: 1px solid rgba(255,255,255,0.2);
-        }
-
-        .login-card h2 {
-            font-weight: 700;
-            margin-bottom: 1.5rem;
-            color: #0f3b5c;
-            font-size: 1.8rem;
-        }
-
-        .login-card input {
-            width: 100%;
-            padding: 14px 18px;
-            font-size: 1rem;
-            border: 1px solid #cfdfed;
-            border-radius: 48px;
-            margin-bottom: 1.2rem;
-            outline: none;
-            transition: 0.2s;
-            background: #fefefe;
-        }
-
-        .login-card input:focus {
-            border-color: #2c7da0;
-            box-shadow: 0 0 0 3px rgba(44,125,160,0.2);
-        }
-
-        .login-card button {
-            background: #2c7da0;
-            color: white;
-            border: none;
-            padding: 12px 28px;
-            border-radius: 48px;
-            font-weight: 600;
-            font-size: 1rem;
-            cursor: pointer;
-            width: 100%;
-            transition: 0.2s;
-        }
-
-        .login-card button:hover {
-            background: #1f5e7a;
-            transform: scale(0.98);
-        }
-
-        .error-msg {
-            color: #d9534f;
-            margin-top: 0.8rem;
-            font-size: 0.85rem;
-        }
-
-        /* ========= MAIN APP (hidden until login) ========= */
-        #main-app {
-            display: none;
-        }
-
-        /* ========= OFFICIAL DASHBOARD WITH HAMBURGER NAV ========= */
-        .app-wrapper {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* Top bar: logo + hamburger */
-        .top-navbar {
-            background: white;
-            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
-            padding: 0.9rem 2rem;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-bottom: 1px solid #e2edf2;
-            position: sticky;
-            top: 0;
-            z-index: 1100;
-        }
-
-        .logo-area {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .logo-area i {
-            font-size: 1.8rem;
-            color: #2c7da0;
-        }
-
-        .logo-area h1 {
-            font-size: 1.55rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, #1e5f7a, #2c7da0);
-            background-clip: text;
-            -webkit-background-clip: text;
-            color: transparent;
-            letter-spacing: -0.3px;
-        }
-
-        .hamburger-menu {
-            background: none;
-            border: none;
-            font-size: 1.8rem;
-            cursor: pointer;
-            color: #1e5f7a;
-            width: 44px;
-            height: 44px;
-            border-radius: 40px;
-            transition: 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .hamburger-menu:hover {
-            background: #eef2f7;
-        }
-
-        /* Side Navigation (offcanvas style) */
-        .side-nav {
-            position: fixed;
-            top: 0;
-            left: -280px;
-            width: 280px;
-            height: 100%;
-            background: white;
-            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.08);
-            z-index: 1500;
-            transition: left 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
-            display: flex;
-            flex-direction: column;
-            padding: 1.5rem 0;
-            border-right: 1px solid #e9edf2;
-        }
-
-        .side-nav.open {
-            left: 0;
-        }
-
-        .nav-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(3px);
-            z-index: 1400;
-            display: none;
-        }
-
-        .nav-overlay.active {
-            display: block;
-        }
-
-        .side-nav-header {
-            padding: 0 1.5rem 1.2rem;
-            border-bottom: 1px solid #eef2f7;
-            margin-bottom: 1rem;
-        }
-
-        .side-nav-header h3 {
-            font-weight: 600;
-            color: #1f5068;
-        }
-
-        .nav-links {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 0.25rem;
-            padding: 0 1rem;
-        }
-
-        .nav-link {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            padding: 12px 16px;
-            border-radius: 32px;
-            font-weight: 500;
-            color: #2c6079;
-            transition: 0.2s;
-            cursor: pointer;
-            background: transparent;
-            border: none;
-            width: 100%;
-            font-size: 1rem;
-        }
-
-        .nav-link i {
-            width: 24px;
-            font-size: 1.2rem;
-        }
-
-        .nav-link.active-nav {
-            background: #e9f2f7;
-            color: #1c6f8f;
-            font-weight: 600;
-        }
-
-        .nav-link:hover:not(.active-nav) {
-            background: #f5f9fc;
-        }
-
-        .logout-nav {
-            margin-top: auto;
-            margin-bottom: 2rem;
-            color: #b23c1c;
-        }
-
-        .logout-nav i {
-            color: #b23c1c;
-        }
-
-        /* Main content area */
-        .main-content {
-            padding: 1.8rem 2rem;
-            max-width: 1400px;
-            margin: 0 auto;
-            width: 100%;
-        }
-
-        /* Tab content wrapper (we keep original tab style but hidden/visible via nav) */
-        .tab-pane {
-            display: none;
-            animation: fadeIn 0.25s ease;
-        }
-
-        .tab-pane.active-pane {
-            display: block;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(5px);}
-            to { opacity: 1; transform: translateY(0);}
-        }
-
-        /* Cards & Components (official style) */
-        .card {
-            background: white;
-            border-radius: 28px;
-            padding: 1.6rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.02);
-            border: 1px solid #e4edf2;
-            transition: box-shadow 0.2s;
-        }
-
-        .card h3, .card h4 {
-            margin-bottom: 1rem;
-            font-weight: 600;
-            color: #1f5068;
-        }
-
-        .form-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1rem;
-            margin-bottom: 1.2rem;
-            align-items: flex-end;
-        }
-
-        .form-group {
-            flex: 1;
-            min-width: 170px;
-        }
-
-        label {
-            font-weight: 500;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            display: block;
-            margin-bottom: 6px;
-            color: #5f7f9c;
-        }
-
-        input, select {
-            width: 100%;
-            padding: 12px 16px;
-            border-radius: 30px;
-            border: 1px solid #cbdde6;
-            font-family: inherit;
-            background: white;
-            font-size: 0.9rem;
-            transition: 0.2s;
-        }
-
-        input:focus, select:focus {
-            outline: none;
-            border-color: #2c7da0;
-            box-shadow: 0 0 0 2px rgba(44,125,160,0.1);
-        }
-
-        button {
-            background: #2c7da0;
-            color: white;
-            border: none;
-            padding: 10px 24px;
-            border-radius: 40px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.2s;
-            font-size: 0.85rem;
-        }
-
-        button.secondary {
-            background: #eef3f7;
-            color: #2c6079;
-            border: 1px solid #cddfe8;
-        }
-
-        button.danger {
-            background: #fff0f0;
-            color: #b33;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.85rem;
-        }
-
-        th, td {
-            text-align: left;
-            padding: 12px 8px;
-            border-bottom: 1px solid #ecf3f7;
-        }
-
-        th {
-            font-weight: 700;
-            color: #1f5068;
-        }
-
-        .action-icons i {
-            margin: 0 6px;
-            cursor: pointer;
-            font-size: 1.1rem;
-            color: #6f8faa;
-            transition: 0.1s;
-        }
-
-        .action-icons i:hover {
-            color: #2c7da0;
-        }
-
-        .pay-btn {
-            background: #2cae6c;
-            padding: 5px 14px;
-            border-radius: 30px;
-            font-size: 0.7rem;
-            font-weight: 700;
-        }
-
-        .badge-month {
-            background: #eef2fa;
-            padding: 4px 12px;
-            border-radius: 50px;
-        }
-
-        @media (max-width: 700px) {
-            .main-content {
-                padding: 1rem;
-            }
-            .top-navbar {
-                padding: 0.7rem 1rem;
-            }
-            .logo-area h1 {
-                font-size: 1.2rem;
-            }
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #f0f4f8; color: #1a2c3e; line-height: 1.4; }
+        #login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center; z-index: 2000; }
+        .login-card { background: white; max-width: 420px; width: 90%; padding: 2rem; border-radius: 32px; box-shadow: 0 30px 50px rgba(0,0,0,0.25); text-align: center; }
+        .login-card h2 { font-weight: 700; margin-bottom: 1.5rem; color: #0f3b5c; }
+        .login-card input { width: 100%; padding: 14px 18px; border: 1px solid #cfdfed; border-radius: 48px; margin-bottom: 1.2rem; outline: none; }
+        .login-card button { background: #2c7da0; color: white; border: none; padding: 12px 28px; border-radius: 48px; font-weight: 600; cursor: pointer; width: 100%; }
+        .error-msg { color: #d9534f; margin-top: 0.8rem; font-size: 0.85rem; }
+        #main-app { display: none; }
+        .app-wrapper { min-height: 100vh; display: flex; flex-direction: column; }
+        .top-navbar { background: white; box-shadow: 0 2px 12px rgba(0,0,0,0.05); padding: 0.9rem 2rem; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 1100; }
+        .logo-area { display: flex; align-items: center; gap: 12px; }
+        .logo-area i { font-size: 1.8rem; color: #2c7da0; }
+        .logo-area h1 { font-size: 1.55rem; font-weight: 700; background: linear-gradient(135deg,#1e5f7a,#2c7da0); background-clip: text; -webkit-background-clip: text; color: transparent; }
+        .hamburger-menu { background: none; border: none; font-size: 1.8rem; cursor: pointer; color: #1e5f7a; width: 44px; height: 44px; border-radius: 40px; display: flex; align-items: center; justify-content: center; }
+        .hamburger-menu:hover { background: #eef2f7; }
+        .side-nav { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: white; box-shadow: 4px 0 20px rgba(0,0,0,0.08); z-index: 1500; transition: left 0.3s; display: flex; flex-direction: column; padding: 1.5rem 0; }
+        .side-nav.open { left: 0; }
+        .nav-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); backdrop-filter: blur(3px); z-index: 1400; display: none; }
+        .nav-overlay.active { display: block; }
+        .nav-links { flex: 1; display: flex; flex-direction: column; gap: 0.25rem; padding: 0 1rem; }
+        .nav-link { display: flex; align-items: center; gap: 14px; padding: 12px 16px; border-radius: 32px; font-weight: 500; color: #2c6079; cursor: pointer; background: transparent; border: none; width: 100%; }
+        .nav-link.active-nav { background: #e9f2f7; color: #1c6f8f; font-weight: 600; }
+        .logout-nav { margin-top: auto; margin-bottom: 2rem; color: #b23c1c; }
+        .main-content { padding: 1.8rem 2rem; max-width: 1400px; margin: 0 auto; width: 100%; }
+        .tab-pane { display: none; animation: fadeIn 0.25s ease; }
+        .tab-pane.active-pane { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px);} to { opacity: 1; transform: translateY(0);} }
+        .card { background: white; border-radius: 28px; padding: 1.6rem; margin-bottom: 2rem; box-shadow: 0 6px 14px rgba(0,0,0,0.02); border: 1px solid #e4edf2; }
+        .card h3, .card h4 { margin-bottom: 1rem; font-weight: 600; color: #1f5068; }
+        .form-row { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.2rem; align-items: flex-end; }
+        .form-group { flex: 1; min-width: 170px; }
+        label { font-weight: 500; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px; color: #5f7f9c; }
+        input, select { width: 100%; padding: 12px 16px; border-radius: 30px; border: 1px solid #cbdde6; font-family: inherit; font-size: 0.9rem; }
+        button { background: #2c7da0; color: white; border: none; padding: 10px 24px; border-radius: 40px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        button.secondary { background: #eef3f7; color: #2c6079; border: 1px solid #cddfe8; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        th, td { text-align: left; padding: 12px 8px; border-bottom: 1px solid #ecf3f7; }
+        th { font-weight: 700; color: #1f5068; }
+        .action-icons i { margin: 0 6px; cursor: pointer; font-size: 1.1rem; color: #6f8faa; }
+        .action-icons i:hover { color: #2c7da0; }
+        .pay-btn { background: #2cae6c; padding: 5px 14px; border-radius: 30px; font-size: 0.7rem; font-weight: 700; }
+        .adjustment-badge { background: #fff3e0; padding: 2px 8px; border-radius: 20px; font-size: 0.7rem; margin-left: 6px; }
+        .teacher-subject-item { background: #f5f9fc; padding: 4px 8px; border-radius: 20px; margin: 2px; display: inline-block; font-size: 0.75rem; }
+        @media (max-width: 700px) { .main-content { padding: 1rem; } .top-navbar { padding: 0.7rem 1rem; } }
     </style>
 </head>
 <body>
@@ -430,252 +66,128 @@
         <div id="login-error" class="error-msg"></div>
     </div>
 </div>
-
 <div id="main-app">
     <div class="app-wrapper">
-        <!-- Top bar with hamburger -->
-        <div class="top-navbar">
-            <div class="logo-area">
-                <i class="fas fa-chalkboard-user"></i>
-                <h1>EduTrack Center</h1>
-            </div>
-            <button class="hamburger-menu" id="hamburgerBtn"><i class="fas fa-bars"></i></button>
-        </div>
-
-        <!-- Side Navigation (three lines menu) -->
-        <div class="side-nav" id="sideNav">
-            <div class="side-nav-header">
-                <h3><i class="fas fa-school"></i> Management</h3>
-                <p style="font-size: 0.7rem; color:#7a98b0;">Official Portal</p>
-            </div>
-            <div class="nav-links">
-                <button class="nav-link" data-nav="schedule"><i class="far fa-calendar-alt"></i> 1. Class Schedule</button>
-                <button class="nav-link" data-nav="students"><i class="fas fa-user-graduate"></i> 2. Student Records</button>
-                <button class="nav-link" data-nav="teachers"><i class="fas fa-chalkboard"></i> 3. Teacher Management</button>
-                <button class="nav-link logout-nav" id="navLogoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</button>
-            </div>
-        </div>
+        <div class="top-navbar"><div class="logo-area"><i class="fas fa-chalkboard-user"></i><h1>EduTrack Center</h1></div><button class="hamburger-menu" id="hamburgerBtn"><i class="fas fa-bars"></i></button></div>
+        <div class="side-nav" id="sideNav"><div class="nav-links"><button class="nav-link" data-nav="schedule"><i class="far fa-calendar-alt"></i> 1. Class Schedule</button><button class="nav-link" data-nav="students"><i class="fas fa-user-graduate"></i> 2. Student Records</button><button class="nav-link" data-nav="teachers"><i class="fas fa-chalkboard"></i> 3. Teacher Management</button><button class="nav-link logout-nav" id="navLogoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</button></div></div>
         <div class="nav-overlay" id="navOverlay"></div>
-
-        <!-- Main dynamic content (panels) -->
         <div class="main-content">
-            <!-- Schedule Panel -->
-            <div id="schedule-panel" class="tab-pane active-pane">
-                <div class="card">
-                    <h3><i class="fas fa-plus-circle"></i> Add Lesson Session</h3>
-                    <div class="form-row">
-                        <div class="form-group"><label>Date & Time</label><input type="datetime-local" id="schedule-datetime"></div>
-                        <div class="form-group"><label>Teacher</label><select id="schedule-teacher" class="teacher-select"></select></div>
-                        <div class="form-group"><label>Subject (from teacher)</label><select id="schedule-subject"></select></div>
-                        <div class="form-group"><button id="add-schedule-btn">Create Schedule</button></div>
-                    </div>
-                    <hr style="margin: 1rem 0">
-                    <h4><i class="fas fa-list"></i> Upcoming Lessons</h4>
-                    <div style="overflow-x:auto;"><table id="schedule-table"><thead><tr><th>Date & Time</th><th>Teacher</th><th>Subject</th><th>Actions</th></tr></thead><tbody></tbody></table></div>
-                </div>
-            </div>
-
-            <!-- Student Panel -->
-            <div id="students-panel" class="tab-pane">
-                <div class="card">
-                    <h3><i class="fas fa-user-plus"></i> Register New Student</h3>
-                    <div class="form-row">
-                        <div class="form-group"><label>Full Name</label><input id="student-name" placeholder="e.g., Emily Wong"></div>
-                        <div class="form-group"><label>Enrolled Teacher(s) — select main (multi-teacher support via edit)</label><select id="student-teacher" class="teacher-select"></select></div>
-                        <div class="form-group"><button id="add-student-btn">Create Student</button></div>
-                    </div>
-                    <small style="color:#6c8faa;">* Student can be assigned multiple teachers later by editing (pencil icon). Billing auto-sums all teachers' monthly fees.</small>
-                </div>
-                <div class="card">
-                    <h3><i class="fas fa-search-dollar"></i> Search Student & Outstanding Fees</h3>
-                    <div class="form-row">
-                        <div class="form-group"><label>Student Name</label><input id="search-student-input" placeholder="Type name to filter"></div>
-                        <div class="form-group"><button id="search-student-btn" class="secondary">Search / Refresh</button></div>
-                    </div>
-                    <div id="student-debt-result" style="margin-top: 0.8rem;"></div>
-                </div>
-                <div class="card">
-                    <h4>All Students</h4>
-                    <div style="overflow-x:auto;"><table id="all-students-table"><thead><tr><th>Name</th><th>Registered Teacher(s)</th><th>Actions</th></tr></thead><tbody></tbody></table></div>
-                </div>
-            </div>
-
-            <!-- Teacher Panel -->
-            <div id="teachers-panel" class="tab-pane">
-                <div class="card">
-                    <h3><i class="fas fa-chalkboard-user"></i> Register New Teacher</h3>
-                    <div class="form-row">
-                        <div class="form-group"><label>Teacher Name</label><input id="teacher-name" placeholder="Full name"></div>
-                        <div class="form-group"><label>Default Monthly Fee (RM)</label><input id="teacher-default-fee" type="number" placeholder="e.g., 220"></div>
-                        <div class="form-group"><label>Subjects (comma separated)</label><input id="teacher-subjects" placeholder="Math, English, Physics"></div>
-                        <div class="form-group"><button id="add-teacher-btn">Add Teacher</button></div>
-                    </div>
-                </div>
-                <div class="card">
-                    <h4>Teacher Directory & Fee Settings</h4>
-                    <div style="overflow-x:auto;"><table id="teachers-table"><thead><tr><th>Name</th><th>Monthly Fee (RM)</th><th>Subjects</th><th>Actions</th></tr></thead><tbody></tbody></table></div>
-                </div>
-            </div>
+            <div id="schedule-panel" class="tab-pane active-pane"><div class="card"><h3><i class="fas fa-plus-circle"></i> Add Lesson Session</h3><div class="form-row"><div class="form-group"><label>Date & Time</label><input type="datetime-local" id="schedule-datetime"></div><div class="form-group"><label>Teacher</label><select id="schedule-teacher" class="teacher-select"></select></div><div class="form-group"><label>Subject</label><select id="schedule-subject"></select></div><div class="form-group"><button id="add-schedule-btn">Create Schedule</button></div></div><hr><h4>Upcoming Lessons</h4><div style="overflow-x:auto;"><table id="schedule-table"><thead><tr><th>Date & Time</th><th>Teacher</th><th>Subject</th><th>Actions</th></tr></thead><tbody></tbody></table></div></div></div>
+            <div id="students-panel" class="tab-pane"><div class="card"><h3><i class="fas fa-user-plus"></i> Register New Student</h3><div class="form-row"><div class="form-group"><label>Full Name</label><input id="student-name" placeholder="e.g., Emily Wong"></div><div class="form-group"><label>Registration Month</label><input type="month" id="student-reg-month"></div><div class="form-group"><button id="add-student-btn">Create Student</button></div></div><small>* Registration month determines when billing starts.</small></div><div class="card"><h3><i class="fas fa-search-dollar"></i> Search Student & Outstanding Fees</h3><div class="form-row"><div class="form-group"><label>Student Name</label><input id="search-student-input" placeholder="Type name"></div><div class="form-group"><button id="search-student-btn" class="secondary">Search / Refresh</button></div></div><div id="student-debt-result"></div></div><div class="card"><h4>All Students</h4><div style="overflow-x:auto;"><table id="all-students-table"><thead><tr><th>Name</th><th>Registered Month</th><th>Enrolled Teachers/Subjects</th><th>Actions</th></tr></thead><tbody></tbody></table></div></div></div>
+            <div id="teachers-panel" class="tab-pane"><div class="card"><h3><i class="fas fa-chalkboard-user"></i> Register New Teacher</h3><div class="form-row"><div class="form-group"><label>Teacher Name</label><input id="teacher-name" placeholder="Full name"></div><div class="form-group"><button id="add-teacher-btn">Add Teacher</button></div></div></div><div class="card"><h4>Teacher Subjects & Fees (each subject can have different fee)</h4><div style="overflow-x:auto;"><table id="teachers-table"><thead><tr><th>Teacher</th><th>Subjects & Monthly Fees (RM)</th><th>Actions</th></tr></thead><tbody></tbody></table></div></div></div>
         </div>
     </div>
 </div>
-
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
-    import { getFirestore, collection, doc, setDoc, getDocs, getDoc, deleteDoc, updateDoc, addDoc, query, where } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
-    
-    const firebaseConfig = {
-        apiKey: "AIzaSyCkfEdLDlHW7DvGxLpbDY7Us2nb3j7oTjQ",
-        authDomain: "perintisaspirasi.firebaseapp.com",
-        projectId: "perintisaspirasi",
-        storageBucket: "perintisaspirasi.firebasestorage.app",
-        messagingSenderId: "293094185092",
-        appId: "1:293094185092:web:ac2b5712db54480c3ccad1",
-        measurementId: "G-9ZSWKEZJVT"
-    };
+    import { getFirestore, collection, doc, setDoc, getDocs, getDoc, deleteDoc, updateDoc, addDoc, query, where, writeBatch } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+    const firebaseConfig = { apiKey: "AIzaSyCkfEdLDlHW7DvGxLpbDY7Us2nb3j7oTjQ", authDomain: "perintisaspirasi.firebaseapp.com", projectId: "perintisaspirasi", storageBucket: "perintisaspirasi.firebasestorage.app", messagingSenderId: "293094185092", appId: "1:293094185092:web:ac2b5712db54480c3ccad1", measurementId: "G-9ZSWKEZJVT" };
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    
-    // Auth & UI
-    const loginOverlay = document.getElementById('login-overlay');
-    const mainAppDiv = document.getElementById('main-app');
-    const loginPass = document.getElementById('login-password');
-    const loginSubmit = document.getElementById('submit-login');
-    const loginErr = document.getElementById('login-error');
-    
-    function setAuth(status) {
-        if(status) sessionStorage.setItem('tutor_auth', '0919');
-        else sessionStorage.removeItem('tutor_auth');
-        if(sessionStorage.getItem('tutor_auth') === '0919') {
-            loginOverlay.style.display = 'none';
-            mainAppDiv.style.display = 'block';
-            loadAllData();
-        } else {
-            loginOverlay.style.display = 'flex';
-            mainAppDiv.style.display = 'none';
-        }
-    }
+    // Auth logic
+    const loginOverlay = document.getElementById('login-overlay'), mainAppDiv = document.getElementById('main-app'), loginPass = document.getElementById('login-password'), loginSubmit = document.getElementById('submit-login'), loginErr = document.getElementById('login-error');
+    function setAuth(status) { if(status) sessionStorage.setItem('tutor_auth', '0919'); else sessionStorage.removeItem('tutor_auth'); if(sessionStorage.getItem('tutor_auth') === '0919') { loginOverlay.style.display = 'none'; mainAppDiv.style.display = 'block'; loadAllData(); } else { loginOverlay.style.display = 'flex'; mainAppDiv.style.display = 'none'; } }
     loginSubmit.addEventListener('click', () => { if(loginPass.value === '0919') setAuth(true); else loginErr.innerText = 'Access denied: incorrect password'; });
     document.getElementById('navLogoutBtn')?.addEventListener('click', () => setAuth(false));
-    document.querySelector('#main-app .logout-nav')?.addEventListener('click', () => setAuth(false));
-    
-    // HAMBURGER MENU LOGIC
-    const hamburger = document.getElementById('hamburgerBtn');
-    const sideNav = document.getElementById('sideNav');
-    const overlay = document.getElementById('navOverlay');
-    function closeNav() { sideNav.classList.remove('open'); overlay.classList.remove('active'); }
-    function openNav() { sideNav.classList.add('open'); overlay.classList.add('active'); }
-    hamburger.addEventListener('click', openNav);
-    overlay.addEventListener('click', closeNav);
+    // Hamburger
+    const hamburger = document.getElementById('hamburgerBtn'), sideNav = document.getElementById('sideNav'), overlayNav = document.getElementById('navOverlay');
+    function closeNav() { sideNav.classList.remove('open'); overlayNav.classList.remove('active'); }
+    function openNav() { sideNav.classList.add('open'); overlayNav.classList.add('active'); }
+    hamburger.addEventListener('click', openNav); overlayNav.addEventListener('click', closeNav);
     document.querySelectorAll('.nav-link').forEach(link => { link.addEventListener('click', (e) => { if(e.target.closest('.nav-link') && !e.target.closest('.logout-nav')) closeNav(); }); });
-    
-    // Panel switching via navigation
-    const panels = {
-        schedule: document.getElementById('schedule-panel'),
-        students: document.getElementById('students-panel'),
-        teachers: document.getElementById('teachers-panel')
-    };
-    function switchPanel(panelId) {
-        Object.keys(panels).forEach(id => panels[id].classList.remove('active-pane'));
-        panels[panelId].classList.add('active-pane');
-        document.querySelectorAll('.nav-link').forEach(btn => btn.classList.remove('active-nav'));
-        const activeBtn = document.querySelector(`.nav-link[data-nav="${panelId}"]`);
-        if(activeBtn) activeBtn.classList.add('active-nav');
-    }
-    document.querySelectorAll('.nav-link[data-nav]').forEach(btn => {
-        btn.addEventListener('click', () => switchPanel(btn.dataset.nav));
-    });
-    
-    // ---------- FIRESTORE HELPER FUNCTIONS ----------
+    // Panel switching
+    const panels = { schedule: document.getElementById('schedule-panel'), students: document.getElementById('students-panel'), teachers: document.getElementById('teachers-panel') };
+    function switchPanel(panelId) { Object.keys(panels).forEach(id => panels[id].classList.remove('active-pane')); panels[panelId].classList.add('active-pane'); document.querySelectorAll('.nav-link').forEach(btn => btn.classList.remove('active-nav')); const activeBtn = document.querySelector(`.nav-link[data-nav="${panelId}"]`); if(activeBtn) activeBtn.classList.add('active-nav'); }
+    document.querySelectorAll('.nav-link[data-nav]').forEach(btn => btn.addEventListener('click', () => switchPanel(btn.dataset.nav)));
+    // Helper: disable button temporarily
+    function debounceButton(btn, delay=1500) { if(btn.disabled) return false; btn.disabled = true; setTimeout(() => { btn.disabled = false; }, delay); return true; }
+    // Firestore Refs
     const teachersRef = collection(db, 'teachers');
     const studentsRef = collection(db, 'students');
     const schedulesRef = collection(db, 'schedules');
     const billsRef = collection(db, 'bills');
-    
+    // Teacher structure: { name, subjects: [{subjectName, fee}] }
+    // Student structure: { name, regMonth (YYYY-MM), enrollments: [{teacherId, subjectName, customFee?}] }
+    // Bill structure: { studentId, monthKey, totalAmount, adjustments: [{description, amount}], paid, breakdown }
     async function generateMonthlyBillsForStudent(studentId, monthKey) {
         const studentDoc = await getDoc(doc(db, 'students', studentId));
-        if (!studentDoc.exists()) return;
+        if(!studentDoc.exists()) return;
         const student = studentDoc.data();
-        const teacherIds = student.teacherIds || [];
-        let total = 0;
+        const enrollments = student.enrollments || [];
+        let baseTotal = 0;
         let breakdown = {};
-        for (let tid of teacherIds) {
-            const teaDoc = await getDoc(doc(db, 'teachers', tid));
-            if (teaDoc.exists()) {
-                const fee = teaDoc.data().defaultFee || 0;
-                total += fee;
-                breakdown[tid] = fee;
+        for(let enroll of enrollments) {
+            const teacherDoc = await getDoc(doc(db, 'teachers', enroll.teacherId));
+            if(teacherDoc.exists()) {
+                const subjects = teacherDoc.data().subjects || [];
+                const subjectObj = subjects.find(s => s.subjectName === enroll.subjectName);
+                let fee = subjectObj ? subjectObj.fee : 0;
+                if(enroll.customFee !== undefined) fee = enroll.customFee;
+                baseTotal += fee;
+                breakdown[`${enroll.teacherId}_${enroll.subjectName}`] = fee;
             }
         }
         const billId = `${studentId}_${monthKey}`;
         const billRef = doc(db, 'bills', billId);
         const existing = await getDoc(billRef);
-        if (!existing.exists()) {
-            await setDoc(billRef, { studentId, monthKey, totalAmount: total, paid: false, breakdown, updatedAt: new Date() });
-        } else if (!existing.data().paid) {
-            await updateDoc(billRef, { totalAmount: total, breakdown, updatedAt: new Date() });
+        if(!existing.exists()) {
+            await setDoc(billRef, { studentId, monthKey, totalAmount: baseTotal, adjustments: [], paid: false, breakdown, updatedAt: new Date() });
+        } else if(!existing.data().paid) {
+            await updateDoc(billRef, { totalAmount: baseTotal, breakdown, updatedAt: new Date() });
         }
     }
-    
-    async function recalcStudentBillsForYear(studentId) {
+    async function recalcAllStudentBillsFromRegMonth(studentId) {
+        const studentDoc = await getDoc(doc(db, 'students', studentId));
+        if(!studentDoc.exists()) return;
+        const regMonth = studentDoc.data().regMonth;
+        if(!regMonth) return;
         const now = new Date();
-        for(let m=1; m<=now.getMonth()+1; m++) {
-            let mk = `${now.getFullYear()}-${String(m).padStart(2,'0')}`;
+        let [year, month] = regMonth.split('-').map(Number);
+        let currentDate = new Date(year, month-1, 1);
+        const today = new Date(now.getFullYear(), now.getMonth(), 1);
+        while(currentDate <= today) {
+            let mk = `${currentDate.getFullYear()}-${String(currentDate.getMonth()+1).padStart(2,'0')}`;
             await generateMonthlyBillsForStudent(studentId, mk);
+            currentDate.setMonth(currentDate.getMonth()+1);
         }
     }
-    
-    async function updateBillsForTeacher(teacherId, newFee) {
-        const studentsSnap = await getDocs(studentsRef);
-        for (const stuDoc of studentsSnap.docs) {
-            const stu = stuDoc.data();
-            if ((stu.teacherIds || []).includes(teacherId)) {
-                const billsQuery = query(billsRef, where("studentId", "==", stuDoc.id));
-                const billsSnap = await getDocs(billsQuery);
-                for (const billDoc of billsSnap.docs) {
-                    const bill = billDoc.data();
-                    if (!bill.paid) {
-                        let newTotal = 0;
-                        let newBreakdown = {...bill.breakdown};
-                        newBreakdown[teacherId] = newFee;
-                        for (let tid in newBreakdown) {
-                            let tDoc = await getDoc(doc(db, 'teachers', tid));
-                            if(tDoc.exists()) newTotal += (tid === teacherId ? newFee : (tDoc.data().defaultFee || 0));
-                            else newTotal += newBreakdown[tid];
-                        }
-                        await updateDoc(billDoc.ref, { totalAmount: newTotal, breakdown: newBreakdown });
-                    }
-                }
-            }
-        }
-    }
-    
-    // Load teachers into dropdowns & table
+    async function updateBillsForEnrollmentChange(studentId) { await recalcAllStudentBillsFromRegMonth(studentId); }
+    // Load teachers (with subjects & fees)
     async function loadTeachers() {
         const snap = await getDocs(teachersRef);
         const teachers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        const selects = ['schedule-teacher', 'student-teacher'];
-        selects.forEach(selId => {
-            const sel = document.getElementById(selId);
-            if(sel) { sel.innerHTML = '<option value="">-- Select Teacher --</option>'; teachers.forEach(t => { sel.insertAdjacentHTML('beforeend', `<option value="${t.id}">${t.name} (RM ${t.defaultFee})</option>`); }); }
-        });
+        const teacherSelect = document.getElementById('schedule-teacher');
+        if(teacherSelect) { teacherSelect.innerHTML = '<option value="">-- Select Teacher --</option>'; teachers.forEach(t => { teacherSelect.insertAdjacentHTML('beforeend', `<option value="${t.id}">${t.name}</option>`); }); }
         const tbody = document.querySelector('#teachers-table tbody');
         if(tbody) {
             tbody.innerHTML = '';
             for(let t of teachers) {
-                let subjects = t.subjectsList ? t.subjectsList.join(', ') : '';
-                tbody.insertAdjacentHTML('beforeend', `<tr><td>${t.name}</td><td>RM ${t.defaultFee}</td><td>${subjects}</td><td class="action-icons"><i class="fas fa-trash-alt delete-teacher" data-id="${t.id}"></i> <i class="fas fa-edit edit-teacher-fee" data-id="${t.id}" data-fee="${t.defaultFee}" data-name="${t.name}" data-subjects="${t.subjectsList?.join(',') || ''}"></i></td></tr>`);
+                let subjectsHtml = '';
+                const subjects = t.subjects || [];
+                subjects.forEach((sub, idx) => { subjectsHtml += `<div class="teacher-subject-item"><strong>${sub.subjectName}</strong>: RM ${sub.fee} <i class="fas fa-edit edit-subject-fee" data-teacherid="${t.id}" data-subjectidx="${idx}" data-subjectname="${sub.subjectName}" data-fee="${sub.fee}" style="cursor:pointer; margin-left:6px;"></i> <i class="fas fa-trash-alt del-subject" data-teacherid="${t.id}" data-subjectidx="${idx}" style="cursor:pointer;"></i></div>`; });
+                subjectsHtml += `<div style="margin-top:8px;"><button class="secondary add-subject-btn" data-id="${t.id}" style="font-size:0.7rem; padding:4px 12px;">+ Add Subject</button></div>`;
+                tbody.insertAdjacentHTML('beforeend', `<tr><td><strong>${t.name}</strong></td><td>${subjectsHtml}</td><td class="action-icons"><i class="fas fa-trash-alt delete-teacher" data-id="${t.id}"></i></td></tr>`);
             }
             attachTeacherActions();
         }
         return teachers;
     }
-    
     function attachTeacherActions() {
-        document.querySelectorAll('.delete-teacher').forEach(btn => btn.addEventListener('click', async (e) => { if(confirm('Delete teacher?')) { await deleteDoc(doc(db, 'teachers', btn.dataset.id)); loadTeachers(); loadStudents(); loadSchedules(); refreshDebtSearch(); } }));
-        document.querySelectorAll('.edit-teacher-fee').forEach(btn => btn.addEventListener('click', async () => { let newFee = prompt(`Update fee for ${btn.dataset.name} (RM):`, btn.dataset.fee); if(newFee && !isNaN(newFee)) { let subjRaw = prompt(`Subjects (comma):`, btn.dataset.subjects); let subjArr = subjRaw ? subjRaw.split(',').map(s=>s.trim()) : []; await updateDoc(doc(db, 'teachers', btn.dataset.id), { defaultFee: parseFloat(newFee), subjectsList: subjArr }); await updateBillsForTeacher(btn.dataset.id, parseFloat(newFee)); loadTeachers(); loadStudents(); refreshDebtSearch(); } }));
+        document.querySelectorAll('.delete-teacher').forEach(btn => btn.addEventListener('click', async (e) => { if(!confirm('Delete teacher? All related enrollments will be removed.')) return; const btnEl = e.currentTarget; if(!debounceButton(btnEl)) return; await deleteDoc(doc(db, 'teachers', btnEl.dataset.id)); loadTeachers(); loadStudents(); loadSchedules(); refreshDebtSearch(); }));
+        document.querySelectorAll('.edit-subject-fee').forEach(btn => btn.addEventListener('click', async (e) => { const teacherId = btn.dataset.teacherid, idx = parseInt(btn.dataset.subjectidx), newFee = prompt(`Enter new monthly fee for ${btn.dataset.subjectname}:`, btn.dataset.fee); if(newFee && !isNaN(parseFloat(newFee))) { const teacherDoc = await getDoc(doc(db, 'teachers', teacherId)); if(teacherDoc.exists()) { let subjects = teacherDoc.data().subjects || []; if(subjects[idx]) { subjects[idx].fee = parseFloat(newFee); await updateDoc(doc(db, 'teachers', teacherId), { subjects }); await updateAllBillsAfterTeacherSubjectChange(teacherId, subjects[idx].subjectName, parseFloat(newFee)); loadTeachers(); loadStudents(); refreshDebtSearch(); } } } }));
+        document.querySelectorAll('.del-subject').forEach(btn => btn.addEventListener('click', async (e) => { const teacherId = btn.dataset.teacherid, idx = parseInt(btn.dataset.subjectidx); if(!confirm('Remove this subject? Students enrolled will lose this billing.')) return; const teacherDoc = await getDoc(doc(db, 'teachers', teacherId)); if(teacherDoc.exists()) { let subjects = teacherDoc.data().subjects || []; subjects.splice(idx,1); await updateDoc(doc(db, 'teachers', teacherId), { subjects }); loadTeachers(); loadStudents(); refreshDebtSearch(); } }));
+        document.querySelectorAll('.add-subject-btn').forEach(btn => btn.addEventListener('click', async (e) => { const teacherId = btn.dataset.id; const subName = prompt('Subject name:'); if(!subName) return; const subFee = parseFloat(prompt('Monthly fee for this subject (RM):', '0')); if(isNaN(subFee)) return; const teacherDoc = await getDoc(doc(db, 'teachers', teacherId)); if(teacherDoc.exists()) { let subjects = teacherDoc.data().subjects || []; subjects.push({ subjectName: subName, fee: subFee }); await updateDoc(doc(db, 'teachers', teacherId), { subjects }); loadTeachers(); } }));
     }
-    
+    async function updateAllBillsAfterTeacherSubjectChange(teacherId, subjectName, newFee) {
+        const studentsSnap = await getDocs(studentsRef);
+        for(const stuDoc of studentsSnap.docs) {
+            const student = stuDoc.data();
+            const enrollments = student.enrollments || [];
+            let updated = false;
+            for(let enc of enrollments) { if(enc.teacherId === teacherId && enc.subjectName === subjectName && !enc.customFee) { updated = true; break; } }
+            if(updated) await recalcAllStudentBillsFromRegMonth(stuDoc.id);
+        }
+    }
     async function loadStudents() {
         const snap = await getDocs(studentsRef);
         const tbody = document.querySelector('#all-students-table tbody');
@@ -683,91 +195,61 @@
             tbody.innerHTML = '';
             for(const docSnap of snap.docs) {
                 const s = docSnap.data();
-                let teacherNames = [];
-                if(s.teacherIds && s.teacherIds.length) { for(let tid of s.teacherIds) { let tDoc = await getDoc(doc(db, 'teachers', tid)); if(tDoc.exists()) teacherNames.push(tDoc.data().name); } }
-                let displayTeachers = teacherNames.join(', ') || 'None';
-                tbody.insertAdjacentHTML('beforeend', `<tr><td>${s.name}</td><td>${displayTeachers}</td><td class="action-icons"><i class="fas fa-edit edit-student" data-id="${docSnap.id}" data-name="${s.name}" data-teacherids='${JSON.stringify(s.teacherIds || [])}'></i> <i class="fas fa-trash-alt delete-student" data-id="${docSnap.id}"></i></td></tr>`);
+                let enrollDisplay = '';
+                const enrollments = s.enrollments || [];
+                for(let enc of enrollments) {
+                    let teacherDoc = await getDoc(doc(db, 'teachers', enc.teacherId));
+                    let teacherName = teacherDoc.exists() ? teacherDoc.data().name : '?';
+                    let feeDisplay = enc.customFee ? `(Custom: RM${enc.customFee})` : '';
+                    enrollDisplay += `<span class="teacher-subject-item">${teacherName} - ${enc.subjectName} ${feeDisplay}</span> `;
+                }
+                tbody.insertAdjacentHTML('beforeend', `<tr><td>${s.name}</td><td>${s.regMonth || 'Not set'}</td><td>${enrollDisplay || '—'}</td><td class="action-icons"><i class="fas fa-plus-circle add-enrollment" data-id="${docSnap.id}" data-name="${s.name}"></i> <i class="fas fa-edit edit-student" data-id="${docSnap.id}" data-name="${s.name}" data-regmonth="${s.regMonth || ''}"></i> <i class="fas fa-trash-alt delete-student" data-id="${docSnap.id}"></i> <i class="fas fa-coins adjustment-bill" data-id="${docSnap.id}" title="Add Adjustment (extra/discount) for a month"></i></td></tr>`);
             }
             attachStudentActions();
         }
     }
-    
     function attachStudentActions() {
-        document.querySelectorAll('.delete-student').forEach(el => el.addEventListener('click', async (e) => { if(confirm('Delete student and bills?')) { await deleteDoc(doc(db, 'students', el.dataset.id)); const billQ = query(billsRef, where("studentId","==",el.dataset.id)); (await getDocs(billQ)).forEach(b => deleteDoc(b.ref)); loadStudents(); refreshDebtSearch(); } }));
-        document.querySelectorAll('.edit-student').forEach(el => el.addEventListener('click', async () => { let newName = prompt('Edit student name:', el.dataset.name); if(newName) { let teacherIdsInput = prompt(`Teacher IDs (comma separated, e.g., "teacherId1,teacherId2"): current = ${el.dataset.teacherids}`, el.dataset.teacherids.replace(/[\[\]']/g,'')); let finalIds = teacherIdsInput ? teacherIdsInput.split(',').map(s=>s.trim()).filter(id=>id) : []; await updateDoc(doc(db, 'students', el.dataset.id), { name: newName, teacherIds: finalIds }); await recalcStudentBillsForYear(el.dataset.id); loadStudents(); refreshDebtSearch(); } }));
+        document.querySelectorAll('.delete-student').forEach(el => el.addEventListener('click', async (e) => { if(!confirm('Delete student permanently?')) return; const btn = e.currentTarget; if(!debounceButton(btn)) return; await deleteDoc(doc(db, 'students', el.dataset.id)); const billQ = query(billsRef, where("studentId","==",el.dataset.id)); (await getDocs(billQ)).forEach(b => deleteDoc(b.ref)); loadStudents(); refreshDebtSearch(); }));
+        document.querySelectorAll('.edit-student').forEach(el => el.addEventListener('click', async () => { const id = el.dataset.id; const newName = prompt('Edit student name:', el.dataset.name); const newRegMonth = prompt('Registration month (YYYY-MM):', el.dataset.regmonth); if(newName) { await updateDoc(doc(db, 'students', id), { name: newName, regMonth: newRegMonth || el.dataset.regmonth }); await recalcAllStudentBillsFromRegMonth(id); loadStudents(); refreshDebtSearch(); } }));
+        document.querySelectorAll('.add-enrollment').forEach(el => el.addEventListener('click', async () => { const studentId = el.dataset.id; const teachersSnap = await getDocs(teachersRef); let teacherOptions = []; teachersSnap.forEach(t => { const subs = t.data().subjects || []; subs.forEach(sub => { teacherOptions.push({ teacherId: t.id, teacherName: t.data().name, subjectName: sub.subjectName, baseFee: sub.fee }); }); }); if(teacherOptions.length === 0) { alert('No teachers/subjects available. Create teacher with subjects first.'); return; } let menu = 'Select enrollment:\n'; teacherOptions.forEach((opt,idx) => { menu += `${idx+1}. ${opt.teacherName} - ${opt.subjectName} (RM${opt.baseFee})\n`; }); let choice = prompt(menu + '\nEnter number, or type custom fee like "1 150" to override fee:'); if(choice) { let parts = choice.trim().split(' '); let optIdx = parseInt(parts[0])-1; if(!isNaN(optIdx) && teacherOptions[optIdx]) { let selected = teacherOptions[optIdx]; let customFee = null; if(parts[1] && !isNaN(parseFloat(parts[1]))) customFee = parseFloat(parts[1]); const studentDoc = await getDoc(doc(db, 'students', studentId)); let enrollments = studentDoc.data().enrollments || []; enrollments.push({ teacherId: selected.teacherId, subjectName: selected.subjectName, customFee: customFee }); await updateDoc(doc(db, 'students', studentId), { enrollments }); await recalcAllStudentBillsFromRegMonth(studentId); loadStudents(); refreshDebtSearch(); } } }));
+        document.querySelectorAll('.adjustment-bill').forEach(el => el.addEventListener('click', async () => { const studentId = el.dataset.id; const monthKey = prompt('Enter month (YYYY-MM) for adjustment:', new Date().toISOString().slice(0,7)); if(!monthKey) return; const desc = prompt('Description (e.g., Photocopy fee, Discount):'); if(!desc) return; const amount = parseFloat(prompt('Amount (RM): positive = extra charge, negative = discount')); if(isNaN(amount)) return; const billId = `${studentId}_${monthKey}`; const billRef = doc(db, 'bills', billId); const billSnap = await getDoc(billRef); if(billSnap.exists()) { let billData = billSnap.data(); let adjustments = billData.adjustments || []; adjustments.push({ description: desc, amount, appliedAt: new Date() }); let newTotal = (billData.totalAmount || 0) + adjustments.reduce((sum,adj)=>sum+adj.amount,0); await updateDoc(billRef, { adjustments, totalAmount: newTotal }); } else { await setDoc(billRef, { studentId, monthKey, totalAmount: amount, adjustments: [{description:desc, amount}], paid: false, breakdown: {} }); } refreshDebtSearch(); alert(`Adjustment added for ${monthKey}`); }));
     }
-    
     async function loadSchedules() {
         const snap = await getDocs(schedulesRef);
         const tbody = document.querySelector('#schedule-table tbody');
-        if(tbody) {
-            tbody.innerHTML = '';
-            for(const docSnap of snap.docs) {
-                let data = docSnap.data();
-                let teacherDoc = await getDoc(doc(db, 'teachers', data.teacherId));
-                let teacherName = teacherDoc.exists() ? teacherDoc.data().name : 'Unknown';
-                tbody.insertAdjacentHTML('beforeend', `<tr><td>${new Date(data.datetime).toLocaleString()}</td><td>${teacherName}</td><td>${data.subject}</td><td><i class="fas fa-trash-alt delete-schedule" data-id="${docSnap.id}"></i></td></tr>`);
-            }
-            document.querySelectorAll('.delete-schedule').forEach(btn => btn.addEventListener('click', async (e) => { await deleteDoc(doc(db, 'schedules', btn.dataset.id)); loadSchedules(); }));
-        }
+        if(tbody) { tbody.innerHTML = ''; for(const docSnap of snap.docs) { let data = docSnap.data(); let teacherDoc = await getDoc(doc(db, 'teachers', data.teacherId)); let teacherName = teacherDoc.exists() ? teacherDoc.data().name : 'Unknown'; tbody.insertAdjacentHTML('beforeend', `<tr><td>${new Date(data.datetime).toLocaleString()}</td><td>${teacherName}</td><td>${data.subject}</td><td><i class="fas fa-trash-alt delete-schedule" data-id="${docSnap.id}"></i></td></tr>`); } document.querySelectorAll('.delete-schedule').forEach(btn => btn.addEventListener('click', async (e) => { const btnEl = e.currentTarget; if(!debounceButton(btnEl)) return; await deleteDoc(doc(db, 'schedules', btn.dataset.id)); loadSchedules(); })); }
     }
-    
     async function refreshDebtSearch() {
         const searchVal = document.getElementById('search-student-input').value.trim();
         let studentsSnap = await getDocs(studentsRef);
-        let filtered = [];
-        for(let s of studentsSnap.docs) { if(searchVal === "" || s.data().name.toLowerCase().includes(searchVal.toLowerCase())) filtered.push({id:s.id, ...s.data()}); }
+        let filtered = []; for(let s of studentsSnap.docs) { if(searchVal === "" || s.data().name.toLowerCase().includes(searchVal.toLowerCase())) filtered.push({id:s.id, ...s.data()}); }
         const container = document.getElementById('student-debt-result');
-        if(filtered.length===0) { container.innerHTML = '<p class="badge-month">No matching student.</p>'; return; }
-        let html = '<h4>📋 Fee Statement (Unpaid highlighted)</h4><div style="overflow-x:auto"><table style="width:100%"><thead><tr><th>Student</th><th>Month</th><th>Total Due (RM)</th><th>Status</th><th>Action</th></tr></thead><tbody>';
+        if(filtered.length===0) { container.innerHTML = '<p>No matching student.</p>'; return; }
+        let html = '<h4>📋 Fee Statement (Adjustments & Unpaid)</h4><div style="overflow-x:auto"><table style="width:100%"><thead><tr><th>Student</th><th>Month</th><th>Base Subjects Fee</th><th>Adjustments</th><th>Total (RM)</th><th>Status</th><th>Action</th></tr></thead><tbody>';
         for(let stu of filtered) {
             let billsQuery = query(billsRef, where("studentId","==", stu.id));
             let billsSnap = await getDocs(billsQuery);
             let bills = billsSnap.docs.map(b => ({id:b.id, ...b.data()})).sort((a,b)=>a.monthKey.localeCompare(b.monthKey));
             for(let bill of bills) {
+                let adjustmentsHtml = (bill.adjustments || []).map(adj => `<div class="adjustment-badge">${adj.description}: ${adj.amount>0?`+${adj.amount}`:adj.amount}</div>`).join('');
                 let statusBadge = bill.paid ? '✅ Paid' : '❌ Unpaid';
-                let payAction = bill.paid ? '' : `<button class="pay-btn" data-billid="${bill.id}" data-month="${bill.monthKey}">Mark as Paid</button>`;
-                html += `<tr><td>${stu.name}</td><td>${bill.monthKey}</td><td>RM ${bill.totalAmount}</td><td>${statusBadge}</td><td>${payAction}</td></tr>`;
+                let payAction = bill.paid ? '' : `<button class="pay-btn" data-billid="${bill.id}" data-month="${bill.monthKey}">Pay Now</button>`;
+                html += `<tr><td>${stu.name}</td><td>${bill.monthKey}</td><td>RM ${(bill.totalAmount - (bill.adjustments?.reduce((s,a)=>s+a.amount,0)||0)).toFixed(2)}</td><td>${adjustmentsHtml || '—'}</td><td><strong>RM ${bill.totalAmount.toFixed(2)}</strong></td><td>${statusBadge}</td><td>${payAction}</td></tr>`;
             }
         }
         html += '</tbody></table></div>';
         container.innerHTML = html;
-        document.querySelectorAll('.pay-btn').forEach(btn => btn.addEventListener('click', async () => { await updateDoc(doc(db, 'bills', btn.dataset.billid), { paid: true, paidAt: new Date() }); refreshDebtSearch(); }));
+        document.querySelectorAll('.pay-btn').forEach(btn => btn.addEventListener('click', async (e) => { const btnEl = e.currentTarget; if(!debounceButton(btnEl, 1000)) return; await updateDoc(doc(db, 'bills', btn.dataset.billid), { paid: true, paidAt: new Date() }); refreshDebtSearch(); }));
     }
-    
-    async function addTeacherLogic() {
-        let name = document.getElementById('teacher-name').value.trim();
-        let fee = parseFloat(document.getElementById('teacher-default-fee').value);
-        let subjectsStr = document.getElementById('teacher-subjects').value;
-        if(!name) return alert('Teacher name required');
-        await addDoc(teachersRef, { name, defaultFee: isNaN(fee)?0:fee, subjectsList: subjectsStr.split(',').map(s=>s.trim()) });
-        document.getElementById('teacher-name').value = ''; document.getElementById('teacher-default-fee').value = ''; document.getElementById('teacher-subjects').value = '';
-        loadTeachers(); loadStudents();
-    }
-    async function addStudentLogic() {
-        let name = document.getElementById('student-name').value.trim();
-        let teacherId = document.getElementById('student-teacher').value;
-        if(!name) return alert('Student name');
-        let teacherIds = teacherId ? [teacherId] : [];
-        const newRef = await addDoc(studentsRef, { name, teacherIds });
-        await recalcStudentBillsForYear(newRef.id);
-        loadStudents(); refreshDebtSearch();
-        document.getElementById('student-name').value = '';
-    }
-    async function addScheduleLogic() {
-        let datetime = document.getElementById('schedule-datetime').value;
-        let teacherId = document.getElementById('schedule-teacher').value;
-        let subject = document.getElementById('schedule-subject').value;
-        if(!datetime || !teacherId || !subject) return alert('Complete all fields');
-        await addDoc(schedulesRef, { datetime, teacherId, subject });
-        loadSchedules();
-    }
+    // Add teacher logic with subject-fee
+    async function addTeacherLogic() { const btn = document.getElementById('add-teacher-btn'); if(!debounceButton(btn)) return; let name = document.getElementById('teacher-name').value.trim(); if(!name) { alert('Teacher name required'); btn.disabled=false; return; } await addDoc(teachersRef, { name, subjects: [] }); document.getElementById('teacher-name').value = ''; loadTeachers(); }
+    async function addStudentLogic() { const btn = document.getElementById('add-student-btn'); if(!debounceButton(btn)) return; let name = document.getElementById('student-name').value.trim(); let regMonth = document.getElementById('student-reg-month').value; if(!name) { alert('Student name required'); btn.disabled=false; return; } if(!regMonth) { const now = new Date(); regMonth = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`; } const newRef = await addDoc(studentsRef, { name, regMonth, enrollments: [] }); await recalcAllStudentBillsFromRegMonth(newRef.id); loadStudents(); refreshDebtSearch(); document.getElementById('student-name').value = ''; document.getElementById('student-reg-month').value = ''; btn.disabled=false; }
+    async function addScheduleLogic() { const btn = document.getElementById('add-schedule-btn'); if(!debounceButton(btn)) return; let datetime = document.getElementById('schedule-datetime').value; let teacherId = document.getElementById('schedule-teacher').value; let subject = document.getElementById('schedule-subject').value; if(!datetime || !teacherId || !subject) { alert('Complete all fields'); btn.disabled=false; return; } await addDoc(schedulesRef, { datetime, teacherId, subject }); loadSchedules(); btn.disabled=false; }
     document.getElementById('add-teacher-btn')?.addEventListener('click', addTeacherLogic);
     document.getElementById('add-student-btn')?.addEventListener('click', addStudentLogic);
     document.getElementById('add-schedule-btn')?.addEventListener('click', addScheduleLogic);
-    document.getElementById('search-student-btn')?.addEventListener('click', refreshDebtSearch);
-    document.getElementById('schedule-teacher')?.addEventListener('change', async (e) => { let tid=e.target.value; if(tid) { let tea=(await getDoc(doc(db,'teachers',tid))).data(); let subs=tea?.subjectsList||[]; let subSel=document.getElementById('schedule-subject'); subSel.innerHTML=''; subs.forEach(s=>subSel.insertAdjacentHTML('beforeend',`<option value="${s}">${s}</option>`)); } });
-    
+    document.getElementById('search-student-btn')?.addEventListener('click', () => refreshDebtSearch());
+    document.getElementById('schedule-teacher')?.addEventListener('change', async (e) => { let tid=e.target.value; if(tid) { let tea=(await getDoc(doc(db,'teachers',tid))).data(); let subs=tea?.subjects||[]; let subSel=document.getElementById('schedule-subject'); subSel.innerHTML=''; subs.forEach(s=>subSel.insertAdjacentHTML('beforeend',`<option value="${s.subjectName}">${s.subjectName}</option>`)); } });
     async function loadAllData() { await loadTeachers(); await loadStudents(); await loadSchedules(); await refreshDebtSearch(); if(document.getElementById('schedule-teacher')?.value) document.getElementById('schedule-teacher').dispatchEvent(new Event('change')); }
     setAuth(sessionStorage.getItem('tutor_auth') === '0919');
 </script>
