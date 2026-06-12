@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Teacher Management | Pusat Tuisyen Perintis Aspirasi</title>
+    <link rel="icon" type="image/png" href="icon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;40..32,400;40..32,500;40..32,600;40..32,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f0f7fc;
+            color: #1a2c3e;
+            overflow-x: hidden;
+        }
+
+        /* Login Overlay */
+        .login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1a5f7a 0%, #0d3b4f 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+        }
+
+        .login-card {
+            background: white;
+            max-width: 420px;
+            width: 90%;
+            padding: 2.5rem;
+            border-radius: 32px;
+            text-align: center;
+        }
+
+        .login-card img {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 1rem;
+        }
+
+        .login-card input {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid #e0eef5;
+            border-radius: 48px;
+            margin-bottom: 1.2rem;
+            outline: none;
+            font-size: 1rem;
+        }
+
+        .login-card input:focus {
+            border-color: #2c7da0;
+        }
+
+        .login-card button {
+            background: #2c7da0;
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 48px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .login-error {
+            color: #d9534f;
+            margin-top: 0.8rem;
+        }
+
+        /* App Layout */
+        .app {
+            display: none;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 260px;
+            height: 100%;
+            background: white;
+            box-shadow: 2px 0 20px rgba(0,0,0,0.05);
+            z-index: 1000;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar.collapsed {
+            width: 80px;
+        }
+
+        .sidebar.collapsed .sidebar-logo h2,
+        .sidebar.collapsed .nav-item span,
+        .sidebar.collapsed .sidebar-footer span {
+            display: none;
+        }
+
+        .sidebar.collapsed .nav-item {
+            justify-content: center;
+        }
+
+        .sidebar-toggle {
+            position: absolute;
+            right: -12px;
+            top: 20px;
+            background: #2c7da0;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 0.7rem;
+            z-index: 1001;
+        }
+
+        .sidebar-logo {
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid #e4edf2;
+        }
+
+        .sidebar-logo img {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+        }
+
+        .sidebar-logo h2 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1a5f7a;
+        }
+
+        .nav-menu {
+            flex: 1;
+            padding: 1.5rem 1rem;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            border-radius: 12px;
+            color: #4a6f8a;
+            cursor: pointer;
+            transition: 0.2s;
+            text-decoration: none;
+        }
+
+        .nav-item:hover {
+            background: #e8f4f8;
+            color: #2c7da0;
+        }
+
+        .nav-item.active {
+            background: #2c7da0;
+            color: white;
+        }
+
+        .sidebar-footer {
+            padding: 1rem;
+            border-top: 1px solid #e4edf2;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 260px;
+            transition: all 0.3s ease;
+            padding: 1.5rem 2rem;
+        }
+
+        .main-content.expanded {
+            margin-left: 80px;
+        }
+
+        /* Search Section */
+        .search-section {
+            background: white;
+            border-radius: 24px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+            border: 1px solid #e4edf2;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .search-box input {
+            flex: 1;
+            padding: 12px 18px;
+            border: 2px solid #e0eef5;
+            border-radius: 48px;
+            outline: none;
+            font-size: 0.95rem;
+            min-width: 200px;
+        }
+
+        .search-box input:focus {
+            border-color: #2c7da0;
+        }
+
+        /* Card */
+        .card {
+            background: white;
+            border-radius: 24px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid #e4edf2;
+        }
+
+        .card h3 {
+            color: #1a5f7a;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .form-group {
+            flex: 1;
+            min-width: 180px;
+        }
+
+        label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #6b8ba0;
+            margin-bottom: 5px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 2px solid #e0eef5;
+            border-radius: 30px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        input:focus, select:focus {
+            border-color: #2c7da0;
+        }
+
+        button {
+            background: #2c7da0;
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        button:hover {
+            background: #1a5f7a;
+            transform: translateY(-1px);
+        }
+
+        button.secondary {
+            background: #e8f4f8;
+            color: #2c7da0;
+            border: 1px solid #cde5ef;
+        }
+
+        button.danger {
+            background: #fee;
+            color: #c33;
+        }
+
+        button.danger:hover {
+            background: #fdd;
+        }
+
+        /* Subjects Container */
+        .subjects-container {
+            background: #f8fbfd;
+            border-radius: 16px;
+            padding: 1rem;
+            margin-top: 0.5rem;
+        }
+
+        .subject-item {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+            align-items: center;
+            background: white;
+            padding: 10px;
+            border-radius: 16px;
+            margin-bottom: 10px;
+            border: 1px solid #e4edf2;
+        }
+
+        .subject-item input {
+            flex: 1;
+            min-width: 100px;
+        }
+
+        .subject-item .remove-subject {
+            background: #fee;
+            color: #c33;
+            padding: 8px 12px;
+            border-radius: 30px;
+            font-size: 0.8rem;
+        }
+
+        .add-subject-btn {
+            margin-top: 10px;
+            background: #e8f4f8;
+            color: #2c7da0;
+            padding: 8px 16px;
+            font-size: 0.85rem;
+        }
+
+        /* Teacher Table */
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 16px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 14px 10px;
+            text-align: left;
+            border-bottom: 1px solid #eef3f7;
+        }
+
+        th {
+            background: #f8fbfd;
+            font-weight: 600;
+            color: #2c7da0;
+        }
+
+        .action-icons i {
+            margin: 0 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            color: #6b8ba0;
+        }
+
+        .action-icons i:hover {
+            color: #2c7da0;
+        }
+
+        .subject-badge {
+            background: #e8f4f8;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            display: inline-block;
+            margin: 2px;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 28px;
+            padding: 1.8rem;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #999;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 80px;
+            }
+            .main-content {
+                margin-left: 80px;
+            }
+            .form-row {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-overlay" id="loginOverlay">
+        <div class="login-card">
+            <img src="icon.png" alt="Logo">
+            <h3>Teacher Management</h3>
+            <input type="password" id="loginPassword" placeholder="Enter Password">
+            <button id="loginBtn">Access Portal</button>
+            <div class="login-error" id="loginError"></div>
+        </div>
+    </div>
+
+    <div class="app" id="mainApp">
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-toggle" id="sidebarToggle"><i class="fas fa-chevron-left"></i></div>
+            <div class="sidebar-logo"><img src="icon.png" alt="Logo"><h2>Perintis Aspirasi</h2></div>
+            <div class="nav-menu">
+                <a href="index.html" class="nav-item"><i class="fas fa-home"></i><span>Home</span></a>
+                <a href="teachermanage.html" class="nav-item active"><i class="fas fa-chalkboard-user"></i><span>Teacher Manage</span></a>
+                <a href="studentmanage.html" class="nav-item"><i class="fas fa-user-graduate"></i><span>Student Manage</span></a>
+                <a href="package.html" class="nav-item"><i class="fas fa-calendar-alt"></i><span>Package Manage</span></a>
+                <a href="invoice.html" class="nav-item"><i class="fas fa-file-invoice"></i><span>Invoice</span></a>
+            </div>
+            <div class="sidebar-footer"><div class="nav-item" id="logoutBtn"><i class="fas fa-sign-out-alt"></i><span>Log Out</span></div></div>
+        </div>
+
+        <div class="main-content" id="mainContent">
+            <!-- Search Section -->
+            <div class="search-section">
+                <div class="search-box">
+                    <i class="fas fa-search" style="color:#8ba9c0;"></i>
+                    <input type="text" id="searchTeacherInput" placeholder="Search by teacher name or subject...">
+                    <button id="searchBtn" class="secondary">Search</button>
+                    <button id="resetSearchBtn" class="secondary">Reset</button>
+                </div>
+            </div>
+
+            <!-- Register New Teacher -->
+            <div class="card">
+                <h3><i class="fas fa-user-plus"></i> Register New Teacher</h3>
+                <div class="form-row">
+                    <div class="form-group"><label>Full Name</label><input type="text" id="teacherName" placeholder="e.g., Mr. Ahmad"></div>
+                    <div class="form-group"><label>IC Number</label><input type="text" id="teacherIc" placeholder="IC Number"></div>
+                </div>
+                
+                <div class="subjects-container">
+                    <label><i class="fas fa-book"></i> Subjects & Fees</label>
+                    <div id="subjectsList">
+                        <div class="subject-item">
+                            <input type="text" placeholder="Subject Name" class="subject-name" value="">
+                            <input type="number" placeholder="Fee (RM)" class="subject-fee" value="0">
+                            <input type="number" placeholder="Center Cut (RM)" class="subject-cut" value="0">
+                            <input type="number" placeholder="Extra Fee (RM)" class="subject-extra" value="0">
+                            <button class="remove-subject secondary" style="display:none;">Remove</button>
+                        </div>
+                    </div>
+                    <button type="button" class="add-subject-btn" id="addSubjectBtn">+ Add Subject</button>
+                </div>
+                <button id="saveTeacherBtn" style="margin-top: 1rem;">Register Teacher</button>
+            </div>
+
+            <!-- Teacher List -->
+            <div class="card">
+                <h3><i class="fas fa-list"></i> Teacher Directory</h3>
+                <div class="table-wrapper">
+                    <table id="teachersTable">
+                        <thead>
+                            <tr><th>Name</th><th>IC Number</th><th>Subjects</th><th>Actions</th></tr>
+                        </thead>
+                        <tbody id="teachersTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header"><h3>Edit Teacher</h3><button class="close-modal">&times;</button></div>
+            <div class="form-group"><label>Name</label><input type="text" id="editTeacherName"></div>
+            <div class="form-group"><label>IC Number</label><input type="text" id="editTeacherIc"></div>
+            <div class="subjects-container" id="editSubjectsContainer"></div>
+            <button id="updateTeacherBtn" style="margin-top:1rem; width:100%;">Update Teacher</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, getDoc, addDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCkfEdLDlHW7DvGxLpbDY7Us2nb3j7oTjQ",
+            authDomain: "perintisaspirasi.firebaseapp.com",
+            projectId: "perintisaspirasi",
+            storageBucket: "perintisaspirasi.firebasestorage.app",
+            messagingSenderId: "293094185092",
+            appId: "1:293094185092:web:ac2b5712db54480c3ccad1",
+            measurementId: "G-9ZSWKEZJVT"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Auth
+        const loginOverlay = document.getElementById('loginOverlay');
+        const mainApp = document.getElementById('mainApp');
+        const loginPassword = document.getElementById('loginPassword');
+        const loginBtn = document.getElementById('loginBtn');
+        const loginError = document.getElementById('loginError');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('mainContent');
+
+        function checkLogin() {
+            if (sessionStorage.getItem('tutor_auth') === '0919') {
+                loginOverlay.style.display = 'none';
+                mainApp.style.display = 'block';
+                loadTeachers();
+            } else {
+                loginOverlay.style.display = 'flex';
+                mainApp.style.display = 'none';
+            }
+        }
+
+        loginBtn.addEventListener('click', () => {
+            if (loginPassword.value === '0919') {
+                sessionStorage.setItem('tutor_auth', '0919');
+                checkLogin();
+            } else {
+                loginError.innerText = 'Incorrect password';
+            }
+        });
+
+        logoutBtn?.addEventListener('click', () => {
+            sessionStorage.removeItem('tutor_auth');
+            checkLogin();
+        });
+
+        // Sidebar toggle
+        let isCollapsed = false;
+        sidebarToggle.addEventListener('click', () => {
+            isCollapsed = !isCollapsed;
+            sidebar.classList.toggle('collapsed', isCollapsed);
+            mainContent.classList.toggle('expanded', isCollapsed);
+            sidebarToggle.innerHTML = isCollapsed ? '<i class="fas fa-chevron-right"></i>' : '<i class="fas fa-chevron-left"></i>';
+        });
+
+        // Subjects management
+        function addSubjectRow(container, data = null) {
+            const div = document.createElement('div');
+            div.className = 'subject-item';
+            div.innerHTML = `
+                <input type="text" placeholder="Subject Name" class="subject-name" value="${data ? data.subjectName : ''}">
+                <input type="number" placeholder="Fee (RM)" class="subject-fee" value="${data ? data.fee : '0'}">
+                <input type="number" placeholder="Center Cut (RM)" class="subject-cut" value="${data ? data.centerCut : '0'}">
+                <input type="number" placeholder="Extra Fee (RM)" class="subject-extra" value="${data ? data.extraFee : '0'}">
+                <button class="remove-subject secondary">Remove</button>
+            `;
+            const removeBtn = div.querySelector('.remove-subject');
+            removeBtn.addEventListener('click', () => div.remove());
+            container.appendChild(div);
+        }
+
+        document.getElementById('addSubjectBtn')?.addEventListener('click', () => {
+            const container = document.getElementById('subjectsList');
+            addSubjectRow(container);
+            // Show remove buttons for all if more than one
+            document.querySelectorAll('#subjectsList .remove-subject').forEach(btn => btn.style.display = 'inline-block');
+        });
+
+        // Save teacher
+        document.getElementById('saveTeacherBtn')?.addEventListener('click', async () => {
+            const name = document.getElementById('teacherName').value.trim();
+            const ic = document.getElementById('teacherIc').value.trim();
+            if (!name) { alert('Please enter teacher name'); return; }
+            
+            const subjectItems = document.querySelectorAll('#subjectsList .subject-item');
+            const subjects = [];
+            subjectItems.forEach(item => {
+                const subjectName = item.querySelector('.subject-name').value.trim();
+                if (subjectName) {
+                    subjects.push({
+                        subjectName: subjectName,
+                        fee: parseFloat(item.querySelector('.subject-fee').value) || 0,
+                        centerCut: parseFloat(item.querySelector('.subject-cut').value) || 0,
+                        extraFee: parseFloat(item.querySelector('.subject-extra').value) || 0
+                    });
+                }
+            });
+            
+            try {
+                await addDoc(collection(db, 'teachers'), { name, ic, subjects });
+                alert('Teacher registered successfully');
+                document.getElementById('teacherName').value = '';
+                document.getElementById('teacherIc').value = '';
+                // Reset subjects to one empty row
+                const container = document.getElementById('subjectsList');
+                container.innerHTML = '';
+                addSubjectRow(container);
+                document.querySelector('#subjectsList .remove-subject').style.display = 'none';
+                loadTeachers();
+            } catch (e) {
+                alert('Error: ' + e.message);
+            }
+        });
+
+        // Load teachers
+        let allTeachers = [];
+        async function loadTeachers() {
+            try {
+                const snap = await getDocs(collection(db, 'teachers'));
+                allTeachers = [];
+                snap.forEach(doc => {
+                    allTeachers.push({ id: doc.id, ...doc.data() });
+                });
+                renderTeacherTable(allTeachers);
+            } catch (e) {
+                console.warn("Error loading teachers:", e);
+            }
+        }
+
+        function renderTeacherTable(teachers) {
+            const tbody = document.getElementById('teachersTableBody');
+            tbody.innerHTML = '';
+            teachers.forEach(teacher => {
+                const subjectsHtml = (teacher.subjects || []).map(s => 
+                    `<span class="subject-badge">${s.subjectName} (RM${s.fee})</span>`
+                ).join('');
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${teacher.name || ''}</td>
+                    <td>${teacher.ic || '-'}</td>
+                    <td>${subjectsHtml || '-'}</td>
+                    <td class="action-icons">
+                        <i class="fas fa-edit edit-teacher" data-id="${teacher.id}"></i>
+                        <i class="fas fa-trash-alt delete-teacher" data-id="${teacher.id}"></i>
+                    </td>
+                `;
+            });
+            
+            document.querySelectorAll('.edit-teacher').forEach(btn => {
+                btn.addEventListener('click', () => openEditModal(btn.dataset.id));
+            });
+            document.querySelectorAll('.delete-teacher').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    if (confirm('Delete this teacher? This will remove them from all packages.')) {
+                        await deleteDoc(doc(db, 'teachers', btn.dataset.id));
+                        loadTeachers();
+                    }
+                });
+            });
+        }
+
+        // Search functionality
+        document.getElementById('searchBtn')?.addEventListener('click', () => {
+            const searchTerm = document.getElementById('searchTeacherInput').value.toLowerCase();
+            const filtered = allTeachers.filter(teacher => {
+                const matchesName = teacher.name?.toLowerCase().includes(searchTerm);
+                const matchesSubject = (teacher.subjects || []).some(s => s.subjectName.toLowerCase().includes(searchTerm));
+                return matchesName || matchesSubject;
+            });
+            renderTeacherTable(filtered);
+        });
+
+        document.getElementById('resetSearchBtn')?.addEventListener('click', () => {
+            document.getElementById('searchTeacherInput').value = '';
+            renderTeacherTable(allTeachers);
+        });
+
+        // Edit modal
+        let currentEditId = null;
+        async function openEditModal(teacherId) {
+            currentEditId = teacherId;
+            const teacher = allTeachers.find(t => t.id === teacherId);
+            if (!teacher) return;
+            
+            document.getElementById('editTeacherName').value = teacher.name || '';
+            document.getElementById('editTeacherIc').value = teacher.ic || '';
+            
+            const container = document.getElementById('editSubjectsContainer');
+            container.innerHTML = '<label>Subjects & Fees</label><div id="editSubjectsList"></div><button type="button" class="add-subject-btn" id="editAddSubjectBtn">+ Add Subject</button>';
+            const subjectsListDiv = document.getElementById('editSubjectsList');
+            
+            function addEditSubjectRow(subj = null) {
+                const div = document.createElement('div');
+                div.className = 'subject-item';
+                div.innerHTML = `
+                    <input type="text" placeholder="Subject Name" class="subject-name" value="${subj ? subj.subjectName : ''}">
+                    <input type="number" placeholder="Fee (RM)" class="subject-fee" value="${subj ? subj.fee : '0'}">
+                    <input type="number" placeholder="Center Cut (RM)" class="subject-cut" value="${subj ? subj.centerCut : '0'}">
+                    <input type="number" placeholder="Extra Fee (RM)" class="subject-extra" value="${subj ? subj.extraFee : '0'}">
+                    <button class="remove-subject secondary">Remove</button>
+                `;
+                div.querySelector('.remove-subject').addEventListener('click', () => div.remove());
+                subjectsListDiv.appendChild(div);
+            }
+            
+            if (teacher.subjects && teacher.subjects.length > 0) {
+                teacher.subjects.forEach(s => addEditSubjectRow(s));
+            } else {
+                addEditSubjectRow();
+            }
+            
+            document.getElementById('editAddSubjectBtn').addEventListener('click', () => addEditSubjectRow());
+            document.getElementById('editModal').style.display = 'flex';
+        }
+
+        document.getElementById('updateTeacherBtn')?.addEventListener('click', async () => {
+            const name = document.getElementById('editTeacherName').value.trim();
+            const ic = document.getElementById('editTeacherIc').value.trim();
+            const subjectItems = document.querySelectorAll('#editSubjectsList .subject-item');
+            const subjects = [];
+            subjectItems.forEach(item => {
+                const subjectName = item.querySelector('.subject-name').value.trim();
+                if (subjectName) {
+                    subjects.push({
+                        subjectName: subjectName,
+                        fee: parseFloat(item.querySelector('.subject-fee').value) || 0,
+                        centerCut: parseFloat(item.querySelector('.subject-cut').value) || 0,
+                        extraFee: parseFloat(item.querySelector('.subject-extra').value) || 0
+                    });
+                }
+            });
+            
+            try {
+                await updateDoc(doc(db, 'teachers', currentEditId), { name, ic, subjects });
+                alert('Teacher updated successfully');
+                document.getElementById('editModal').style.display = 'none';
+                loadTeachers();
+            } catch (e) {
+                alert('Error: ' + e.message);
+            }
+        });
+
+        document.querySelectorAll('.close-modal').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.getElementById('editModal').style.display = 'none';
+            });
+        });
+        window.addEventListener('click', (e) => {
+            if (e.target === document.getElementById('editModal')) {
+                document.getElementById('editModal').style.display = 'none';
+            }
+        });
+
+        checkLogin();
+    </script>
+</body>
+</html>
