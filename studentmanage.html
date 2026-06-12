@@ -87,7 +87,7 @@
         }
         .card h3 { color: #1a5f7a; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px; }
         .form-row { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem; }
-        .form-group { flex: 1; min-width: 180px; }
+        .form-group { flex: 1; min-width: 160px; }
         label {
             display: block; font-size: 0.75rem; font-weight: 600;
             text-transform: uppercase; color: #6b8ba0; margin-bottom: 5px;
@@ -124,6 +124,7 @@
         .action-icons i { margin: 0 6px; cursor: pointer; font-size: 1rem; color: #6b8ba0; }
         .action-icons i:hover { color: #2c7da0; }
         .birthday-badge { background: #ffe8e0; padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; display: inline-block; }
+        .email-badge { background: #e8f4f8; padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; display: inline-block; margin-left: 5px; }
         
         .modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -131,7 +132,7 @@
         }
         .modal-content {
             background: white; border-radius: 28px; padding: 1.8rem;
-            max-width: 550px; width: 90%; max-height: 80vh; overflow-y: auto;
+            max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto;
         }
         .modal-header { display: flex; justify-content: space-between; margin-bottom: 1rem; }
         .close-modal { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #999; }
@@ -178,7 +179,7 @@
             <div class="search-section">
                 <div class="search-box">
                     <i class="fas fa-search" style="color:#8ba9c0;"></i>
-                    <input type="text" id="searchStudentInput" placeholder="Search by student name or subject...">
+                    <input type="text" id="searchStudentInput" placeholder="Search by student name, email or subject...">
                     <button id="searchBtn" class="secondary"><i class="fas fa-search"></i> Search</button>
                     <button id="resetSearchBtn" class="secondary"><i class="fas fa-undo"></i> Reset</button>
                 </div>
@@ -187,7 +188,10 @@
             <div class="card">
                 <h3><i class="fas fa-user-plus"></i> Register New Student</h3>
                 <div class="form-row">
-                    <div class="form-group"><label>Full Name</label><input type="text" id="studentName" placeholder="e.g., Ahmad Bin Abdullah"></div>
+                    <div class="form-group"><label>Full Name *</label><input type="text" id="studentName" placeholder="e.g., Ahmad Bin Abdullah"></div>
+                    <div class="form-group"><label>Email (Optional)</label><input type="email" id="studentEmail" placeholder="student@example.com"></div>
+                </div>
+                <div class="form-row">
                     <div class="form-group"><label>Birthday</label><input type="date" id="studentBirthday"></div>
                     <div class="form-group"><label>Gender</label>
                         <select id="studentGender"><option value="Male">Male</option><option value="Female">Female</option></select>
@@ -212,7 +216,16 @@
                 <h3><i class="fas fa-users"></i> Student Directory</h3>
                 <div class="table-wrapper">
                     <table id="studentsTable">
-                        <thead><tr><th>Name</th><th>Age</th><th>Gender</th><th>Enrolled Subjects</th><th>Actions</th></tr></thead>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Contact</th>
+                                <th>Age</th>
+                                <th>Gender</th>
+                                <th>Enrolled Subjects</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
                         <tbody id="studentsTableBody"></tbody>
                     </table>
                 </div>
@@ -223,7 +236,8 @@
     <div id="editModal" class="modal">
         <div class="modal-content">
             <div class="modal-header"><h3>Edit Student</h3><button class="close-modal">&times;</button></div>
-            <div class="form-group"><label>Name</label><input type="text" id="editStudentName"></div>
+            <div class="form-group"><label>Name *</label><input type="text" id="editStudentName"></div>
+            <div class="form-group"><label>Email</label><input type="email" id="editStudentEmail" placeholder="student@example.com"></div>
             <div class="form-group"><label>Birthday</label><input type="date" id="editStudentBirthday"></div>
             <div class="form-group"><label>Gender</label><select id="editStudentGender"><option>Male</option><option>Female</option></select></div>
             <div class="form-group"><label>Enrolled Subjects</label><div id="editSubjectsContainer"></div></div>
@@ -303,7 +317,6 @@
                 allPackages = [];
                 for (const pkgDoc of snap.docs) {
                     const pkg = { id: pkgDoc.id, ...pkgDoc.data() };
-                    // Get teacher name
                     if (pkg.teacherId && !teacherCache[pkg.teacherId]) {
                         try {
                             const teacherDoc = await getDoc(doc(db, 'teachers', pkg.teacherId));
@@ -407,14 +420,23 @@
         // Save student
         document.getElementById('saveStudentBtn')?.addEventListener('click', async () => {
             const name = document.getElementById('studentName').value.trim();
+            const email = document.getElementById('studentEmail').value.trim();
             const birthday = document.getElementById('studentBirthday').value;
             const gender = document.getElementById('studentGender').value;
+            
             if (!name) { alert('Please enter student name'); return; }
             if (currentSelectedSubjects.length === 0) { alert('Please select at least one subject'); return; }
+            
+            // Validate email format if provided
+            if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                alert('Please enter a valid email address');
+                return;
+            }
             
             try {
                 await addDoc(collection(db, 'students'), {
                     name,
+                    email: email || null,
                     birthday,
                     gender,
                     enrolledSubjects: currentSelectedSubjects,
@@ -423,6 +445,7 @@
                 });
                 alert('Student registered successfully');
                 document.getElementById('studentName').value = '';
+                document.getElementById('studentEmail').value = '';
                 document.getElementById('studentBirthday').value = '';
                 currentSelectedSubjects = [];
                 renderSelectedSubjects();
@@ -461,7 +484,7 @@
             tbody.innerHTML = '';
             
             if (students.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:2rem; color:#8ba9c0;">No students yet. Register a student above.用它</td>';
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:2rem; color:#8ba9c0;">No students yet. Register a student above.</td></tr>';
                 return;
             }
             
@@ -470,16 +493,26 @@
                 const subjectsHtml = (student.enrolledSubjects || []).map(s => 
                     `<span class="subject-tag" style="background:#e8f4f8;">${s.subjectName} (${s.teacherName})</span>`
                 ).join('');
+                
+                // Contact column with email
+                let contactHtml = '';
+                if (student.email) {
+                    contactHtml = `<span class="email-badge"><i class="fas fa-envelope"></i> ${student.email}</span>`;
+                } else {
+                    contactHtml = '<span style="color:#8ba9c0; font-size:0.75rem;">No email</span>';
+                }
+                
                 const row = tbody.insertRow();
                 row.innerHTML = `
                     <td><strong>${student.name || ''}</strong></td>
+                    <td>${contactHtml}</td>
                     <td>${age}${student.birthday ? `<br><span class="birthday-badge"><i class="fas fa-birthday-cake"></i> ${student.birthday}</span>` : ''}</td>
                     <td>${student.gender || '-'}</td>
                     <td>${subjectsHtml || '-'}</td>
                     <td class="action-icons">
                         <i class="fas fa-edit edit-student" data-id="${student.id}" title="Edit"></i>
                         <i class="fas fa-trash-alt delete-student" data-id="${student.id}" title="Delete"></i>
-                     </td>
+                    </td>
                 `;
             });
             
@@ -496,13 +529,14 @@
             });
         }
 
-        // Search functionality
+        // Search functionality (includes email search)
         document.getElementById('searchBtn')?.addEventListener('click', () => {
             const searchTerm = document.getElementById('searchStudentInput').value.toLowerCase();
             const filtered = allStudents.filter(student => {
                 const matchesName = student.name?.toLowerCase().includes(searchTerm);
+                const matchesEmail = student.email?.toLowerCase().includes(searchTerm);
                 const matchesSubject = (student.enrolledSubjects || []).some(s => s.subjectName.toLowerCase().includes(searchTerm));
-                return matchesName || matchesSubject;
+                return matchesName || matchesEmail || matchesSubject;
             });
             renderStudentTable(filtered);
         });
@@ -521,6 +555,7 @@
             if (!student) return;
             currentEditId = studentId;
             document.getElementById('editStudentName').value = student.name || '';
+            document.getElementById('editStudentEmail').value = student.email || '';
             document.getElementById('editStudentBirthday').value = student.birthday || '';
             document.getElementById('editStudentGender').value = student.gender || 'Male';
             
@@ -590,13 +625,24 @@
 
         document.getElementById('updateStudentBtn')?.addEventListener('click', async () => {
             const name = document.getElementById('editStudentName').value.trim();
+            const email = document.getElementById('editStudentEmail').value.trim();
             const birthday = document.getElementById('editStudentBirthday').value;
             const gender = document.getElementById('editStudentGender').value;
+            
             if (!name) { alert('Name required'); return; }
+            
+            // Validate email if provided
+            if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                alert('Please enter a valid email address');
+                return;
+            }
             
             try {
                 await updateDoc(doc(db, 'students', currentEditId), {
-                    name, birthday, gender,
+                    name, 
+                    email: email || null,
+                    birthday, 
+                    gender,
                     enrolledSubjects: editSelectedSubjects
                 });
                 alert('Student updated successfully');
