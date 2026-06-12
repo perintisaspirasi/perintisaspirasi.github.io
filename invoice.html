@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Invoice Management | Pusat Tuisyen Perintis Aspirasi</title>
+    <link rel="icon" type="image/png" href="icon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #f0f7fc; color: #1a2c3e; }
+        
+        /* Login Overlay */
+        .login-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, #1a5f7a 0%, #0d3b4f 100%);
+            display: flex; align-items: center; justify-content: center; z-index: 3000;
+        }
+        .login-card {
+            background: white; max-width: 420px; width: 90%; padding: 2.5rem;
+            border-radius: 32px; text-align: center;
+        }
+        .login-card img { width: 80px; margin-bottom: 1rem; }
+        .login-card input {
+            width: 100%; padding: 14px 18px; border: 2px solid #e0eef5;
+            border-radius: 48px; margin-bottom: 1.2rem; outline: none; font-size: 1rem;
+        }
+        .login-card input:focus { border-color: #2c7da0; }
+        .login-card button {
+            background: #2c7da0; color: white; border: none; padding: 12px 28px;
+            border-radius: 48px; font-weight: 600; cursor: pointer; width: 100%;
+        }
+        .login-error { color: #d9534f; margin-top: 0.8rem; }
+        
+        /* App Layout */
+        .app { display: none; min-height: 100vh; }
+        .sidebar {
+            position: fixed; left: 0; top: 0; width: 260px; height: 100%;
+            background: white; box-shadow: 2px 0 20px rgba(0,0,0,0.05);
+            z-index: 1000; transition: all 0.3s ease; display: flex; flex-direction: column;
+        }
+        .sidebar.collapsed { width: 80px; }
+        .sidebar.collapsed .sidebar-logo h2,
+        .sidebar.collapsed .nav-item span,
+        .sidebar.collapsed .sidebar-footer span { display: none; }
+        .sidebar.collapsed .nav-item { justify-content: center; }
+        .sidebar-toggle {
+            position: absolute; right: -12px; top: 20px; background: #2c7da0;
+            color: white; width: 24px; height: 24px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 0.7rem; z-index: 1001;
+        }
+        .sidebar-logo {
+            padding: 1.5rem; display: flex; align-items: center; gap: 12px;
+            border-bottom: 1px solid #e4edf2;
+        }
+        .sidebar-logo img { width: 40px; height: 40px; border-radius: 10px; }
+        .sidebar-logo h2 { font-size: 1rem; font-weight: 600; color: #1a5f7a; }
+        .nav-menu { flex: 1; padding: 1.5rem 1rem; }
+        .nav-item {
+            display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+            margin-bottom: 8px; border-radius: 12px; color: #4a6f8a;
+            cursor: pointer; transition: 0.2s; text-decoration: none;
+        }
+        .nav-item:hover { background: #e8f4f8; color: #2c7da0; }
+        .nav-item.active { background: #2c7da0; color: white; }
+        .sidebar-footer { padding: 1rem; border-top: 1px solid #e4edf2; }
+        
+        /* Main Content */
+        .main-content {
+            margin-left: 260px; transition: all 0.3s ease; padding: 1.5rem 2rem;
+        }
+        .main-content.expanded { margin-left: 80px; }
+        
+        /* Search Section - Enhanced UI */
+        .search-section {
+            background: white; border-radius: 24px; padding: 1.5rem;
+            margin-bottom: 1.5rem; border: 1px solid #e4edf2;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        }
+        .search-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #1a5f7a;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .search-box {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: flex-end;
+        }
+        .search-group {
+            flex: 2;
+            min-width: 200px;
+        }
+        .filter-group {
+            flex: 1;
+            min-width: 150px;
+        }
+        .button-group {
+            display: flex;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+        }
+        .search-section label {
+            display: block;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #6b8ba0;
+            margin-bottom: 5px;
+            letter-spacing: 0.5px;
+        }
+        .search-section input,
+        .search-section select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0eef5;
+            border-radius: 48px;
+            outline: none;
+            font-size: 0.9rem;
+            background: white;
+            transition: all 0.2s;
+        }
+        .search-section input:focus,
+        .search-section select:focus {
+            border-color: #2c7da0;
+            box-shadow: 0 0 0 3px rgba(44,125,160,0.1);
+        }
+        .search-btn {
+            background: #2c7da0;
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 48px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+        }
+        .search-btn:hover {
+            background: #1a5f7a;
+            transform: translateY(-1px);
+        }
+        .reset-btn {
+            background: #e8f4f8;
+            color: #2c7da0;
+            border: 2px solid #cde5ef;
+            padding: 12px 28px;
+            border-radius: 48px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+        }
+        .reset-btn:hover {
+            background: #d4eaf2;
+            transform: translateY(-1px);
+        }
+        
+        /* Cards */
+        .card {
+            background: white; border-radius: 24px; padding: 1.5rem;
+            margin-bottom: 1.5rem; border: 1px solid #e4edf2;
+        }
+        .card h3 { color: #1a5f7a; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px; }
+        
+        /* Invoice Grid */
+        .invoice-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 1.2rem;
+            margin-bottom: 1.5rem;
+        }
+        .invoice-card {
+            background: white;
+            border: 2px solid #e4edf2;
+            border-radius: 20px;
+            padding: 1.2rem;
+            transition: all 0.2s;
+            cursor: pointer;
+            position: relative;
+        }
+        .invoice-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.08);
+        }
+        .invoice-card.selected {
+            border-color: #2c7da0;
+            background: #f0f9ff;
+        }
+        .invoice-card.paid {
+            border-left: 5px solid #2cae6c;
+        }
+        .invoice-card.unpaid {
+            border-left: 5px solid #e67e22;
+        }
+        .invoice-checkbox {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #2c7da0;
+        }
+        .invoice-number {
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-bottom: 12px;
+            letter-spacing: 0.5px;
+        }
+        .invoice-number.paid {
+            background: #2cae6c20;
+            color: #2cae6c;
+        }
+        .invoice-number.unpaid {
+            background: #e67e2220;
+            color: #e67e22;
+        }
+        .invoice-student {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #1a5f7a;
+            margin-bottom: 8px;
+        }
+        .invoice-details {
+            font-size: 0.8rem;
+            color: #6b8ba0;
+            margin-bottom: 8px;
+        }
+        .invoice-amount {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #1a5f7a;
+            margin-top: 8px;
+        }
+        .package-tag {
+            background: #e8f4f8;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            display: inline-block;
+            margin: 2px;
+        }
+        
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .page-btn {
+            background: white;
+            color: #2c7da0;
+            border: 1px solid #cde5ef;
+            padding: 8px 14px;
+            border-radius: 30px;
+            min-width: 40px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-weight: 500;
+        }
+        .page-btn:hover {
+            background: #e8f4f8;
+            transform: translateY(-1px);
+        }
+        .page-btn.active-page {
+            background: #2c7da0;
+            color: white;
+            border-color: #2c7da0;
+        }
+        
+        /* Bulk Pay Button */
+        .bulk-pay-section {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 1.2rem;
+        }
+        .pay-bulk-btn {
+            background: #2cae6c;
+            padding: 12px 28px;
+            font-size: 0.9rem;
+            border-radius: 48px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .pay-bulk-btn:hover {
+            background: #229954;
+            transform: translateY(-1px);
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 3rem;
+            color: #8ba9c0;
+        }
+        
+        .stats-badge {
+            background: #e8f4f8;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            margin-left: 12px;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar { width: 80px; }
+            .main-content { margin-left: 80px; padding: 1rem; }
+            .invoice-grid { grid-template-columns: 1fr; }
+            .search-box { flex-direction: column; }
+            .search-group, .filter-group { width: 100%; }
+            .button-group { width: 100%; justify-content: stretch; }
+            .search-btn, .reset-btn { flex: 1; justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-overlay" id="loginOverlay">
+        <div class="login-card">
+            <img src="icon.png" alt="Logo">
+            <h3>Invoice Management</h3>
+            <input type="password" id="loginPassword" placeholder="Enter Password">
+            <button id="loginBtn">Access Portal</button>
+            <div class="login-error" id="loginError"></div>
+        </div>
+    </div>
+
+    <div class="app" id="mainApp">
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-toggle" id="sidebarToggle"><i class="fas fa-chevron-left"></i></div>
+            <div class="sidebar-logo"><img src="icon.png" alt="Logo"><h2>Perintis Aspirasi</h2></div>
+            <div class="nav-menu">
+                <a href="index.html" class="nav-item"><i class="fas fa-home"></i><span>Home</span></a>
+                <a href="teachermanage.html" class="nav-item"><i class="fas fa-chalkboard-user"></i><span>Teacher Manage</span></a>
+                <a href="studentmanage.html" class="nav-item"><i class="fas fa-user-graduate"></i><span>Student Manage</span></a>
+                <a href="package.html" class="nav-item"><i class="fas fa-calendar-alt"></i><span>Package Manage</span></a>
+                <a href="invoice.html" class="nav-item active"><i class="fas fa-file-invoice"></i><span>Invoice</span></a>
+            </div>
+            <div class="sidebar-footer"><div class="nav-item" id="logoutBtn"><i class="fas fa-sign-out-alt"></i><span>Log Out</span></div></div>
+        </div>
+
+        <div class="main-content" id="mainContent">
+            <!-- Enhanced Search Section -->
+            <div class="search-section">
+                <div class="search-title">
+                    <i class="fas fa-filter"></i> Filter Invoices
+                </div>
+                <div class="search-box">
+                    <div class="search-group">
+                        <label><i class="fas fa-search"></i> Search</label>
+                        <input type="text" id="searchInvoiceInput" placeholder="Student name or subject...">
+                    </div>
+                    <div class="filter-group">
+                        <label><i class="fas fa-flag"></i> Payment Status</label>
+                        <select id="statusFilter">
+                            <option value="all">All Status</option>
+                            <option value="unpaid">Unpaid Only</option>
+                            <option value="paid">Paid Only</option>
+                        </select>
+                    </div>
+                    <div class="button-group">
+                        <button id="searchBtn" class="search-btn"><i class="fas fa-search"></i> Search</button>
+                        <button id="resetSearchBtn" class="reset-btn"><i class="fas fa-undo-alt"></i> Reset</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Invoices -->
+            <div class="card">
+                <h3>
+                    <i class="fas fa-file-invoice-dollar"></i> 
+                    All Invoices
+                    <span class="stats-badge" id="invoiceStats">Loading...</span>
+                </h3>
+                <div class="bulk-pay-section" id="bulkPaySection" style="display: none;">
+                    <button id="bulkPayBtn" class="pay-bulk-btn"><i class="fas fa-credit-card"></i> Pay Selected (<span id="selectedCount">0</span>)</button>
+                </div>
+                <div id="invoiceGrid" class="invoice-grid">
+                    <div class="no-results"><i class="fas fa-spinner fa-spin"></i> Loading invoices...</div>
+                </div>
+                <div class="pagination" id="pagination"></div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, updateDoc, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCkfEdLDlHW7DvGxLpbDY7Us2nb3j7oTjQ",
+            authDomain: "perintisaspirasi.firebaseapp.com",
+            projectId: "perintisaspirasi",
+            storageBucket: "perintisaspirasi.firebasestorage.app",
+            messagingSenderId: "293094185092",
+            appId: "1:293094185092:web:ac2b5712db54480c3ccad1",
+            measurementId: "G-9ZSWKEZJVT"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Auth
+        const loginOverlay = document.getElementById('loginOverlay');
+        const mainApp = document.getElementById('mainApp');
+        const loginPassword = document.getElementById('loginPassword');
+        const loginBtn = document.getElementById('loginBtn');
+        const loginError = document.getElementById('loginError');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('mainContent');
+
+        function checkLogin() {
+            if (sessionStorage.getItem('tutor_auth') === '0919') {
+                loginOverlay.style.display = 'none';
+                mainApp.style.display = 'block';
+                loadAllInvoices();
+            } else {
+                loginOverlay.style.display = 'flex';
+                mainApp.style.display = 'none';
+            }
+        }
+
+        loginBtn.addEventListener('click', () => {
+            if (loginPassword.value === '0919') {
+                sessionStorage.setItem('tutor_auth', '0919');
+                checkLogin();
+            } else {
+                loginError.innerText = 'Incorrect password';
+            }
+        });
+
+        logoutBtn?.addEventListener('click', () => {
+            sessionStorage.removeItem('tutor_auth');
+            checkLogin();
+        });
+
+        let isCollapsed = false;
+        sidebarToggle.addEventListener('click', () => {
+            isCollapsed = !isCollapsed;
+            sidebar.classList.toggle('collapsed', isCollapsed);
+            mainContent.classList.toggle('expanded', isCollapsed);
+            sidebarToggle.innerHTML = isCollapsed ? '<i class="fas fa-chevron-right"></i>' : '<i class="fas fa-chevron-left"></i>';
+        });
+
+        // Data stores
+        let allInvoices = [];
+        let studentsCache = new Map();
+        
+        async function loadStudentsAndPackages() {
+            try {
+                const studentsSnap = await getDocs(collection(db, 'students'));
+                studentsSnap.forEach(doc => {
+                    studentsCache.set(doc.id, doc.data().name);
+                });
+            } catch (e) {
+                console.warn("Error loading students:", e);
+            }
+        }
+        
+        async function generateMonthlyInvoices() {
+            try {
+                const studentsSnap = await getDocs(collection(db, 'students'));
+                const now = new Date();
+                const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+                
+                for (const studentDoc of studentsSnap.docs) {
+                    const student = studentDoc.data();
+                    const enrolledSubjects = student.enrolledSubjects || [];
+                    
+                    // Get registration month or use current
+                    let regMonth = student.regMonth;
+                    if (!regMonth) {
+                        if (student.createdAt?.toDate) {
+                            regMonth = student.createdAt.toDate().toISOString().slice(0, 7);
+                        } else {
+                            regMonth = currentMonth;
+                        }
+                    }
+                    
+                    const [regYear, regMon] = regMonth.split('-').map(Number);
+                    if (isNaN(regYear)) continue;
+                    
+                    const regDate = new Date(regYear, regMon - 1, 1);
+                    let iterDate = new Date(regDate);
+                    
+                    while (iterDate <= now) {
+                        const monthKey = `${iterDate.getFullYear()}-${String(iterDate.getMonth() + 1).padStart(2, '0')}`;
+                        const invoiceId = `${studentDoc.id}_${monthKey}`;
+                        const invoiceRef = doc(db, 'invoices', invoiceId);
+                        const existing = await getDoc(invoiceRef);
+                        
+                        if (!existing.exists()) {
+                            let totalAmount = 0;
+                            for (const sub of enrolledSubjects) {
+                                totalAmount += sub.fee || 0;
+                            }
+                            
+                            await setDoc(invoiceRef, {
+                                studentId: studentDoc.id,
+                                monthKey: monthKey,
+                                totalAmount: totalAmount,
+                                paid: false,
+                                subjects: enrolledSubjects,
+                                createdAt: new Date()
+                            });
+                        }
+                        iterDate.setMonth(iterDate.getMonth() + 1);
+                    }
+                }
+            } catch (e) {
+                console.warn("Error generating invoices:", e);
+            }
+        }
+        
+        async function loadAllInvoices() {
+            try {
+                await loadStudentsAndPackages();
+                await generateMonthlyInvoices();
+                
+                const invoicesSnap = await getDocs(collection(db, 'invoices'));
+                allInvoices = [];
+                for (const invDoc of invoicesSnap.docs) {
+                    const inv = { id: invDoc.id, ...invDoc.data() };
+                    inv.studentName = studentsCache.get(inv.studentId) || 'Unknown';
+                    allInvoices.push(inv);
+                }
+                
+                allInvoices.sort((a, b) => (b.monthKey || '').localeCompare(a.monthKey || ''));
+                
+                // Update stats
+                const unpaidCount = allInvoices.filter(i => !i.paid).length;
+                const paidCount = allInvoices.filter(i => i.paid).length;
+                document.getElementById('invoiceStats').innerHTML = `${paidCount} Paid / ${unpaidCount} Unpaid`;
+                
+                applyFiltersAndRender();
+            } catch (e) {
+                console.warn("Error loading invoices:", e);
+                document.getElementById('invoiceGrid').innerHTML = '<div class="no-results">Error loading invoices. Please check Firebase permissions.</div>';
+            }
+        }
+        
+        // Search and filter state
+        let currentFilters = { search: '', status: 'all' };
+        let currentPage = 1;
+        let rowsPerPage = 10;
+        let selectedInvoices = new Set();
+        
+        function applyFiltersAndRender() {
+            let filtered = [...allInvoices];
+            
+            if (currentFilters.search) {
+                const searchLower = currentFilters.search.toLowerCase();
+                filtered = filtered.filter(inv => 
+                    inv.studentName?.toLowerCase().includes(searchLower) ||
+                    (inv.subjects || []).some(s => s.subjectName?.toLowerCase().includes(searchLower))
+                );
+            }
+            
+            if (currentFilters.status === 'paid') {
+                filtered = filtered.filter(inv => inv.paid === true);
+            } else if (currentFilters.status === 'unpaid') {
+                filtered = filtered.filter(inv => inv.paid !== true);
+            }
+            
+            const totalPages = Math.ceil(filtered.length / rowsPerPage);
+            const start = (currentPage - 1) * rowsPerPage;
+            const paginated = filtered.slice(start, start + rowsPerPage);
+            
+            renderInvoiceGrid(paginated);
+            renderPagination(totalPages);
+            
+            const unpaidInView = filtered.filter(inv => !inv.paid).length;
+            const bulkSection = document.getElementById('bulkPaySection');
+            bulkSection.style.display = unpaidInView > 0 ? 'flex' : 'none';
+        }
+        
+        function renderInvoiceGrid(invoices) {
+            const grid = document.getElementById('invoiceGrid');
+            if (invoices.length === 0) {
+                grid.innerHTML = '<div class="no-results"><i class="fas fa-inbox"></i> No invoices found</div>';
+                return;
+            }
+            
+            grid.innerHTML = '';
+            invoices.forEach(inv => {
+                const isPaid = inv.paid === true;
+                const isSelected = selectedInvoices.has(inv.id);
+                const invNumber = `INV-${inv.monthKey?.replace('-', '')}-${inv.studentId?.slice(-4)}`;
+                
+                const subjects = inv.subjects || [];
+                const packagesHtml = subjects.map(s => 
+                    `<span class="package-tag">${s.subjectName} (RM${s.fee})</span>`
+                ).join('');
+                
+                const card = document.createElement('div');
+                card.className = `invoice-card ${isPaid ? 'paid' : 'unpaid'} ${isSelected ? 'selected' : ''}`;
+                card.innerHTML = `
+                    <input type="checkbox" class="invoice-checkbox" data-id="${inv.id}" ${isPaid ? 'disabled' : ''} ${isSelected ? 'checked' : ''}>
+                    <div class="invoice-number ${isPaid ? 'paid' : 'unpaid'}">
+                        <i class="fas ${isPaid ? 'fa-check-circle' : 'fa-clock'}"></i> ${invNumber}
+                    </div>
+                    <div class="invoice-student">
+                        <i class="fas fa-user-graduate"></i> ${inv.studentName}
+                    </div>
+                    <div class="invoice-details">
+                        <i class="fas fa-calendar-alt"></i> ${inv.monthKey || 'N/A'}
+                    </div>
+                    <div class="invoice-details">
+                        ${packagesHtml || '<span class="package-tag">No subjects</span>'}
+                    </div>
+                    <div class="invoice-amount">
+                        RM ${(inv.totalAmount || 0).toFixed(2)}
+                    </div>
+                    <div style="margin-top: 10px; font-size:0.7rem; color:#8ba9c0;">
+                        ${isPaid ? '<i class="fas fa-check-circle"></i> Paid' : '<i class="fas fa-hourglass-half"></i> Pending'}
+                    </div>
+                `;
+                
+                const checkbox = card.querySelector('.invoice-checkbox');
+                if (checkbox && !isPaid) {
+                    checkbox.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        if (checkbox.checked) {
+                            selectedInvoices.add(inv.id);
+                        } else {
+                            selectedInvoices.delete(inv.id);
+                        }
+                        document.getElementById('selectedCount').innerText = selectedInvoices.size;
+                        renderInvoiceGrid(invoices);
+                    });
+                }
+                
+                if (!isPaid) {
+                    card.style.cursor = 'pointer';
+                    card.addEventListener('click', (e) => {
+                        if (e.target.type !== 'checkbox') {
+                            sessionStorage.setItem('selectedInvoices', JSON.stringify([inv.id]));
+                            window.location.href = 'payment.html';
+                        }
+                    });
+                }
+                
+                grid.appendChild(card);
+            });
+            
+            document.getElementById('selectedCount').innerText = selectedInvoices.size;
+        }
+        
+        function renderPagination(totalPages) {
+            const container = document.getElementById('pagination');
+            if (totalPages <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+            
+            let html = '';
+            for (let i = 1; i <= totalPages; i++) {
+                html += `<button class="page-btn ${i === currentPage ? 'active-page' : ''}" data-page="${i}">${i}</button>`;
+            }
+            container.innerHTML = html;
+            
+            document.querySelectorAll('.page-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    currentPage = parseInt(btn.dataset.page);
+                    applyFiltersAndRender();
+                });
+            });
+        }
+        
+        // Event handlers
+        document.getElementById('searchBtn')?.addEventListener('click', () => {
+            currentFilters.search = document.getElementById('searchInvoiceInput').value;
+            currentFilters.status = document.getElementById('statusFilter').value;
+            currentPage = 1;
+            selectedInvoices.clear();
+            applyFiltersAndRender();
+        });
+        
+        document.getElementById('resetSearchBtn')?.addEventListener('click', () => {
+            document.getElementById('searchInvoiceInput').value = '';
+            document.getElementById('statusFilter').value = 'all';
+            currentFilters = { search: '', status: 'all' };
+            currentPage = 1;
+            selectedInvoices.clear();
+            applyFiltersAndRender();
+        });
+        
+        document.getElementById('bulkPayBtn')?.addEventListener('click', () => {
+            const selectedIds = Array.from(selectedInvoices);
+            if (selectedIds.length === 0) {
+                alert('Please select at least one invoice to pay');
+                return;
+            }
+            sessionStorage.setItem('selectedInvoices', JSON.stringify(selectedIds));
+            window.location.href = 'payment.html';
+        });
+        
+        document.getElementById('searchInvoiceInput')?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('searchBtn').click();
+            }
+        });
+        
+        checkLogin();
+    </script>
+</body>
+</html>
