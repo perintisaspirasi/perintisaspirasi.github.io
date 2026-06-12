@@ -11,7 +11,6 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Inter', sans-serif; background: #f0f7fc; color: #1a2c3e; }
         
-        /* Login Overlay */
         .login-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: linear-gradient(135deg, #1a5f7a 0%, #0d3b4f 100%);
@@ -33,7 +32,6 @@
         }
         .login-error { color: #d9534f; margin-top: 0.8rem; }
         
-        /* App Layout */
         .app { display: none; min-height: 100vh; }
         .sidebar {
             position: fixed; left: 0; top: 0; width: 260px; height: 100%;
@@ -67,13 +65,11 @@
         .nav-item.active { background: #2c7da0; color: white; }
         .sidebar-footer { padding: 1rem; border-top: 1px solid #e4edf2; }
         
-        /* Main Content */
         .main-content {
             margin-left: 260px; transition: all 0.3s ease; padding: 1.5rem 2rem;
         }
         .main-content.expanded { margin-left: 80px; }
         
-        /* Search Section */
         .search-section {
             background: white; border-radius: 24px; padding: 1.5rem;
             margin-bottom: 1.5rem; border: 1px solid #e4edf2;
@@ -85,7 +81,6 @@
         }
         .search-box input:focus { border-color: #2c7da0; }
         
-        /* Cards */
         .card {
             background: white; border-radius: 24px; padding: 1.5rem;
             margin-bottom: 1.5rem; border: 1px solid #e4edf2;
@@ -98,19 +93,19 @@
             text-transform: uppercase; color: #6b8ba0; margin-bottom: 5px;
         }
         input, select {
-            width: 100%; padding: 10px 14px; border: 2px solid #e0eef5;
+            width: 100%; padding: 12px 16px; border: 2px solid #e0eef5;
             border-radius: 30px; font-family: inherit; font-size: 0.9rem; outline: none;
+            background: white;
+            transition: all 0.2s;
         }
-        input:focus, select:focus { border-color: #2c7da0; }
+        input:focus, select:focus { border-color: #2c7da0; box-shadow: 0 0 0 3px rgba(44,125,160,0.1); }
         button {
-            background: #2c7da0; color: white; border: none; padding: 10px 24px;
+            background: #2c7da0; color: white; border: none; padding: 12px 24px;
             border-radius: 40px; font-weight: 600; cursor: pointer; transition: 0.2s;
         }
         button:hover { background: #1a5f7a; transform: translateY(-1px); }
         button.secondary { background: #e8f4f8; color: #2c7da0; border: 1px solid #cde5ef; }
-        button.danger { background: #fee; color: #c33; }
         
-        /* Package Table */
         .table-wrapper { overflow-x: auto; border-radius: 16px; }
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 14px 10px; text-align: left; border-bottom: 1px solid #eef3f7; }
@@ -122,7 +117,6 @@
             font-size: 0.8rem; font-weight: 500; display: inline-block;
         }
         
-        /* Modal */
         .modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center;
@@ -133,6 +127,12 @@
         }
         .modal-header { display: flex; justify-content: space-between; margin-bottom: 1rem; }
         .close-modal { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #999; }
+        
+        .subject-hint {
+            font-size: 0.7rem;
+            color: #8ba9c0;
+            margin-top: 5px;
+        }
         
         @media (max-width: 768px) {
             .sidebar { width: 80px; }
@@ -167,18 +167,16 @@
         </div>
 
         <div class="main-content" id="mainContent">
-            <!-- Search Section -->
             <div class="search-section">
                 <div class="search-box">
                     <i class="fas fa-search" style="color:#8ba9c0;"></i>
-                    <input type="text" id="searchPackageInput" placeholder="Search by subject name, teacher, or day...">
-                    <button id="searchBtn" class="secondary">Search</button>
-                    <button id="resetSearchBtn" class="secondary">Reset</button>
-                    <button id="createNewBtn" style="margin-left: auto;"><i class="fas fa-plus"></i> Create New</button>
+                    <input type="text" id="searchPackageInput" placeholder="Search by subject, teacher, or day...">
+                    <button id="searchBtn" class="secondary"><i class="fas fa-search"></i> Search</button>
+                    <button id="resetSearchBtn" class="secondary"><i class="fas fa-undo"></i> Reset</button>
+                    <button id="createNewBtn"><i class="fas fa-plus"></i> Create New</button>
                 </div>
             </div>
 
-            <!-- Package List -->
             <div class="card">
                 <h3><i class="fas fa-calendar-week"></i> Class Schedule Packages</h3>
                 <div class="table-wrapper">
@@ -201,7 +199,7 @@
                 <button class="close-modal">&times;</button>
             </div>
             <div class="form-group">
-                <label>Day of Week</label>
+                <label><i class="fas fa-calendar-day"></i> Day of Week</label>
                 <select id="packageDay">
                     <option value="Monday">Monday</option>
                     <option value="Tuesday">Tuesday</option>
@@ -213,20 +211,26 @@
                 </select>
             </div>
             <div class="form-group">
-                <label>Time</label>
-                <input type="time" id="packageTime" step="60">
+                <label><i class="fas fa-clock"></i> Time</label>
+                <input type="time" id="packageTime" step="60" placeholder="e.g., 14:30">
             </div>
             <div class="form-group">
-                <label>Subject Name</label>
-                <input type="text" id="packageSubject" placeholder="e.g., Mathematics, English, Science">
+                <label><i class="fas fa-chalkboard-user"></i> Teacher</label>
+                <select id="packageTeacher">
+                    <option value="">-- Select Teacher First --</option>
+                </select>
             </div>
             <div class="form-group">
-                <label>Teacher</label>
-                <select id="packageTeacher"></select>
+                <label><i class="fas fa-book"></i> Subject (from selected teacher)</label>
+                <select id="packageSubject">
+                    <option value="">-- Select Teacher First --</option>
+                </select>
+                <div class="subject-hint"><i class="fas fa-info-circle"></i> Subjects are based on what the teacher teaches</div>
             </div>
             <div class="form-group">
-                <label>Monthly Fee (RM)</label>
-                <input type="number" id="packageFee" placeholder="0" step="0.01" value="0">
+                <label><i class="fas fa-dollar-sign"></i> Monthly Fee (RM)</label>
+                <input type="number" id="packageFee" placeholder="Auto from subject" step="0.01" value="0">
+                <div class="subject-hint"><i class="fas fa-magic"></i> Auto-filled from subject's default fee</div>
             </div>
             <button id="savePackageBtn" style="margin-top: 1rem; width: 100%;">Save Package</button>
         </div>
@@ -296,18 +300,26 @@
         // Data stores
         let allPackages = [];
         let allTeachers = [];
-        let teacherMap = new Map(); // id -> teacher name
+        let teacherSubjectsMap = new Map(); // teacherId -> array of subjects
+        let teacherMap = new Map(); // teacherId -> teacher name
 
         async function loadTeachers() {
             try {
                 const snap = await getDocs(collection(db, 'teachers'));
                 allTeachers = [];
                 teacherMap.clear();
+                teacherSubjectsMap.clear();
+                
                 snap.forEach(doc => {
                     const teacher = { id: doc.id, ...doc.data() };
                     allTeachers.push(teacher);
                     teacherMap.set(teacher.id, teacher.name);
+                    
+                    // Store subjects for this teacher
+                    const subjects = teacher.subjects || [];
+                    teacherSubjectsMap.set(teacher.id, subjects);
                 });
+                
                 updateTeacherSelect();
             } catch (e) {
                 console.warn("Error loading teachers:", e);
@@ -319,9 +331,64 @@
             if (!select) return;
             select.innerHTML = '<option value="">-- Select Teacher --</option>';
             allTeachers.forEach(teacher => {
-                select.innerHTML += `<option value="${teacher.id}">${teacher.name}</option>`;
+                const subjectCount = (teacher.subjects || []).length;
+                select.innerHTML += `<option value="${teacher.id}" data-subjects='${JSON.stringify(teacher.subjects || [])}'>${teacher.name} (${subjectCount} subjects)</option>`;
             });
         }
+
+        // Update subject dropdown based on selected teacher
+        function updateSubjectDropdown(teacherId) {
+            const subjectSelect = document.getElementById('packageSubject');
+            const feeInput = document.getElementById('packageFee');
+            
+            if (!teacherId) {
+                subjectSelect.innerHTML = '<option value="">-- Select Teacher First --</option>';
+                feeInput.value = '0';
+                feeInput.readOnly = false;
+                return;
+            }
+            
+            const subjects = teacherSubjectsMap.get(teacherId) || [];
+            
+            if (subjects.length === 0) {
+                subjectSelect.innerHTML = '<option value="">-- No subjects for this teacher --</option>';
+                subjectSelect.innerHTML += '<option value="__manual__">+ Manually enter subject</option>';
+                feeInput.value = '0';
+                feeInput.readOnly = false;
+            } else {
+                subjectSelect.innerHTML = '<option value="">-- Select Subject --</option>';
+                subjects.forEach(sub => {
+                    subjectSelect.innerHTML += `<option value="${sub.subjectName}" data-fee="${sub.fee || 0}">${sub.subjectName} (RM${sub.fee || 0})</option>`;
+                });
+                subjectSelect.innerHTML += '<option value="__manual__">+ Manually enter subject</option>';
+                feeInput.readOnly = true;
+                feeInput.value = subjects[0]?.fee || '0';
+            }
+            
+            // Add event listener for subject selection
+            subjectSelect.onchange = () => {
+                const selectedOption = subjectSelect.options[subjectSelect.selectedIndex];
+                if (selectedOption.value && selectedOption.value !== '__manual__') {
+                    const fee = selectedOption.dataset.fee || 0;
+                    feeInput.value = fee;
+                    feeInput.readOnly = true;
+                } else if (selectedOption.value === '__manual__') {
+                    feeInput.value = '';
+                    feeInput.readOnly = false;
+                    feeInput.placeholder = 'Enter custom fee';
+                    subjectSelect.value = '';
+                } else {
+                    feeInput.value = '0';
+                    feeInput.readOnly = false;
+                }
+            };
+        }
+
+        // Teacher selection change handler
+        document.getElementById('packageTeacher')?.addEventListener('change', (e) => {
+            const teacherId = e.target.value;
+            updateSubjectDropdown(teacherId);
+        });
 
         async function loadPackages() {
             try {
@@ -339,6 +406,12 @@
         function renderPackageTable(packages) {
             const tbody = document.getElementById('packagesTableBody');
             tbody.innerHTML = '';
+            
+            if (packages.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:2rem; color:#8ba9c0;"><i class="fas fa-calendar-plus"></i> No packages yet. Click "Create New" to add classes.</td></tr>';
+                return;
+            }
+            
             packages.forEach(pkg => {
                 const teacherName = teacherMap.get(pkg.teacherId) || pkg.teacherId || '-';
                 const row = tbody.insertRow();
@@ -349,8 +422,8 @@
                     <td>${teacherName}</td>
                     <td>RM ${(pkg.fee || 0).toFixed(2)}</td>
                     <td class="action-icons">
-                        <i class="fas fa-edit edit-package" data-id="${pkg.id}"></i>
-                        <i class="fas fa-trash-alt delete-package" data-id="${pkg.id}"></i>
+                        <i class="fas fa-edit edit-package" data-id="${pkg.id}" title="Edit"></i>
+                        <i class="fas fa-trash-alt delete-package" data-id="${pkg.id}" title="Delete"></i>
                     </td>
                 `;
             });
@@ -360,9 +433,10 @@
             });
             document.querySelectorAll('.delete-package').forEach(btn => {
                 btn.addEventListener('click', async () => {
-                    if (confirm('Delete this package? Students enrolled in this subject will lose this class.')) {
+                    if (confirm('Delete this package? This will remove this class from schedule and student enrollments.')) {
                         await deleteDoc(doc(db, 'packages', btn.dataset.id));
                         loadPackages();
+                        // Also update index.html schedule when navigating back
                     }
                 });
             });
@@ -390,9 +464,10 @@
             document.getElementById('modalTitle').innerText = 'Create New Package';
             document.getElementById('packageDay').value = 'Monday';
             document.getElementById('packageTime').value = '';
-            document.getElementById('packageSubject').value = '';
             document.getElementById('packageTeacher').value = '';
+            document.getElementById('packageSubject').innerHTML = '<option value="">-- Select Teacher First --</option>';
             document.getElementById('packageFee').value = '0';
+            document.getElementById('packageFee').readOnly = false;
             currentEditId = null;
             document.getElementById('packageModal').style.display = 'flex';
         });
@@ -402,13 +477,22 @@
         document.getElementById('savePackageBtn')?.addEventListener('click', async () => {
             const dayOfWeek = document.getElementById('packageDay').value;
             const time = document.getElementById('packageTime').value;
-            const subjectName = document.getElementById('packageSubject').value.trim();
             const teacherId = document.getElementById('packageTeacher').value;
-            const fee = parseFloat(document.getElementById('packageFee').value) || 0;
+            let subjectName = document.getElementById('packageSubject').value;
+            let fee = parseFloat(document.getElementById('packageFee').value) || 0;
             
-            if (!subjectName) { alert('Please enter subject name'); return; }
             if (!teacherId) { alert('Please select a teacher'); return; }
             if (!time) { alert('Please select time'); return; }
+            
+            // Handle manual subject entry
+            if (subjectName === '__manual__') {
+                subjectName = prompt('Enter subject name:');
+                if (!subjectName) { alert('Subject name required'); return; }
+                const manualFee = prompt('Enter monthly fee for this subject (RM):', '0');
+                fee = parseFloat(manualFee) || 0;
+            }
+            
+            if (!subjectName || subjectName === '') { alert('Please select or enter a subject'); return; }
             
             const packageData = { dayOfWeek, time, subjectName, teacherId, fee };
             
@@ -434,9 +518,39 @@
             document.getElementById('modalTitle').innerText = 'Edit Package';
             document.getElementById('packageDay').value = pkg.dayOfWeek || 'Monday';
             document.getElementById('packageTime').value = pkg.time || '';
-            document.getElementById('packageSubject').value = pkg.subjectName || '';
             document.getElementById('packageTeacher').value = pkg.teacherId || '';
             document.getElementById('packageFee').value = pkg.fee || 0;
+            
+            // Update subject dropdown based on teacher
+            updateSubjectDropdown(pkg.teacherId);
+            
+            // Set the subject value
+            setTimeout(() => {
+                const subjectSelect = document.getElementById('packageSubject');
+                for (let i = 0; i < subjectSelect.options.length; i++) {
+                    if (subjectSelect.options[i].value === pkg.subjectName) {
+                        subjectSelect.selectedIndex = i;
+                        break;
+                    }
+                }
+                // If subject not found in dropdown, add it as an option
+                let found = false;
+                for (let i = 0; i < subjectSelect.options.length; i++) {
+                    if (subjectSelect.options[i].value === pkg.subjectName) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found && pkg.subjectName) {
+                    const option = document.createElement('option');
+                    option.value = pkg.subjectName;
+                    option.text = `${pkg.subjectName} (Custom)`;
+                    option.dataset.fee = pkg.fee;
+                    subjectSelect.appendChild(option);
+                    subjectSelect.value = pkg.subjectName;
+                }
+            }, 100);
+            
             document.getElementById('packageModal').style.display = 'flex';
         }
 
