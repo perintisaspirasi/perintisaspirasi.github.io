@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Package Management | Pusat Tuisyen Perintis Aspirasi</title>
+    <link rel="icon" type="image/png" href="icon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #f0f7fc; color: #1a2c3e; }
+        
+        /* Login Overlay */
+        .login-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, #1a5f7a 0%, #0d3b4f 100%);
+            display: flex; align-items: center; justify-content: center; z-index: 3000;
+        }
+        .login-card {
+            background: white; max-width: 420px; width: 90%; padding: 2.5rem;
+            border-radius: 32px; text-align: center;
+        }
+        .login-card img { width: 80px; margin-bottom: 1rem; }
+        .login-card input {
+            width: 100%; padding: 14px 18px; border: 2px solid #e0eef5;
+            border-radius: 48px; margin-bottom: 1.2rem; outline: none; font-size: 1rem;
+        }
+        .login-card input:focus { border-color: #2c7da0; }
+        .login-card button {
+            background: #2c7da0; color: white; border: none; padding: 12px 28px;
+            border-radius: 48px; font-weight: 600; cursor: pointer; width: 100%;
+        }
+        .login-error { color: #d9534f; margin-top: 0.8rem; }
+        
+        /* App Layout */
+        .app { display: none; min-height: 100vh; }
+        .sidebar {
+            position: fixed; left: 0; top: 0; width: 260px; height: 100%;
+            background: white; box-shadow: 2px 0 20px rgba(0,0,0,0.05);
+            z-index: 1000; transition: all 0.3s ease; display: flex; flex-direction: column;
+        }
+        .sidebar.collapsed { width: 80px; }
+        .sidebar.collapsed .sidebar-logo h2,
+        .sidebar.collapsed .nav-item span,
+        .sidebar.collapsed .sidebar-footer span { display: none; }
+        .sidebar.collapsed .nav-item { justify-content: center; }
+        .sidebar-toggle {
+            position: absolute; right: -12px; top: 20px; background: #2c7da0;
+            color: white; width: 24px; height: 24px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 0.7rem; z-index: 1001;
+        }
+        .sidebar-logo {
+            padding: 1.5rem; display: flex; align-items: center; gap: 12px;
+            border-bottom: 1px solid #e4edf2;
+        }
+        .sidebar-logo img { width: 40px; height: 40px; border-radius: 10px; }
+        .sidebar-logo h2 { font-size: 1rem; font-weight: 600; color: #1a5f7a; }
+        .nav-menu { flex: 1; padding: 1.5rem 1rem; }
+        .nav-item {
+            display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+            margin-bottom: 8px; border-radius: 12px; color: #4a6f8a;
+            cursor: pointer; transition: 0.2s; text-decoration: none;
+        }
+        .nav-item:hover { background: #e8f4f8; color: #2c7da0; }
+        .nav-item.active { background: #2c7da0; color: white; }
+        .sidebar-footer { padding: 1rem; border-top: 1px solid #e4edf2; }
+        
+        /* Main Content */
+        .main-content {
+            margin-left: 260px; transition: all 0.3s ease; padding: 1.5rem 2rem;
+        }
+        .main-content.expanded { margin-left: 80px; }
+        
+        /* Search Section */
+        .search-section {
+            background: white; border-radius: 24px; padding: 1.5rem;
+            margin-bottom: 1.5rem; border: 1px solid #e4edf2;
+        }
+        .search-box { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
+        .search-box input {
+            flex: 1; padding: 12px 18px; border: 2px solid #e0eef5;
+            border-radius: 48px; outline: none; font-size: 0.95rem; min-width: 200px;
+        }
+        .search-box input:focus { border-color: #2c7da0; }
+        
+        /* Cards */
+        .card {
+            background: white; border-radius: 24px; padding: 1.5rem;
+            margin-bottom: 1.5rem; border: 1px solid #e4edf2;
+        }
+        .card h3 { color: #1a5f7a; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px; }
+        .form-row { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem; }
+        .form-group { flex: 1; min-width: 160px; }
+        label {
+            display: block; font-size: 0.75rem; font-weight: 600;
+            text-transform: uppercase; color: #6b8ba0; margin-bottom: 5px;
+        }
+        input, select {
+            width: 100%; padding: 10px 14px; border: 2px solid #e0eef5;
+            border-radius: 30px; font-family: inherit; font-size: 0.9rem; outline: none;
+        }
+        input:focus, select:focus { border-color: #2c7da0; }
+        button {
+            background: #2c7da0; color: white; border: none; padding: 10px 24px;
+            border-radius: 40px; font-weight: 600; cursor: pointer; transition: 0.2s;
+        }
+        button:hover { background: #1a5f7a; transform: translateY(-1px); }
+        button.secondary { background: #e8f4f8; color: #2c7da0; border: 1px solid #cde5ef; }
+        button.danger { background: #fee; color: #c33; }
+        
+        /* Package Table */
+        .table-wrapper { overflow-x: auto; border-radius: 16px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 14px 10px; text-align: left; border-bottom: 1px solid #eef3f7; }
+        th { background: #f8fbfd; font-weight: 600; color: #2c7da0; }
+        .action-icons i { margin: 0 6px; cursor: pointer; font-size: 1rem; color: #6b8ba0; }
+        .action-icons i:hover { color: #2c7da0; }
+        .day-badge {
+            background: #e8f4f8; padding: 4px 12px; border-radius: 20px;
+            font-size: 0.8rem; font-weight: 500; display: inline-block;
+        }
+        
+        /* Modal */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center;
+        }
+        .modal-content {
+            background: white; border-radius: 28px; padding: 1.8rem;
+            max-width: 500px; width: 90%;
+        }
+        .modal-header { display: flex; justify-content: space-between; margin-bottom: 1rem; }
+        .close-modal { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #999; }
+        
+        @media (max-width: 768px) {
+            .sidebar { width: 80px; }
+            .main-content { margin-left: 80px; }
+            .form-row { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-overlay" id="loginOverlay">
+        <div class="login-card">
+            <img src="icon.png" alt="Logo">
+            <h3>Package Management</h3>
+            <input type="password" id="loginPassword" placeholder="Enter Password">
+            <button id="loginBtn">Access Portal</button>
+            <div class="login-error" id="loginError"></div>
+        </div>
+    </div>
+
+    <div class="app" id="mainApp">
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-toggle" id="sidebarToggle"><i class="fas fa-chevron-left"></i></div>
+            <div class="sidebar-logo"><img src="icon.png" alt="Logo"><h2>Perintis Aspirasi</h2></div>
+            <div class="nav-menu">
+                <a href="index.html" class="nav-item"><i class="fas fa-home"></i><span>Home</span></a>
+                <a href="teachermanage.html" class="nav-item"><i class="fas fa-chalkboard-user"></i><span>Teacher Manage</span></a>
+                <a href="studentmanage.html" class="nav-item"><i class="fas fa-user-graduate"></i><span>Student Manage</span></a>
+                <a href="package.html" class="nav-item active"><i class="fas fa-calendar-alt"></i><span>Package Manage</span></a>
+                <a href="invoice.html" class="nav-item"><i class="fas fa-file-invoice"></i><span>Invoice</span></a>
+            </div>
+            <div class="sidebar-footer"><div class="nav-item" id="logoutBtn"><i class="fas fa-sign-out-alt"></i><span>Log Out</span></div></div>
+        </div>
+
+        <div class="main-content" id="mainContent">
+            <!-- Search Section -->
+            <div class="search-section">
+                <div class="search-box">
+                    <i class="fas fa-search" style="color:#8ba9c0;"></i>
+                    <input type="text" id="searchPackageInput" placeholder="Search by subject name, teacher, or day...">
+                    <button id="searchBtn" class="secondary">Search</button>
+                    <button id="resetSearchBtn" class="secondary">Reset</button>
+                    <button id="createNewBtn" style="margin-left: auto;"><i class="fas fa-plus"></i> Create New</button>
+                </div>
+            </div>
+
+            <!-- Package List -->
+            <div class="card">
+                <h3><i class="fas fa-calendar-week"></i> Class Schedule Packages</h3>
+                <div class="table-wrapper">
+                    <table id="packagesTable">
+                        <thead>
+                            <tr><th>Day</th><th>Time</th><th>Subject</th><th>Teacher</th><th>Fee (RM)</th><th>Actions</th></tr>
+                        </thead>
+                        <tbody id="packagesTableBody"></tbody>
+                    赶</table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create/Edit Modal -->
+    <div id="packageModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Create New Package</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="form-group">
+                <label>Day of Week</label>
+                <select id="packageDay">
+                    <option value="Monday">Monday</option>
+                    <option value="Tuesday">Tuesday</option>
+                    <option value="Wednesday">Wednesday</option>
+                    <option value="Thursday">Thursday</option>
+                    <option value="Friday">Friday</option>
+                    <option value="Saturday">Saturday</option>
+                    <option value="Sunday">Sunday</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Time</label>
+                <input type="time" id="packageTime" step="60">
+            </div>
+            <div class="form-group">
+                <label>Subject Name</label>
+                <input type="text" id="packageSubject" placeholder="e.g., Mathematics, English, Science">
+            </div>
+            <div class="form-group">
+                <label>Teacher</label>
+                <select id="packageTeacher"></select>
+            </div>
+            <div class="form-group">
+                <label>Monthly Fee (RM)</label>
+                <input type="number" id="packageFee" placeholder="0" step="0.01" value="0">
+            </div>
+            <button id="savePackageBtn" style="margin-top: 1rem; width: 100%;">Save Package</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCkfEdLDlHW7DvGxLpbDY7Us2nb3j7oTjQ",
+            authDomain: "perintisaspirasi.firebaseapp.com",
+            projectId: "perintisaspirasi",
+            storageBucket: "perintisaspirasi.firebasestorage.app",
+            messagingSenderId: "293094185092",
+            appId: "1:293094185092:web:ac2b5712db54480c3ccad1",
+            measurementId: "G-9ZSWKEZJVT"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Auth
+        const loginOverlay = document.getElementById('loginOverlay');
+        const mainApp = document.getElementById('mainApp');
+        const loginPassword = document.getElementById('loginPassword');
+        const loginBtn = document.getElementById('loginBtn');
+        const loginError = document.getElementById('loginError');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('mainContent');
+
+        function checkLogin() {
+            if (sessionStorage.getItem('tutor_auth') === '0919') {
+                loginOverlay.style.display = 'none';
+                mainApp.style.display = 'block';
+                loadAllData();
+            } else {
+                loginOverlay.style.display = 'flex';
+                mainApp.style.display = 'none';
+            }
+        }
+
+        loginBtn.addEventListener('click', () => {
+            if (loginPassword.value === '0919') {
+                sessionStorage.setItem('tutor_auth', '0919');
+                checkLogin();
+            } else {
+                loginError.innerText = 'Incorrect password';
+            }
+        });
+
+        logoutBtn?.addEventListener('click', () => {
+            sessionStorage.removeItem('tutor_auth');
+            checkLogin();
+        });
+
+        let isCollapsed = false;
+        sidebarToggle.addEventListener('click', () => {
+            isCollapsed = !isCollapsed;
+            sidebar.classList.toggle('collapsed', isCollapsed);
+            mainContent.classList.toggle('expanded', isCollapsed);
+            sidebarToggle.innerHTML = isCollapsed ? '<i class="fas fa-chevron-right"></i>' : '<i class="fas fa-chevron-left"></i>';
+        });
+
+        // Data stores
+        let allPackages = [];
+        let allTeachers = [];
+        let teacherMap = new Map(); // id -> teacher name
+
+        async function loadTeachers() {
+            try {
+                const snap = await getDocs(collection(db, 'teachers'));
+                allTeachers = [];
+                teacherMap.clear();
+                snap.forEach(doc => {
+                    const teacher = { id: doc.id, ...doc.data() };
+                    allTeachers.push(teacher);
+                    teacherMap.set(teacher.id, teacher.name);
+                });
+                updateTeacherSelect();
+            } catch (e) {
+                console.warn("Error loading teachers:", e);
+            }
+        }
+
+        function updateTeacherSelect() {
+            const select = document.getElementById('packageTeacher');
+            if (!select) return;
+            select.innerHTML = '<option value="">-- Select Teacher --</option>';
+            allTeachers.forEach(teacher => {
+                select.innerHTML += `<option value="${teacher.id}">${teacher.name}</option>`;
+            });
+        }
+
+        async function loadPackages() {
+            try {
+                const snap = await getDocs(collection(db, 'packages'));
+                allPackages = [];
+                snap.forEach(doc => {
+                    allPackages.push({ id: doc.id, ...doc.data() });
+                });
+                renderPackageTable(allPackages);
+            } catch (e) {
+                console.warn("Error loading packages:", e);
+            }
+        }
+
+        function renderPackageTable(packages) {
+            const tbody = document.getElementById('packagesTableBody');
+            tbody.innerHTML = '';
+            packages.forEach(pkg => {
+                const teacherName = teacherMap.get(pkg.teacherId) || pkg.teacherId || '-';
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td><span class="day-badge">${pkg.dayOfWeek || '-'}</span></td>
+                    <td>${pkg.time || '-'}</td>
+                    <td><strong>${pkg.subjectName || '-'}</strong></td>
+                    <td>${teacherName}</td>
+                    <td>RM ${(pkg.fee || 0).toFixed(2)}</td>
+                    <td class="action-icons">
+                        <i class="fas fa-edit edit-package" data-id="${pkg.id}"></i>
+                        <i class="fas fa-trash-alt delete-package" data-id="${pkg.id}"></i>
+                    </td>
+                `;
+            });
+            
+            document.querySelectorAll('.edit-package').forEach(btn => {
+                btn.addEventListener('click', () => openEditModal(btn.dataset.id));
+            });
+            document.querySelectorAll('.delete-package').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    if (confirm('Delete this package? Students enrolled in this subject will lose this class.')) {
+                        await deleteDoc(doc(db, 'packages', btn.dataset.id));
+                        loadPackages();
+                    }
+                });
+            });
+        }
+
+        // Search functionality
+        document.getElementById('searchBtn')?.addEventListener('click', () => {
+            const searchTerm = document.getElementById('searchPackageInput').value.toLowerCase();
+            const filtered = allPackages.filter(pkg => {
+                const teacherName = teacherMap.get(pkg.teacherId) || '';
+                return pkg.subjectName?.toLowerCase().includes(searchTerm) ||
+                       teacherName.toLowerCase().includes(searchTerm) ||
+                       pkg.dayOfWeek?.toLowerCase().includes(searchTerm);
+            });
+            renderPackageTable(filtered);
+        });
+
+        document.getElementById('resetSearchBtn')?.addEventListener('click', () => {
+            document.getElementById('searchPackageInput').value = '';
+            renderPackageTable(allPackages);
+        });
+
+        // Create New button
+        document.getElementById('createNewBtn')?.addEventListener('click', () => {
+            document.getElementById('modalTitle').innerText = 'Create New Package';
+            document.getElementById('packageDay').value = 'Monday';
+            document.getElementById('packageTime').value = '';
+            document.getElementById('packageSubject').value = '';
+            document.getElementById('packageTeacher').value = '';
+            document.getElementById('packageFee').value = '0';
+            currentEditId = null;
+            document.getElementById('packageModal').style.display = 'flex';
+        });
+
+        // Save package
+        let currentEditId = null;
+        document.getElementById('savePackageBtn')?.addEventListener('click', async () => {
+            const dayOfWeek = document.getElementById('packageDay').value;
+            const time = document.getElementById('packageTime').value;
+            const subjectName = document.getElementById('packageSubject').value.trim();
+            const teacherId = document.getElementById('packageTeacher').value;
+            const fee = parseFloat(document.getElementById('packageFee').value) || 0;
+            
+            if (!subjectName) { alert('Please enter subject name'); return; }
+            if (!teacherId) { alert('Please select a teacher'); return; }
+            if (!time) { alert('Please select time'); return; }
+            
+            const packageData = { dayOfWeek, time, subjectName, teacherId, fee };
+            
+            try {
+                if (currentEditId) {
+                    await updateDoc(doc(db, 'packages', currentEditId), packageData);
+                    alert('Package updated successfully');
+                } else {
+                    await addDoc(collection(db, 'packages'), packageData);
+                    alert('Package created successfully');
+                }
+                document.getElementById('packageModal').style.display = 'none';
+                loadPackages();
+            } catch (e) {
+                alert('Error: ' + e.message);
+            }
+        });
+
+        function openEditModal(packageId) {
+            const pkg = allPackages.find(p => p.id === packageId);
+            if (!pkg) return;
+            currentEditId = packageId;
+            document.getElementById('modalTitle').innerText = 'Edit Package';
+            document.getElementById('packageDay').value = pkg.dayOfWeek || 'Monday';
+            document.getElementById('packageTime').value = pkg.time || '';
+            document.getElementById('packageSubject').value = pkg.subjectName || '';
+            document.getElementById('packageTeacher').value = pkg.teacherId || '';
+            document.getElementById('packageFee').value = pkg.fee || 0;
+            document.getElementById('packageModal').style.display = 'flex';
+        }
+
+        // Close modal
+        document.querySelectorAll('.close-modal').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.getElementById('packageModal').style.display = 'none';
+            });
+        });
+        window.addEventListener('click', (e) => {
+            if (e.target === document.getElementById('packageModal')) {
+                document.getElementById('packageModal').style.display = 'none';
+            }
+        });
+
+        async function loadAllData() {
+            await loadTeachers();
+            await loadPackages();
+        }
+
+        checkLogin();
+    </script>
+</body>
+</html>
