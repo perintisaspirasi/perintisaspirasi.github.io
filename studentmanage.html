@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Student Management | Pusat Tuisyen Perintis Aspirasi</title>
+    <link rel="icon" type="image/png" href="icon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #f0f7fc; color: #1a2c3e; }
+        
+        /* Login Overlay */
+        .login-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, #1a5f7a 0%, #0d3b4f 100%);
+            display: flex; align-items: center; justify-content: center; z-index: 3000;
+        }
+        .login-card {
+            background: white; max-width: 420px; width: 90%; padding: 2.5rem;
+            border-radius: 32px; text-align: center;
+        }
+        .login-card img { width: 80px; margin-bottom: 1rem; }
+        .login-card input {
+            width: 100%; padding: 14px 18px; border: 2px solid #e0eef5;
+            border-radius: 48px; margin-bottom: 1.2rem; outline: none; font-size: 1rem;
+        }
+        .login-card input:focus { border-color: #2c7da0; }
+        .login-card button {
+            background: #2c7da0; color: white; border: none; padding: 12px 28px;
+            border-radius: 48px; font-weight: 600; cursor: pointer; width: 100%;
+        }
+        .login-error { color: #d9534f; margin-top: 0.8rem; }
+        
+        /* App Layout */
+        .app { display: none; min-height: 100vh; }
+        .sidebar {
+            position: fixed; left: 0; top: 0; width: 260px; height: 100%;
+            background: white; box-shadow: 2px 0 20px rgba(0,0,0,0.05);
+            z-index: 1000; transition: all 0.3s ease; display: flex; flex-direction: column;
+        }
+        .sidebar.collapsed { width: 80px; }
+        .sidebar.collapsed .sidebar-logo h2,
+        .sidebar.collapsed .nav-item span,
+        .sidebar.collapsed .sidebar-footer span { display: none; }
+        .sidebar.collapsed .nav-item { justify-content: center; }
+        .sidebar-toggle {
+            position: absolute; right: -12px; top: 20px; background: #2c7da0;
+            color: white; width: 24px; height: 24px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 0.7rem; z-index: 1001;
+        }
+        .sidebar-logo {
+            padding: 1.5rem; display: flex; align-items: center; gap: 12px;
+            border-bottom: 1px solid #e4edf2;
+        }
+        .sidebar-logo img { width: 40px; height: 40px; border-radius: 10px; }
+        .sidebar-logo h2 { font-size: 1rem; font-weight: 600; color: #1a5f7a; }
+        .nav-menu { flex: 1; padding: 1.5rem 1rem; }
+        .nav-item {
+            display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+            margin-bottom: 8px; border-radius: 12px; color: #4a6f8a;
+            cursor: pointer; transition: 0.2s; text-decoration: none;
+        }
+        .nav-item:hover { background: #e8f4f8; color: #2c7da0; }
+        .nav-item.active { background: #2c7da0; color: white; }
+        .sidebar-footer { padding: 1rem; border-top: 1px solid #e4edf2; }
+        
+        /* Main Content */
+        .main-content {
+            margin-left: 260px; transition: all 0.3s ease; padding: 1.5rem 2rem;
+        }
+        .main-content.expanded { margin-left: 80px; }
+        
+        /* Search Section */
+        .search-section {
+            background: white; border-radius: 24px; padding: 1.5rem;
+            margin-bottom: 1.5rem; border: 1px solid #e4edf2;
+        }
+        .search-box { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
+        .search-box input {
+            flex: 1; padding: 12px 18px; border: 2px solid #e0eef5;
+            border-radius: 48px; outline: none; font-size: 0.95rem; min-width: 200px;
+        }
+        .search-box input:focus { border-color: #2c7da0; }
+        
+        /* Cards */
+        .card {
+            background: white; border-radius: 24px; padding: 1.5rem;
+            margin-bottom: 1.5rem; border: 1px solid #e4edf2;
+        }
+        .card h3 { color: #1a5f7a; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px; }
+        .form-row { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem; }
+        .form-group { flex: 1; min-width: 180px; }
+        label {
+            display: block; font-size: 0.75rem; font-weight: 600;
+            text-transform: uppercase; color: #6b8ba0; margin-bottom: 5px;
+        }
+        input, select {
+            width: 100%; padding: 10px 14px; border: 2px solid #e0eef5;
+            border-radius: 30px; font-family: inherit; font-size: 0.9rem; outline: none;
+        }
+        input:focus, select:focus { border-color: #2c7da0; }
+        button {
+            background: #2c7da0; color: white; border: none; padding: 10px 24px;
+            border-radius: 40px; font-weight: 600; cursor: pointer; transition: 0.2s;
+        }
+        button:hover { background: #1a5f7a; transform: translateY(-1px); }
+        button.secondary { background: #e8f4f8; color: #2c7da0; border: 1px solid #cde5ef; }
+        button.danger { background: #fee; color: #c33; }
+        
+        /* Selected Subjects */
+        .selected-subjects {
+            background: #f8fbfd; border-radius: 16px; padding: 1rem;
+            margin-top: 0.5rem;
+        }
+        .subject-tag {
+            background: #e8f4f8; padding: 6px 12px; border-radius: 20px;
+            font-size: 0.8rem; display: inline-block; margin: 4px;
+        }
+        .subject-tag .remove {
+            margin-left: 8px; cursor: pointer; color: #c33;
+        }
+        
+        /* Student Table */
+        .table-wrapper { overflow-x: auto; border-radius: 16px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 14px 10px; text-align: left; border-bottom: 1px solid #eef3f7; }
+        th { background: #f8fbfd; font-weight: 600; color: #2c7da0; }
+        .action-icons i { margin: 0 6px; cursor: pointer; font-size: 1rem; color: #6b8ba0; }
+        .action-icons i:hover { color: #2c7da0; }
+        .birthday-badge { background: #ffe8e0; padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; display: inline-block; }
+        
+        /* Modal */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center;
+        }
+        .modal-content {
+            background: white; border-radius: 28px; padding: 1.8rem;
+            max-width: 550px; width: 90%; max-height: 80vh; overflow-y: auto;
+        }
+        .modal-header { display: flex; justify-content: space-between; margin-bottom: 1rem; }
+        .close-modal { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #999; }
+        
+        @media (max-width: 768px) {
+            .sidebar { width: 80px; }
+            .main-content { margin-left: 80px; }
+            .form-row { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-overlay" id="loginOverlay">
+        <div class="login-card">
+            <img src="icon.png" alt="Logo">
+            <h3>Student Management</h3>
+            <input type="password" id="loginPassword" placeholder="Enter Password">
+            <button id="loginBtn">Access Portal</button>
+            <div class="login-error" id="loginError"></div>
+        </div>
+    </div>
+
+    <div class="app" id="mainApp">
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-toggle" id="sidebarToggle"><i class="fas fa-chevron-left"></i></div>
+            <div class="sidebar-logo"><img src="icon.png" alt="Logo"><h2>Perintis Aspirasi</h2></div>
+            <div class="nav-menu">
+                <a href="index.html" class="nav-item"><i class="fas fa-home"></i><span>Home</span></a>
+                <a href="teachermanage.html" class="nav-item"><i class="fas fa-chalkboard-user"></i><span>Teacher Manage</span></a>
+                <a href="studentmanage.html" class="nav-item active"><i class="fas fa-user-graduate"></i><span>Student Manage</span></a>
+                <a href="package.html" class="nav-item"><i class="fas fa-calendar-alt"></i><span>Package Manage</span></a>
+                <a href="invoice.html" class="nav-item"><i class="fas fa-file-invoice"></i><span>Invoice</span></a>
+            </div>
+            <div class="sidebar-footer"><div class="nav-item" id="logoutBtn"><i class="fas fa-sign-out-alt"></i><span>Log Out</span></div></div>
+        </div>
+
+        <div class="main-content" id="mainContent">
+            <!-- Search Section -->
+            <div class="search-section">
+                <div class="search-box">
+                    <i class="fas fa-search" style="color:#8ba9c0;"></i>
+                    <input type="text" id="searchStudentInput" placeholder="Search by student name or subject...">
+                    <button id="searchBtn" class="secondary">Search</button>
+                    <button id="resetSearchBtn" class="secondary">Reset</button>
+                </div>
+            </div>
+
+            <!-- Register New Student -->
+            <div class="card">
+                <h3><i class="fas fa-user-plus"></i> Register New Student</h3>
+                <div class="form-row">
+                    <div class="form-group"><label>Full Name</label><input type="text" id="studentName" placeholder="e.g., Ahmad Bin Abdullah"></div>
+                    <div class="form-group"><label>Birthday</label><input type="date" id="studentBirthday"></div>
+                    <div class="form-group"><label>Gender</label>
+                        <select id="studentGender"><option value="Male">Male</option><option value="Female">Female</option></select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Select Subjects (from available packages)</label>
+                    <select id="subjectSelect"></select>
+                    <button type="button" id="addSubjectBtn" class="secondary" style="margin-top: 8px;">+ Add Subject</button>
+                </div>
+                <div class="selected-subjects" id="selectedSubjectsList">
+                    <label>Enrolled Subjects:</label>
+                    <div id="subjectsTags"></div>
+                </div>
+                <button id="saveStudentBtn" style="margin-top: 1rem;">Register Student</button>
+            </div>
+
+            <!-- Student List -->
+            <div class="card">
+                <h3><i class="fas fa-users"></i> Student Directory</h3>
+                <div class="table-wrapper">
+                    <table id="studentsTable">
+                        <thead><tr><th>Name</th><th>Age</th><th>Gender</th><th>Enrolled Subjects</th><th>Actions</th></tr></thead>
+                        <tbody id="studentsTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header"><h3>Edit Student</h3><button class="close-modal">&times;</button></div>
+            <div class="form-group"><label>Name</label><input type="text" id="editStudentName"></div>
+            <div class="form-group"><label>Birthday</label><input type="date" id="editStudentBirthday"></div>
+            <div class="form-group"><label>Gender</label><select id="editStudentGender"><option>Male</option><option>Female</option></select></div>
+            <div class="form-group"><label>Enrolled Subjects</label><div id="editSubjectsContainer"></div></div>
+            <button id="updateStudentBtn" style="margin-top:1rem; width:100%;">Update Student</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCkfEdLDlHW7DvGxLpbDY7Us2nb3j7oTjQ",
+            authDomain: "perintisaspirasi.firebaseapp.com",
+            projectId: "perintisaspirasi",
+            storageBucket: "perintisaspirasi.firebasestorage.app",
+            messagingSenderId: "293094185092",
+            appId: "1:293094185092:web:ac2b5712db54480c3ccad1",
+            measurementId: "G-9ZSWKEZJVT"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Auth
+        const loginOverlay = document.getElementById('loginOverlay');
+        const mainApp = document.getElementById('mainApp');
+        const loginPassword = document.getElementById('loginPassword');
+        const loginBtn = document.getElementById('loginBtn');
+        const loginError = document.getElementById('loginError');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('mainContent');
+
+        function checkLogin() {
+            if (sessionStorage.getItem('tutor_auth') === '0919') {
+                loginOverlay.style.display = 'none';
+                mainApp.style.display = 'block';
+                loadAllData();
+            } else {
+                loginOverlay.style.display = 'flex';
+                mainApp.style.display = 'none';
+            }
+        }
+
+        loginBtn.addEventListener('click', () => {
+            if (loginPassword.value === '0919') {
+                sessionStorage.setItem('tutor_auth', '0919');
+                checkLogin();
+            } else {
+                loginError.innerText = 'Incorrect password';
+            }
+        });
+
+        logoutBtn?.addEventListener('click', () => {
+            sessionStorage.removeItem('tutor_auth');
+            checkLogin();
+        });
+
+        let isCollapsed = false;
+        sidebarToggle.addEventListener('click', () => {
+            isCollapsed = !isCollapsed;
+            sidebar.classList.toggle('collapsed', isCollapsed);
+            mainContent.classList.toggle('expanded', isCollapsed);
+            sidebarToggle.innerHTML = isCollapsed ? '<i class="fas fa-chevron-right"></i>' : '<i class="fas fa-chevron-left"></i>';
+        });
+
+        // Data stores
+        let allStudents = [];
+        let allPackages = [];  // Packages from Firebase (subjects with teacher info)
+        let teacherCache = {};
+
+        async function loadPackages() {
+            try {
+                const snap = await getDocs(collection(db, 'packages'));
+                allPackages = [];
+                for (const pkgDoc of snap.docs) {
+                    const pkg = { id: pkgDoc.id, ...pkgDoc.data() };
+                    // Get teacher name
+                    if (pkg.teacherId && !teacherCache[pkg.teacherId]) {
+                        const teacherDoc = await getDoc(doc(db, 'teachers', pkg.teacherId));
+                        teacherCache[pkg.teacherId] = teacherDoc.exists() ? teacherDoc.data().name : 'Unknown';
+                    }
+                    allPackages.push(pkg);
+                }
+                updateSubjectSelect();
+            } catch (e) {
+                console.warn("Error loading packages:", e);
+            }
+        }
+
+        function updateSubjectSelect() {
+            const select = document.getElementById('subjectSelect');
+            if (!select) return;
+            select.innerHTML = '<option value="">-- Select Subject --</option>';
+            allPackages.forEach(pkg => {
+                const teacherName = teacherCache[pkg.teacherId] || 'Unknown';
+                select.innerHTML += `<option value="${pkg.id}" data-subject="${pkg.subjectName}" data-teacher="${teacherName}" data-fee="${pkg.fee || 0}">${pkg.subjectName} (${teacherName}) - ${pkg.dayOfWeek} ${pkg.time}</option>`;
+            });
+        }
+
+        // Selected subjects for new student
+        let currentSelectedSubjects = [];
+
+        function renderSelectedSubjects() {
+            const container = document.getElementById('subjectsTags');
+            if (!container) return;
+            container.innerHTML = '';
+            currentSelectedSubjects.forEach((sub, idx) => {
+                const tag = document.createElement('span');
+                tag.className = 'subject-tag';
+                tag.innerHTML = `${sub.subjectName} (${sub.teacherName}) - RM${sub.fee} <span class="remove" data-idx="${idx}">&times;</span>`;
+                tag.querySelector('.remove').addEventListener('click', () => {
+                    currentSelectedSubjects.splice(idx, 1);
+                    renderSelectedSubjects();
+                });
+                container.appendChild(tag);
+            });
+        }
+
+        document.getElementById('addSubjectBtn')?.addEventListener('click', () => {
+            const select = document.getElementById('subjectSelect');
+            const selectedOption = select.options[select.selectedIndex];
+            const pkgId = select.value;
+            if (!pkgId) { alert('Please select a subject'); return; }
+            const pkg = allPackages.find(p => p.id === pkgId);
+            if (pkg) {
+                const teacherName = teacherCache[pkg.teacherId] || 'Unknown';
+                const exists = currentSelectedSubjects.some(s => s.packageId === pkgId);
+                if (exists) { alert('Subject already added'); return; }
+                currentSelectedSubjects.push({
+                    packageId: pkg.id,
+                    subjectName: pkg.subjectName,
+                    teacherId: pkg.teacherId,
+                    teacherName: teacherName,
+                    fee: pkg.fee || 0,
+                    dayOfWeek: pkg.dayOfWeek,
+                    time: pkg.time
+                });
+                renderSelectedSubjects();
+            }
+        });
+
+        // Save student
+        document.getElementById('saveStudentBtn')?.addEventListener('click', async () => {
+            const name = document.getElementById('studentName').value.trim();
+            const birthday = document.getElementById('studentBirthday').value;
+            const gender = document.getElementById('studentGender').value;
+            if (!name) { alert('Please enter student name'); return; }
+            if (currentSelectedSubjects.length === 0) { alert('Please select at least one subject'); return; }
+            
+            try {
+                await addDoc(collection(db, 'students'), {
+                    name,
+                    birthday,
+                    gender,
+                    enrolledSubjects: currentSelectedSubjects,
+                    createdAt: new Date()
+                });
+                alert('Student registered successfully');
+                document.getElementById('studentName').value = '';
+                document.getElementById('studentBirthday').value = '';
+                currentSelectedSubjects = [];
+                renderSelectedSubjects();
+                loadStudents();
+            } catch (e) {
+                alert('Error: ' + e.message);
+            }
+        });
+
+        // Load students
+        async function loadStudents() {
+            try {
+                const snap = await getDocs(collection(db, 'students'));
+                allStudents = [];
+                snap.forEach(doc => {
+                    allStudents.push({ id: doc.id, ...doc.data() });
+                });
+                renderStudentTable(allStudents);
+            } catch (e) {
+                console.warn("Error loading students:", e);
+            }
+        }
+
+        function calculateAge(birthday) {
+            if (!birthday) return '-';
+            const birthDate = new Date(birthday);
+            const today = new Date();
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const m = today.getMonth() - birthDate.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
+            return age;
+        }
+
+        function renderStudentTable(students) {
+            const tbody = document.getElementById('studentsTableBody');
+            tbody.innerHTML = '';
+            students.forEach(student => {
+                const age = calculateAge(student.birthday);
+                const subjectsHtml = (student.enrolledSubjects || []).map(s => 
+                    `<span class="subject-tag" style="background:#e8f4f8;">${s.subjectName} (${s.teacherName})</span>`
+                ).join('');
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${student.name || ''}</td>
+                    <td>${age}${student.birthday ? ` <span class="birthday-badge"><i class="fas fa-birthday-cake"></i> ${student.birthday}</span>` : ''}</td>
+                    <td>${student.gender || '-'}</td>
+                    <td>${subjectsHtml || '-'}</td>
+                    <td class="action-icons">
+                        <i class="fas fa-edit edit-student" data-id="${student.id}"></i>
+                        <i class="fas fa-trash-alt delete-student" data-id="${student.id}"></i>
+                    </td>
+                `;
+            });
+            
+            document.querySelectorAll('.edit-student').forEach(btn => {
+                btn.addEventListener('click', () => openEditModal(btn.dataset.id));
+            });
+            document.querySelectorAll('.delete-student').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    if (confirm('Delete this student? This will also remove their invoices.')) {
+                        await deleteDoc(doc(db, 'students', btn.dataset.id));
+                        loadStudents();
+                    }
+                });
+            });
+        }
+
+        // Search functionality
+        document.getElementById('searchBtn')?.addEventListener('click', () => {
+            const searchTerm = document.getElementById('searchStudentInput').value.toLowerCase();
+            const filtered = allStudents.filter(student => {
+                const matchesName = student.name?.toLowerCase().includes(searchTerm);
+                const matchesSubject = (student.enrolledSubjects || []).some(s => s.subjectName.toLowerCase().includes(searchTerm));
+                return matchesName || matchesSubject;
+            });
+            renderStudentTable(filtered);
+        });
+
+        document.getElementById('resetSearchBtn')?.addEventListener('click', () => {
+            document.getElementById('searchStudentInput').value = '';
+            renderStudentTable(allStudents);
+        });
+
+        // Edit modal
+        let currentEditId = null;
+        let editSelectedSubjects = [];
+
+        async function openEditModal(studentId) {
+            const student = allStudents.find(s => s.id === studentId);
+            if (!student) return;
+            currentEditId = studentId;
+            document.getElementById('editStudentName').value = student.name || '';
+            document.getElementById('editStudentBirthday').value = student.birthday || '';
+            document.getElementById('editStudentGender').value = student.gender || 'Male';
+            
+            editSelectedSubjects = [...(student.enrolledSubjects || [])];
+            renderEditSubjects();
+            
+            document.getElementById('editModal').style.display = 'flex';
+        }
+
+        function renderEditSubjects() {
+            const container = document.getElementById('editSubjectsContainer');
+            container.innerHTML = `
+                <div style="margin-bottom: 8px;">
+                    <select id="editSubjectSelect" style="width: calc(100% - 100px); display: inline-block; margin-right: 8px;">
+                        <option value="">-- Add Subject --</option>
+                        ${allPackages.map(pkg => {
+                            const teacherName = teacherCache[pkg.teacherId] || 'Unknown';
+                            return `<option value="${pkg.id}" data-subject="${pkg.subjectName}" data-teacher="${teacherName}" data-fee="${pkg.fee || 0}">${pkg.subjectName} (${teacherName})</option>`;
+                        }).join('')}
+                    </select>
+                    <button id="editAddSubjectBtn" class="secondary" style="width: 90px;">Add</button>
+                </div>
+                <div id="editSubjectsTags" style="margin-top: 10px;"></div>
+            `;
+            
+            function renderTags() {
+                const tagsContainer = document.getElementById('editSubjectsTags');
+                tagsContainer.innerHTML = '';
+                editSelectedSubjects.forEach((sub, idx) => {
+                    const tag = document.createElement('span');
+                    tag.className = 'subject-tag';
+                    tag.innerHTML = `${sub.subjectName} (${sub.teacherName}) - RM${sub.fee} <span class="remove" data-idx="${idx}">&times;</span>`;
+                    tag.querySelector('.remove').addEventListener('click', () => {
+                        editSelectedSubjects.splice(idx, 1);
+                        renderTags();
+                    });
+                    tagsContainer.appendChild(tag);
+                });
+            }
+            
+            document.getElementById('editAddSubjectBtn').addEventListener('click', () => {
+                const select = document.getElementById('editSubjectSelect');
+                const pkgId = select.value;
+                if (!pkgId) return;
+                const pkg = allPackages.find(p => p.id === pkgId);
+                if (pkg) {
+                    const exists = editSelectedSubjects.some(s => s.packageId === pkgId);
+                    if (exists) { alert('Subject already added'); return; }
+                    editSelectedSubjects.push({
+                        packageId: pkg.id,
+                        subjectName: pkg.subjectName,
+                        teacherId: pkg.teacherId,
+                        teacherName: teacherCache[pkg.teacherId] || 'Unknown',
+                        fee: pkg.fee || 0,
+                        dayOfWeek: pkg.dayOfWeek,
+                        time: pkg.time
+                    });
+                    renderTags();
+                }
+            });
+            renderTags();
+        }
+
+        document.getElementById('updateStudentBtn')?.addEventListener('click', async () => {
+            const name = document.getElementById('editStudentName').value.trim();
+            const birthday = document.getElementById('editStudentBirthday').value;
+            const gender = document.getElementById('editStudentGender').value;
+            if (!name) { alert('Name required'); return; }
+            
+            try {
+                await updateDoc(doc(db, 'students', currentEditId), {
+                    name, birthday, gender,
+                    enrolledSubjects: editSelectedSubjects
+                });
+                alert('Student updated successfully');
+                document.getElementById('editModal').style.display = 'none';
+                loadStudents();
+            } catch (e) {
+                alert('Error: ' + e.message);
+            }
+        });
+
+        document.querySelectorAll('.close-modal').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.getElementById('editModal').style.display = 'none';
+            });
+        });
+        window.addEventListener('click', (e) => {
+            if (e.target === document.getElementById('editModal')) {
+                document.getElementById('editModal').style.display = 'none';
+            }
+        });
+
+        async function loadAllData() {
+            await loadPackages();
+            await loadStudents();
+        }
+
+        checkLogin();
+    </script>
+</body>
+</html>
