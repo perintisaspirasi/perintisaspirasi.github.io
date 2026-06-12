@@ -120,7 +120,7 @@
         
         .invoice-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
             gap: 1.2rem;
             margin-bottom: 1.5rem;
         }
@@ -151,6 +151,7 @@
         .action-icon.download { background: #e8f4f8; color: #2c7da0; }
         .action-icon.gmail { background: #ea433520; color: #ea4335; }
         .action-icon.pay { background: #2cae6c20; color: #2cae6c; }
+        .action-icon.whatsapp { background: #25D36620; color: #25D366; }
         .action-icon:hover { transform: translateY(-1px); opacity: 0.9; }
         
         .pagination { display: flex; justify-content: center; gap: 8px; margin-top: 1.5rem; }
@@ -364,6 +365,7 @@
         let allInvoices = [];
         let studentsCache = new Map();
         let selectedInvoices = new Set();
+        let nextInvoiceNumber = 2026001; // Starting invoice number
         
         async function loadStudentsData() {
             try {
@@ -377,6 +379,25 @@
                 });
             } catch (e) {
                 console.warn("Error loading students:", e);
+            }
+        }
+        
+        // Generate sequential invoice number
+        function generateInvoiceNumber() {
+            const current = nextInvoiceNumber;
+            nextInvoiceNumber++;
+            // Save to localStorage to persist across page loads
+            localStorage.setItem('nextInvoiceNumber', nextInvoiceNumber);
+            return current;
+        }
+        
+        // Load saved invoice counter
+        function loadInvoiceCounter() {
+            const saved = localStorage.getItem('nextInvoiceNumber');
+            if (saved) {
+                nextInvoiceNumber = parseInt(saved);
+            } else {
+                nextInvoiceNumber = 2026001;
             }
         }
         
@@ -394,7 +415,13 @@
         
         async function generateInvoiceHTML(invoice) {
             const student = studentsCache.get(invoice.studentId) || { name: 'Unknown', phone: null, email: null };
-            const invoiceNumber = `INV-${invoice.monthKey?.replace('-', '')}-${invoice.studentId?.slice(-4)}`;
+            // Use numeric invoice number if available, otherwise generate from month and student ID
+            let invoiceNumberDisplay = invoice.invoiceNumber;
+            if (!invoiceNumberDisplay) {
+                invoiceNumberDisplay = `INV-${invoice.monthKey?.replace('-', '')}-${invoice.studentId?.slice(-4)}`;
+            } else {
+                invoiceNumberDisplay = `INV-${invoiceNumberDisplay}`;
+            }
             const today = new Date();
             const formattedDate = today.toLocaleDateString('en-MY');
             
@@ -428,7 +455,7 @@
                         <h3 style="margin: 0;">INVOICE</h3>
                     </div>
                     <div style="display: flex; justify-content: space-between; margin: 1rem 0;">
-                        <div><strong>Invoice No:</strong> ${invoiceNumber}</div>
+                        <div><strong>Invoice No:</strong> ${invoiceNumberDisplay}</div>
                         <div><strong>Date:</strong> ${formattedDate}</div>
                     </div>
                     <div style="margin-bottom: 1rem;">
@@ -449,6 +476,7 @@
         
         async function loadAllInvoices() {
             try {
+                loadInvoiceCounter();
                 await loadStudentsData();
                 
                 const invoicesSnap = await getDocs(collection(db, 'invoices'));
@@ -458,6 +486,7 @@
                     const student = studentsCache.get(inv.studentId);
                     inv.studentName = student?.name || 'Unknown';
                     inv.studentEmail = student?.email || null;
+                    inv.studentPhone = student?.phone || null;
                     allInvoices.push(inv);
                 }
                 allInvoices.sort((a, b) => (b.monthKey || '').localeCompare(a.monthKey || ''));
@@ -498,6 +527,19 @@
             bulkSection.style.display = unpaidInView > 0 ? 'flex' : 'none';
         }
         
+        // WhatsApp reminder function
+        function sendWhatsAppReminder(phoneNumber, studentName, monthKey, amount) {
+            if (!phoneNumber) {
+                alert(`No phone number found for ${studentName}. Please add phone number in Student Management.`);
+                return;
+            }
+            
+            const message = `Dear ${studentName},\n\nThis is a friendly reminder that your tuition fee for ${monthKey} of RM ${amount.toFixed(2)} is still unpaid.\n\nPlease make the payment at your earliest convenience.\n\nThank you for your cooperation!\n\nPusat Tuisyen Perintis Aspirasi`;
+            
+            const waLink = `https://wa.me/60${phoneNumber}?text=${encodeURIComponent(message)}`;
+            window.open(waLink, '_blank');
+        }
+        
         function renderInvoiceGrid(invoices) {
             const grid = document.getElementById('invoiceGrid');
             if (invoices.length === 0) {
@@ -508,7 +550,13 @@
             invoices.forEach(inv => {
                 const isPaid = inv.paid === true;
                 const isSelected = selectedInvoices.has(inv.id);
-                const invNumber = `INV-${inv.monthKey?.replace('-', '')}-${inv.studentId?.slice(-4)}`;
+                // Use numeric invoice number if available
+                let invNumberDisplay = inv.invoiceNumber;
+                if (!invNumberDisplay) {
+                    invNumberDisplay = `INV-${inv.monthKey?.replace('-', '')}${inv.studentId?.slice(-4)}`;
+                } else {
+                    invNumberDisplay = `INV-${invNumberDisplay}`;
+                }
                 const subjects = inv.subjects || [];
                 const packagesHtml = subjects.map(s => `<span class="package-tag">${s.subjectName} (RM${s.fee})</span>`).join('');
                 
@@ -516,16 +564,20 @@
                 card.className = `invoice-card ${isPaid ? 'paid' : 'unpaid'} ${isSelected ? 'selected' : ''}`;
                 card.innerHTML = `
                     ${!isPaid ? `<input type="checkbox" class="invoice-checkbox" data-id="${inv.id}" style="position:absolute; top:12px; right:12px; width:18px; height:18px; cursor:pointer;" ${isSelected ? 'checked' : ''}>` : ''}
-                    <div class="invoice-number ${isPaid ? 'paid' : 'unpaid'}"><i class="fas ${isPaid ? 'fa-check-circle' : 'fa-clock'}"></i> ${invNumber}</div>
+                    <div class="invoice-number ${isPaid ? 'paid' : 'unpaid'}"><i class="fas ${isPaid ? 'fa-check-circle' : 'fa-clock'}"></i> ${invNumberDisplay}</div>
                     <div class="invoice-student"><i class="fas fa-user-graduate"></i> ${inv.studentName}</div>
                     <div class="invoice-details"><i class="fas fa-calendar-alt"></i> ${inv.monthKey || 'N/A'}</div>
                     <div class="invoice-details">${packagesHtml || '<span class="package-tag">No subjects</span>'}</div>
                     <div class="invoice-amount">RM ${(inv.totalAmount || 0).toFixed(2)}</div>
                     <div class="invoice-actions">
                         <button class="action-icon view" data-id="${inv.id}"><i class="fas fa-eye"></i> View</button>
-                        ${!isPaid ? `<button class="action-icon pay" data-id="${inv.id}" style="background:#2cae6c20; color:#2cae6c;"><i class="fas fa-credit-card"></i> Pay Now</button>` : `
-                        <button class="action-icon download" data-id="${inv.id}"><i class="fas fa-download"></i> Download</button>
-                        <button class="action-icon gmail" data-id="${inv.id}" data-email="${inv.studentEmail || ''}" data-name="${inv.studentName}"><i class="fab fa-google"></i> Gmail</button>`}
+                        ${!isPaid ? `
+                            <button class="action-icon pay" data-id="${inv.id}"><i class="fas fa-credit-card"></i> Pay Now</button>
+                            <button class="action-icon whatsapp" data-id="${inv.id}" data-phone="${inv.studentPhone || ''}" data-name="${inv.studentName}" data-month="${inv.monthKey}" data-amount="${inv.totalAmount}"><i class="fab fa-whatsapp"></i> Reminder</button>
+                        ` : `
+                            <button class="action-icon download" data-id="${inv.id}"><i class="fas fa-download"></i> Download</button>
+                            <button class="action-icon gmail" data-id="${inv.id}" data-email="${inv.studentEmail || ''}" data-name="${inv.studentName}"><i class="fab fa-google"></i> Gmail</button>
+                        `}
                     </div>
                 `;
                 grid.appendChild(card);
@@ -550,6 +602,14 @@
                             e.stopPropagation();
                             sessionStorage.setItem('selectedInvoices', JSON.stringify([inv.id]));
                             window.location.href = 'payment.html';
+                        });
+                    }
+                    
+                    const waBtn = card.querySelector('.whatsapp');
+                    if (waBtn) {
+                        waBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            sendWhatsAppReminder(waBtn.dataset.phone, waBtn.dataset.name, waBtn.dataset.month, parseFloat(waBtn.dataset.amount));
                         });
                     }
                 }
