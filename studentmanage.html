@@ -280,7 +280,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCkfEdLDlHW7DvGxLpbDY7Us2nb3j7oTjQ",
@@ -395,13 +395,53 @@
             });
         }
 
-        // Format phone number for display
-        function formatPhoneNumber(phoneNumber) {
-            if (!phoneNumber) return null;
-            // Remove any non-digit characters
-            const cleaned = phoneNumber.toString().replace(/\D/g, '');
-            if (cleaned.length === 0) return null;
-            return cleaned;
+        // Function to generate invoice for a student for a specific month
+        async function generateInvoiceForStudent(studentId, monthKey, enrolledSubjects) {
+            try {
+                let totalAmount = 0;
+                enrolledSubjects.forEach(sub => {
+                    totalAmount += sub.fee || 0;
+                });
+                
+                const invoiceId = `${studentId}_${monthKey}`;
+                const invoiceRef = doc(db, 'invoices', invoiceId);
+                const existing = await getDoc(invoiceRef);
+                
+                if (!existing.exists()) {
+                    await setDoc(invoiceRef, {
+                        studentId: studentId,
+                        monthKey: monthKey,
+                        totalAmount: totalAmount,
+                        paid: false,
+                        subjects: enrolledSubjects,
+                        createdAt: new Date()
+                    });
+                    console.log(`Generated invoice for ${studentId} for ${monthKey}`);
+                    return true;
+                }
+                return false;
+            } catch (e) {
+                console.warn("Error generating invoice:", e);
+                return false;
+            }
+        }
+
+        // Generate invoices from registration month to current month
+        async function generateAllInvoicesForNewStudent(studentId, regMonth, enrolledSubjects) {
+            if (!enrolledSubjects || enrolledSubjects.length === 0) return;
+            
+            const now = new Date();
+            const [regYear, regMon] = regMonth.split('-').map(Number);
+            if (isNaN(regYear)) return;
+            
+            const regDate = new Date(regYear, regMon - 1, 1);
+            let iterDate = new Date(regDate);
+            
+            while (iterDate <= now) {
+                const monthKey = `${iterDate.getFullYear()}-${String(iterDate.getMonth() + 1).padStart(2, '0')}`;
+                await generateInvoiceForStudent(studentId, monthKey, enrolledSubjects);
+                iterDate.setMonth(iterDate.getMonth() + 1);
+            }
         }
 
         // Selected subjects for new student
@@ -459,7 +499,7 @@
             }
         });
 
-        // Save student
+        // Save student - NOW WITH INVOICE GENERATION
         document.getElementById('saveStudentBtn')?.addEventListener('click', async () => {
             const name = document.getElementById('studentName').value.trim();
             const email = document.getElementById('studentEmail').value.trim();
@@ -470,13 +510,11 @@
             if (!name) { alert('Please enter student name'); return; }
             if (currentSelectedSubjects.length === 0) { alert('Please select at least one subject'); return; }
             
-            // Validate email format if provided
             if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
                 alert('Please enter a valid email address');
                 return;
             }
             
-            // Format phone number
             let phoneNumber = null;
             if (phoneRaw) {
                 const cleaned = phoneRaw.replace(/\D/g, '');
@@ -485,18 +523,26 @@
                 }
             }
             
+            const regMonth = new Date().toISOString().slice(0, 7);
+            
             try {
-                await addDoc(collection(db, 'students'), {
+                // Save student
+                const docRef = await addDoc(collection(db, 'students'), {
                     name,
                     email: email || null,
                     phone: phoneNumber,
                     birthday,
                     gender,
                     enrolledSubjects: currentSelectedSubjects,
-                    regMonth: new Date().toISOString().slice(0, 7),
+                    regMonth: regMonth,
                     createdAt: new Date()
                 });
-                alert('Student registered successfully');
+                
+                // Generate invoices for this student from registration month
+                await generateAllInvoicesForNewStudent(docRef.id, regMonth, currentSelectedSubjects);
+                
+                alert('Student registered successfully! Invoices have been generated.');
+                
                 document.getElementById('studentName').value = '';
                 document.getElementById('studentEmail').value = '';
                 document.getElementById('studentPhone').value = '';
@@ -538,7 +584,7 @@
             tbody.innerHTML = '';
             
             if (students.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:2rem; color:#8ba9c0;">No students yet. Register a student above.</td></td>';
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:2rem; color:#8ba9c0;">No students yet. Register a student above.用它</td>';
                 return;
             }
             
@@ -548,7 +594,6 @@
                     `<span class="subject-tag" style="background:#e8f4f8;">${s.subjectName} (${s.teacherName})</span>`
                 ).join('');
                 
-                // Contact column with email and phone
                 let contactHtml = '';
                 if (student.email) {
                     contactHtml += `<div class="contact-badge"><i class="fas fa-envelope"></i> ${student.email}</div>`;
@@ -587,7 +632,7 @@
             });
         }
 
-        // Search functionality (includes email and phone search)
+        // Search functionality
         document.getElementById('searchBtn')?.addEventListener('click', () => {
             const searchTerm = document.getElementById('searchStudentInput').value.toLowerCase();
             const filtered = allStudents.filter(student => {
@@ -692,13 +737,11 @@
             
             if (!name) { alert('Name required'); return; }
             
-            // Validate email if provided
             if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
                 alert('Please enter a valid email address');
                 return;
             }
             
-            // Format phone number
             let phoneNumber = null;
             if (phoneRaw) {
                 const cleaned = phoneRaw.replace(/\D/g, '');
