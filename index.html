@@ -123,6 +123,7 @@
             padding: 12px 8px;
             text-align: left;
             border-bottom: 1px solid #eef3f7;
+            vertical-align: top;
         }
         .schedule-table th {
             font-weight: 600;
@@ -133,9 +134,17 @@
             background: #e8f4f8;
             padding: 4px 12px;
             border-radius: 20px;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             font-weight: 500;
             display: inline-block;
+        }
+        .schedule-entry {
+            margin-bottom: 8px;
+            padding: 6px 0;
+            border-bottom: 1px dashed #eef3f7;
+        }
+        .schedule-entry:last-child {
+            border-bottom: none;
         }
         .empty-schedule {
             text-align: center;
@@ -199,8 +208,13 @@
                     <table class="schedule-table" id="scheduleTable">
                         <thead>
                             <tr>
-                                <th>Monday</th><th>Tuesday</th><th>Wednesday</th>
-                                <th>Thursday</th><th>Friday</th><th>Saturday</th><th>Sunday</th>
+                                <th width="14%">Monday</th>
+                                <th width="14%">Tuesday</th>
+                                <th width="14%">Wednesday</th>
+                                <th width="14%">Thursday</th>
+                                <th width="14%">Friday</th>
+                                <th width="15%">Saturday</th>
+                                <th width="15%">Sunday</th>
                             </tr>
                         </thead>
                         <tbody id="scheduleBody">
@@ -214,7 +228,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, doc } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCkfEdLDlHW7DvGxLpbDY7Us2nb3j7oTjQ",
@@ -289,7 +303,6 @@
                 const totalStudents = studentsSnap.size;
                 document.getElementById('totalStudents').innerText = totalStudents;
                 
-                // Calculate monthly revenue from paid invoices
                 const now = new Date();
                 const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
                 try {
@@ -312,69 +325,110 @@
             }
         }
 
+        // Cache for teacher names
+        let teacherNameCache = new Map();
+        
+        async function getTeacherName(teacherId) {
+            if (!teacherId) return 'No teacher assigned';
+            if (teacherNameCache.has(teacherId)) {
+                return teacherNameCache.get(teacherId);
+            }
+            try {
+                const teacherDoc = await getDoc(doc(db, 'teachers', teacherId));
+                const name = teacherDoc.exists() ? teacherDoc.data().name : 'Unknown Teacher';
+                teacherNameCache.set(teacherId, name);
+                return name;
+            } catch (e) {
+                console.warn("Error getting teacher name:", e);
+                return 'Error loading';
+            }
+        }
+
         async function loadSchedule() {
             const scheduleBody = document.getElementById('scheduleBody');
             try {
+                // Load all packages first
                 const packagesSnap = await getDocs(collection(db, 'packages'));
                 const packages = [];
                 packagesSnap.forEach(doc => {
                     packages.push({ id: doc.id, ...doc.data() });
                 });
                 
+                console.log("Loaded packages:", packages); // Debug log
+                
                 // Group by day of week
                 const scheduleMap = {
-                    'Monday': [], 'Tuesday': [], 'Wednesday': [],
-                    'Thursday': [], 'Friday': [], 'Saturday': [], 'Sunday': []
+                    'Monday': [],
+                    'Tuesday': [],
+                    'Wednesday': [],
+                    'Thursday': [],
+                    'Friday': [],
+                    'Saturday': [],
+                    'Sunday': []
                 };
                 
+                // For each package, get the teacher name
                 for (let pkg of packages) {
-                    let teacherName = 'Unknown';
+                    let teacherName = 'No teacher';
                     if (pkg.teacherId) {
-                        try {
-                            const teacherDoc = await getDoc(doc(db, 'teachers', pkg.teacherId));
-                            teacherName = teacherDoc.exists() ? teacherDoc.data().name : 'Unknown';
-                        } catch (e) {}
+                        teacherName = await getTeacherName(pkg.teacherId);
+                    } else if (pkg.teacherName) {
+                        teacherName = pkg.teacherName;
                     }
+                    
                     scheduleMap[pkg.dayOfWeek].push({
                         time: pkg.time,
                         subject: pkg.subjectName,
-                        teacher: teacherName
+                        teacher: teacherName,
+                        fee: pkg.fee
                     });
                 }
                 
+                // Sort each day by time
                 for (let day in scheduleMap) {
                     scheduleMap[day].sort((a, b) => a.time.localeCompare(b.time));
                 }
                 
-                const maxEntries = Math.max(...Object.values(scheduleMap).map(arr => arr.length), 1);
+                // Build the table - show multiple entries per cell
+                const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+                
+                // Check if there's any data
+                const hasAnyData = days.some(day => scheduleMap[day].length > 0);
+                
+                if (!hasAnyData) {
+                    scheduleBody.innerHTML = '<tr><td colspan="7" class="empty-schedule"><i class="fas fa-calendar-plus"></i> No classes scheduled. Go to Package Manage to create.</td></tr>';
+                    return;
+                }
+                
+                // Find max number of entries in any day
+                const maxEntries = Math.max(...days.map(day => scheduleMap[day].length), 1);
                 
                 let html = '';
                 for (let i = 0; i < maxEntries; i++) {
                     html += '<tr>';
-                    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
                     for (let day of days) {
                         const entry = scheduleMap[day][i];
                         if (entry) {
-                            html += `<td>
+                            html += `<td class="schedule-entry">
                                 <div class="day-badge">${entry.time}</div>
                                 <div><strong>${entry.subject}</strong></div>
-                                <div style="font-size:0.75rem; color:#6b8ba0;">${entry.teacher}</div>
+                                <div style="font-size:0.75rem; color:#2c7da0; margin-top:4px;">
+                                    <i class="fas fa-chalkboard-user"></i> ${entry.teacher}
+                                </div>
+                                <div style="font-size:0.7rem; color:#8ba9c0;">RM ${(entry.fee || 0).toFixed(2)}</div>
                             </td>`;
                         } else {
-                            html += '<td style="color:#c0d4e0;">—</td>';
+                            html += '<td style="color:#c0d4e0; vertical-align:middle;">—</td>';
                         }
                     }
                     html += '</tr>';
                 }
                 
-                if (packages.length === 0) {
-                    scheduleBody.innerHTML = '<tr><td colspan="7" class="empty-schedule"><i class="fas fa-calendar-plus"></i> No classes scheduled. Go to Package Manage to create.</td></tr>';
-                } else {
-                    scheduleBody.innerHTML = html;
-                }
+                scheduleBody.innerHTML = html;
+                
             } catch (e) {
-                console.warn("Error loading schedule:", e);
-                scheduleBody.innerHTML = '<tr><td colspan="7" class="empty-schedule"><i class="fas fa-exclamation-triangle"></i> Unable to load schedule. Please make sure Firebase collections exist and security rules are set to allow read/write.</td></tr>';
+                console.error("Error loading schedule:", e);
+                scheduleBody.innerHTML = `<tr><td colspan="7" class="empty-schedule"><i class="fas fa-exclamation-triangle"></i> Error loading schedule: ${e.message}. Please make sure Firebase collections exist.</td></tr>`;
             }
         }
 
