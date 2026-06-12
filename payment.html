@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Payment | Pusat Tuisyen Perintis Aspirasi</title>
+    <link rel="icon" type="image/png" href="icon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #f0f7fc; color: #1a2c3e; }
+        
+        .login-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, #1a5f7a 0%, #0d3b4f 100%);
+            display: flex; align-items: center; justify-content: center; z-index: 3000;
+        }
+        .login-card {
+            background: white; max-width: 420px; width: 90%; padding: 2.5rem;
+            border-radius: 32px; text-align: center;
+        }
+        .login-card img { width: 80px; margin-bottom: 1rem; }
+        .login-card input {
+            width: 100%; padding: 14px 18px; border: 2px solid #e0eef5;
+            border-radius: 48px; margin-bottom: 1.2rem; outline: none; font-size: 1rem;
+        }
+        .login-card input:focus { border-color: #2c7da0; }
+        .login-card button {
+            background: #2c7da0; color: white; border: none; padding: 12px 28px;
+            border-radius: 48px; font-weight: 600; cursor: pointer; width: 100%;
+        }
+        .login-error { color: #d9534f; margin-top: 0.8rem; }
+        
+        .app { display: none; min-height: 100vh; }
+        .sidebar {
+            position: fixed; left: 0; top: 0; width: 260px; height: 100%;
+            background: white; box-shadow: 2px 0 20px rgba(0,0,0,0.05);
+            z-index: 1000; transition: all 0.3s ease; display: flex; flex-direction: column;
+        }
+        .sidebar.collapsed { width: 80px; }
+        .sidebar.collapsed .sidebar-logo h2,
+        .sidebar.collapsed .nav-item span,
+        .sidebar.collapsed .sidebar-footer span { display: none; }
+        .sidebar.collapsed .nav-item { justify-content: center; }
+        .sidebar-toggle {
+            position: absolute; right: -12px; top: 20px; background: #2c7da0;
+            color: white; width: 24px; height: 24px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 0.7rem; z-index: 1001;
+        }
+        .sidebar-logo {
+            padding: 1.5rem; display: flex; align-items: center; gap: 12px;
+            border-bottom: 1px solid #e4edf2;
+        }
+        .sidebar-logo img { width: 40px; height: 40px; border-radius: 10px; }
+        .sidebar-logo h2 { font-size: 1rem; font-weight: 600; color: #1a5f7a; }
+        .nav-menu { flex: 1; padding: 1.5rem 1rem; }
+        .nav-item {
+            display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+            margin-bottom: 8px; border-radius: 12px; color: #4a6f8a;
+            cursor: pointer; transition: 0.2s; text-decoration: none;
+        }
+        .nav-item:hover { background: #e8f4f8; color: #2c7da0; }
+        .nav-item.active { background: #2c7da0; color: white; }
+        .sidebar-footer { padding: 1rem; border-top: 1px solid #e4edf2; }
+        
+        .main-content {
+            margin-left: 260px; transition: all 0.3s ease; padding: 1.5rem 2rem;
+        }
+        .main-content.expanded { margin-left: 80px; }
+        
+        /* Payment Steps */
+        .step-container {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+        .step {
+            flex: 1;
+            background: white;
+            border-radius: 20px;
+            padding: 1rem;
+            text-align: center;
+            border: 2px solid #e4edf2;
+            opacity: 0.6;
+        }
+        .step.active {
+            opacity: 1;
+            border-color: #2c7da0;
+            background: #f0f9ff;
+        }
+        .step-number {
+            width: 32px;
+            height: 32px;
+            background: #cde5ef;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .step.active .step-number {
+            background: #2c7da0;
+            color: white;
+        }
+        
+        .payment-panel {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        .payment-panel.active-panel {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .card {
+            background: white;
+            border-radius: 24px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid #e4edf2;
+        }
+        .card h3 {
+            color: #1a5f7a;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .invoice-preview {
+            background: #f8fbfd;
+            border-radius: 20px;
+            padding: 1rem;
+        }
+        .invoice-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e4edf2;
+        }
+        .invoice-total {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #1a5f7a;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 2px solid #2c7da0;
+        }
+        
+        .payment-methods {
+            display: flex;
+            gap: 1rem;
+            margin: 1rem 0;
+            flex-wrap: wrap;
+        }
+        .payment-method {
+            flex: 1;
+            border: 2px solid #e4edf2;
+            border-radius: 20px;
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .payment-method.selected {
+            border-color: #2c7da0;
+            background: #f0f9ff;
+        }
+        .payment-method img {
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
+            margin-bottom: 8px;
+        }
+        
+        .extra-fee-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 10px;
+            background: #f8fbfd;
+            border-radius: 16px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        .extra-fee-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+        .extra-fee-item input[type="number"] {
+            width: 120px;
+            padding: 8px;
+            border-radius: 30px;
+            border: 1px solid #cde5ef;
+        }
+        
+        .btn {
+            background: #2c7da0;
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 48px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 1rem;
+        }
+        .btn:hover {
+            background: #1a5f7a;
+            transform: translateY(-1px);
+        }
+        .btn-secondary {
+            background: #e8f4f8;
+            color: #2c7da0;
+            border: 1px solid #cde5ef;
+        }
+        
+        /* Invoice Preview for Step 1 */
+        .subjects-list {
+            margin: 1rem 0;
+        }
+        .subject-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+        }
+        
+        /* Final Invoice styling for download */
+        .final-invoice {
+            background: white;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+            border-radius: 24px;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar { width: 80px; }
+            .main-content { margin-left: 80px; padding: 1rem; }
+            .payment-methods { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-overlay" id="loginOverlay">
+        <div class="login-card">
+            <img src="icon.png" alt="Logo">
+            <h3>Payment Portal</h3>
+            <input type="password" id="loginPassword" placeholder="Enter Password">
+            <button id="loginBtn">Access Portal</button>
+            <div class="login-error" id="loginError"></div>
+        </div>
+    </div>
+
+    <div class="app" id="mainApp">
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-toggle" id="sidebarToggle"><i class="fas fa-chevron-left"></i></div>
+            <div class="sidebar-logo"><img src="icon.png" alt="Logo"><h2>Perintis Aspirasi</h2></div>
+            <div class="nav-menu">
+                <a href="index.html" class="nav-item"><i class="fas fa-home"></i><span>Home</span></a>
+                <a href="teachermanage.html" class="nav-item"><i class="fas fa-chalkboard-user"></i><span>Teacher Manage</span></a>
+                <a href="studentmanage.html" class="nav-item"><i class="fas fa-user-graduate"></i><span>Student Manage</span></a>
+                <a href="package.html" class="nav-item"><i class="fas fa-calendar-alt"></i><span>Package Manage</span></a>
+                <a href="invoice.html" class="nav-item"><i class="fas fa-file-invoice"></i><span>Invoice</span></a>
+            </div>
+            <div class="sidebar-footer"><div class="nav-item" id="logoutBtn"><i class="fas fa-sign-out-alt"></i><span>Log Out</span></div></div>
+        </div>
+
+        <div class="main-content" id="mainContent">
+            <!-- Step 1: Review & Extras -->
+            <div id="step1Panel" class="payment-panel active-panel">
+                <div class="step-container">
+                    <div class="step active"><div class="step-number">1</div><div>Review & Extras</div></div>
+                    <div class="step"><div class="step-number">2</div><div>Payment Method</div></div>
+                    <div class="step"><div class="step-number">3</div><div>Invoice</div></div>
+                </div>
+                
+                <div class="card">
+                    <h3><i class="fas fa-receipt"></i> Invoice Preview</h3>
+                    <div id="previewContent">
+                        <div class="invoice-preview">
+                            <div id="previewSubjects"></div>
+                            <div class="invoice-total" id="previewTotal">Total: RM 0.00</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3><i class="fas fa-plus-circle"></i> Additional Charges / Discounts</h3>
+                    <div class="extra-fee-item">
+                        <input type="checkbox" id="regFeeCheck">
+                        <label>Registration Fee</label>
+                        <input type="number" id="regFeeAmount" placeholder="RM" value="0" step="0.01" disabled style="width:100px;">
+                    </div>
+                    <div class="extra-fee-item">
+                        <input type="checkbox" id="photoFeeCheck">
+                        <label>Photocopy Fee</label>
+                        <input type="number" id="photoFeeAmount" placeholder="RM" value="0" step="0.01" disabled style="width:100px;">
+                    </div>
+                    <div class="extra-fee-item">
+                        <input type="checkbox" id="discountCheck">
+                        <label>Discount / No Class</label>
+                        <input type="number" id="discountAmount" placeholder="RM (negative)" value="0" step="0.01" disabled style="width:100px;">
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                    <button id="cancelBtn" class="btn-secondary">Cancel</button>
+                    <button id="nextToPaymentBtn" class="btn">Next: Payment Method →</button>
+                </div>
+            </div>
+            
+            <!-- Step 2: Payment Method -->
+            <div id="step2Panel" class="payment-panel">
+                <div class="step-container">
+                    <div class="step"><div class="step-number">1</div><div>Review & Extras</div></div>
+                    <div class="step active"><div class="step-number">2</div><div>Payment Method</div></div>
+                    <div class="step"><div class="step-number">3</div><div>Invoice</div></div>
+                </div>
+                
+                <div class="card">
+                    <h3><i class="fas fa-credit-card"></i> Select Payment Method</h3>
+                    <div class="payment-methods">
+                        <div class="payment-method" data-method="cash">
+                            <img src="/icons/cash.png" alt="Cash" onerror="this.src='https://via.placeholder.com/50?text=CASH'">
+                            <div>Cash</div>
+                        </div>
+                        <div class="payment-method" data-method="duitnow">
+                            <img src="/icons/duitnow.png" alt="DuitNow" onerror="this.src='https://via.placeholder.com/50?text=DUITNOW'">
+                            <div>DuitNow</div>
+                        </div>
+                    </div>
+                    <div id="selectedMethod" style="margin-top: 1rem; color: #2c7da0;"></div>
+                </div>
+                
+                <div style="display: flex; gap: 1rem; justify-content: space-between;">
+                    <button id="backToReviewBtn" class="btn-secondary">← Back</button>
+                    <button id="confirmPayBtn" class="btn">Confirm & Pay →</button>
+                </div>
+            </div>
+            
+            <!-- Step 3: Final Invoice & Download -->
+            <div id="step3Panel" class="payment-panel">
+                <div class="step-container">
+                    <div class="step"><div class="step-number">1</div><div>Review & Extras</div></div>
+                    <div class="step"><div class="step-number">2</div><div>Payment Method</div></div>
+                    <div class="step active"><div class="step-number">3</div><div>Invoice</div></div>
+                </div>
+                
+                <div class="card" id="invoiceContainer">
+                    <div id="finalInvoice" class="final-invoice">
+                        <!-- Invoice will be rendered here -->
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1rem;">
+                    <button id="downloadInvoiceBtn" class="btn"><i class="fas fa-download"></i> Download as PNG</button>
+                    <button id="backToHomeBtn" class="btn-secondary">Back to Home</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, updateDoc, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCkfEdLDlHW7DvGxLpbDY7Us2nb3j7oTjQ",
+            authDomain: "perintisaspirasi.firebaseapp.com",
+            projectId: "perintisaspirasi",
+            storageBucket: "perintisaspirasi.firebasestorage.app",
+            messagingSenderId: "293094185092",
+            appId: "1:293094185092:web:ac2b5712db54480c3ccad1",
+            measurementId: "G-9ZSWKEZJVT"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Auth
+        const loginOverlay = document.getElementById('loginOverlay');
+        const mainApp = document.getElementById('mainApp');
+        const loginPassword = document.getElementById('loginPassword');
+        const loginBtn = document.getElementById('loginBtn');
+        const loginError = document.getElementById('loginError');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('mainContent');
+
+        function checkLogin() {
+            if (sessionStorage.getItem('tutor_auth') === '0919') {
+                loginOverlay.style.display = 'none';
+                mainApp.style.display = 'block';
+                loadPaymentData();
+            } else {
+                loginOverlay.style.display = 'flex';
+                mainApp.style.display = 'none';
+            }
+        }
+
+        loginBtn.addEventListener('click', () => {
+            if (loginPassword.value === '0919') {
+                sessionStorage.setItem('tutor_auth', '0919');
+                checkLogin();
+            } else {
+                loginError.innerText = 'Incorrect password';
+            }
+        });
+
+        logoutBtn?.addEventListener('click', () => {
+            sessionStorage.removeItem('tutor_auth');
+            checkLogin();
+        });
+
+        let isCollapsed = false;
+        sidebarToggle.addEventListener('click', () => {
+            isCollapsed = !isCollapsed;
+            sidebar.classList.toggle('collapsed', isCollapsed);
+            mainContent.classList.toggle('expanded', isCollapsed);
+            sidebarToggle.innerHTML = isCollapsed ? '<i class="fas fa-chevron-right"></i>' : '<i class="fas fa-chevron-left"></i>';
+        });
+
+        // Payment data
+        let selectedInvoiceIds = [];
+        let invoicesData = [];
+        let studentsMap = new Map();
+        let packagesMap = new Map();
+        let baseTotal = 0;
+        let selectedPaymentMethod = null;
+        
+        // Extra fees
+        let regFee = 0, photoFee = 0, discount = 0;
+        
+        async function loadPaymentData() {
+            const storedIds = sessionStorage.getItem('selectedInvoices');
+            if (!storedIds) {
+                alert('No invoices selected. Redirecting to Invoice page.');
+                window.location.href = 'invoice.html';
+                return;
+            }
+            
+            selectedInvoiceIds = JSON.parse(storedIds);
+            
+            // Load students
+            const studentsSnap = await getDocs(collection(db, 'students'));
+            studentsSnap.forEach(doc => {
+                studentsMap.set(doc.id, doc.data());
+            });
+            
+            // Load packages for subject names
+            const packagesSnap = await getDocs(collection(db, 'packages'));
+            packagesSnap.forEach(doc => {
+                packagesMap.set(doc.id, doc.data());
+            });
+            
+            // Load selected invoices
+            for (const invId of selectedInvoiceIds) {
+                const invDoc = await getDoc(doc(db, 'invoices', invId));
+                if (invDoc.exists()) {
+                    const inv = { id: invDoc.id, ...invDoc.data() };
+                    // Get student name
+                    const student = studentsMap.get(inv.studentId);
+                    inv.studentName = student?.name || 'Unknown';
+                    
+                    // Get package/subject details
+                    const subjects = inv.subjects || [];
+                    inv.subjectsWithDetails = subjects.map(s => ({
+                        ...s,
+                        teacherName: s.teacherName || 'Unknown'
+                    }));
+                    
+                    invoicesData.push(inv);
+                    baseTotal += inv.totalAmount || 0;
+                }
+            }
+            
+            if (invoicesData.length === 0) {
+                alert('No valid invoices found.');
+                window.location.href = 'invoice.html';
+                return;
+            }
+            
+            renderPreview();
+        }
+        
+        function renderPreview() {
+            const container = document.getElementById('previewSubjects');
+            let html = '';
+            invoicesData.forEach(inv => {
+                html += `<div style="margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px dashed #cde5ef;">
+                            <strong style="color:#1a5f7a;">${inv.studentName} - ${inv.monthKey}</strong>
+                            <div class="subjects-list">`;
+                (inv.subjectsWithDetails || []).forEach(sub => {
+                    html += `<div class="subject-row">
+                                <span>${sub.subjectName} (${sub.teacherName})</span>
+                                <span>RM ${(sub.fee || 0).toFixed(2)}</span>
+                            </div>`;
+                });
+                html += `</div><div style="text-align:right; font-weight:600;">Subtotal: RM ${(inv.totalAmount || 0).toFixed(2)}</div></div>`;
+            });
+            html += `<div class="invoice-total" style="margin-top:0;">Base Total: RM ${baseTotal.toFixed(2)}</div>`;
+            container.innerHTML = html;
+            updateTotalWithExtras();
+        }
+        
+        function updateTotalWithExtras() {
+            const reg = parseFloat(document.getElementById('regFeeAmount').value) || 0;
+            const photo = parseFloat(document.getElementById('photoFeeAmount').value) || 0;
+            const disc = parseFloat(document.getElementById('discountAmount').value) || 0;
+            const extrasTotal = reg + photo + disc;
+            const grandTotal = baseTotal + extrasTotal;
+            document.getElementById('previewTotal').innerHTML = `Base Total: RM ${baseTotal.toFixed(2)}<br>
+                                                                  Extras: RM ${extrasTotal.toFixed(2)}<br>
+                                                                  <strong>Grand Total: RM ${grandTotal.toFixed(2)}</strong>`;
+        }
+        
+        // Checkbox handlers
+        document.getElementById('regFeeCheck').addEventListener('change', (e) => {
+            const input = document.getElementById('regFeeAmount');
+            input.disabled = !e.target.checked;
+            if (!e.target.checked) input.value = '0';
+            updateTotalWithExtras();
+        });
+        document.getElementById('photoFeeCheck').addEventListener('change', (e) => {
+            const input = document.getElementById('photoFeeAmount');
+            input.disabled = !e.target.checked;
+            if (!e.target.checked) input.value = '0';
+            updateTotalWithExtras();
+        });
+        document.getElementById('discountCheck').addEventListener('change', (e) => {
+            const input = document.getElementById('discountAmount');
+            input.disabled = !e.target.checked;
+            if (!e.target.checked) input.value = '0';
+            updateTotalWithExtras();
+        });
+        
+        ['regFeeAmount', 'photoFeeAmount', 'discountAmount'].forEach(id => {
+            document.getElementById(id).addEventListener('input', () => updateTotalWithExtras());
+        });
+        
+        // Navigation
+        function showPanel(panelId) {
+            document.querySelectorAll('.payment-panel').forEach(p => p.classList.remove('active-panel'));
+            document.getElementById(panelId).classList.add('active-panel');
+        }
+        
+        document.getElementById('nextToPaymentBtn').addEventListener('click', () => {
+            showPanel('step2Panel');
+        });
+        
+        document.getElementById('backToReviewBtn').addEventListener('click', () => {
+            showPanel('step1Panel');
+        });
+        
+        document.getElementById('cancelBtn').addEventListener('click', () => {
+            window.location.href = 'invoice.html';
+        });
+        
+        // Payment method selection
+        document.querySelectorAll('.payment-method').forEach(el => {
+            el.addEventListener('click', () => {
+                document.querySelectorAll('.payment-method').forEach(m => m.classList.remove('selected'));
+                el.classList.add('selected');
+                selectedPaymentMethod = el.dataset.method;
+                document.getElementById('selectedMethod').innerHTML = `Selected: ${selectedPaymentMethod.toUpperCase()}`;
+            });
+        });
+        
+        // Confirm payment and generate final invoice
+        document.getElementById('confirmPayBtn').addEventListener('click', async () => {
+            if (!selectedPaymentMethod) {
+                alert('Please select a payment method');
+                return;
+            }
+            
+            // Calculate extras
+            const reg = document.getElementById('regFeeCheck').checked ? (parseFloat(document.getElementById('regFeeAmount').value) || 0) : 0;
+            const photo = document.getElementById('photoFeeCheck').checked ? (parseFloat(document.getElementById('photoFeeAmount').value) || 0) : 0;
+            const disc = document.getElementById('discountCheck').checked ? (parseFloat(document.getElementById('discountAmount').value) || 0) : 0;
+            const extrasTotal = reg + photo + disc;
+            const grandTotal = baseTotal + extrasTotal;
+            
+            // Generate invoice number
+            const invoiceNumber = `INV-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+            const today = new Date();
+            const formattedDate = today.toLocaleDateString('en-MY');
+            
+            // Build final invoice HTML
+            let subjectsHtml = '';
+            invoicesData.forEach(inv => {
+                (inv.subjectsWithDetails || []).forEach(sub => {
+                    subjectsHtml += `
+                        <tr>
+                            <td style="padding: 8px 0;">${sub.subjectName} (${sub.teacherName}) - ${inv.monthKey}</td>
+                            <td style="padding: 8px 0; text-align: right;">RM ${(sub.fee || 0).toFixed(2)}</td>
+                        </tr>
+                    `;
+                });
+            });
+            
+            let extrasHtml = '';
+            if (reg !== 0) extrasHtml += `<tr><td>Registration Fee</td><td style="text-align: right;">RM ${reg.toFixed(2)}</td></tr>`;
+            if (photo !== 0) extrasHtml += `<tr><td>Photocopy Fee</td><td style="text-align: right;">RM ${photo.toFixed(2)}</td></tr>`;
+            if (disc !== 0) extrasHtml += `<tr><td>Discount / Adjustment</td><td style="text-align: right;">RM ${disc.toFixed(2)}</td></tr>`;
+            
+            const invoiceHtml = `
+                <div style="text-align: center; margin-bottom: 1.5rem;">
+                    <img src="icon.png" alt="Logo" style="width: 60px; margin-bottom: 10px;" onerror="this.style.display='none'">
+                    <h2 style="color: #1a5f7a;">Pusat Tuisyen Perintis Aspirasi</h2>
+                    <p style="font-size: 0.8rem; color: #6b8ba0;">No. 21, Lorong 1, Taman Perlis, Kangar, Malaysia</p>
+                    <p style="font-size: 0.8rem; color: #6b8ba0;">TEL/FAX: 012-520 0919</p>
+                </div>
+                <div style="border-top: 2px solid #2c7da0; border-bottom: 2px solid #2c7da0; padding: 10px 0; margin-bottom: 1rem;">
+                    <h3 style="text-align: center;">INVOICE</h3>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
+                    <div><strong>Invoice No:</strong> ${invoiceNumber}</div>
+                    <div><strong>Date:</strong> ${formattedDate}</div>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <div><strong>Student:</strong> ${invoicesData.map(i => i.studentName).join(', ')}</div>
+                    <div><strong>Payment Method:</strong> ${selectedPaymentMethod.toUpperCase()}</div>
+                </div>
+                <table style="width: 100%; border-collapse: collapse; margin: 1rem 0;">
+                    <thead>
+                        <tr><th style="border-bottom: 1px solid #cde5ef; padding: 8px 0; text-align: left;">Description</th>
+                        <th style="border-bottom: 1px solid #cde5ef; padding: 8px 0; text-align: right;">Amount (RM)</th></tr>
+                    </thead>
+                    <tbody>
+                        ${subjectsHtml}
+                        ${extrasHtml}
+                        <tr style="border-top: 2px solid #2c7da0; font-weight: 700;">
+                            <td style="padding: 12px 0;">TOTAL</td>
+                            <td style="padding: 12px 0; text-align: right;">RM ${grandTotal.toFixed(2)}</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div style="text-align: center; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #cde5ef; font-size: 0.75rem; color: #8ba9c0;">
+                    Thank you for your payment!
+                </div>
+            `;
+            
+            document.getElementById('finalInvoice').innerHTML = invoiceHtml;
+            
+            // Mark invoices as paid in Firebase
+            for (const invId of selectedInvoiceIds) {
+                await updateDoc(doc(db, 'invoices', invId), {
+                    paid: true,
+                    paidAt: new Date(),
+                    paymentMethod: selectedPaymentMethod,
+                    invoiceNumber: invoiceNumber,
+                    extras: { registrationFee: reg, photocopyFee: photo, discount: disc },
+                    grandTotal: grandTotal
+                });
+            }
+            
+            // Store for download
+            sessionStorage.setItem('lastInvoice', invoiceHtml);
+            
+            showPanel('step3Panel');
+        });
+        
+        // Download invoice as PNG
+        document.getElementById('downloadInvoiceBtn').addEventListener('click', async () => {
+            const invoiceElement = document.getElementById('finalInvoice');
+            if (!invoiceElement) return;
+            
+            try {
+                const canvas = await html2canvas(invoiceElement, {
+                    scale: 2,
+                    backgroundColor: '#ffffff',
+                    logging: false
+                });
+                const link = document.createElement('a');
+                const invoiceNumber = document.querySelector('#finalInvoice div:first-child + div h3') ? 
+                    document.querySelector('#finalInvoice div:first-child + div h3')?.innerText : 'INVOICE';
+                link.download = `invoice_${Date.now()}.png`;
+                link.href = canvas.toDataURL();
+                link.click();
+            } catch (err) {
+                console.error('Download error:', err);
+                alert('Failed to download invoice. Please try again.');
+            }
+        });
+        
+        document.getElementById('backToHomeBtn').addEventListener('click', () => {
+            window.location.href = 'index.html';
+        });
+        
+        checkLogin();
+    </script>
+</body>
+</html>
