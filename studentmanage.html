@@ -124,7 +124,7 @@
         .action-icons i { margin: 0 6px; cursor: pointer; font-size: 1rem; color: #6b8ba0; }
         .action-icons i:hover { color: #2c7da0; }
         .birthday-badge { background: #ffe8e0; padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; display: inline-block; }
-        .email-badge { background: #e8f4f8; padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; display: inline-block; margin-left: 5px; }
+        .contact-badge { background: #e8f4f8; padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; display: inline-block; margin: 2px; }
         
         .modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -132,7 +132,7 @@
         }
         .modal-content {
             background: white; border-radius: 28px; padding: 1.8rem;
-            max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto;
+            max-width: 650px; width: 90%; max-height: 80vh; overflow-y: auto;
         }
         .modal-header { display: flex; justify-content: space-between; margin-bottom: 1rem; }
         .close-modal { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #999; }
@@ -143,10 +143,28 @@
             margin-top: 5px;
         }
         
+        .phone-prefix {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .phone-prefix span {
+            background: #e8f4f8;
+            padding: 12px 16px;
+            border-radius: 30px;
+            font-weight: 600;
+            color: #1a5f7a;
+            white-space: nowrap;
+        }
+        .phone-prefix input {
+            flex: 1;
+        }
+        
         @media (max-width: 768px) {
             .sidebar { width: 80px; }
             .main-content { margin-left: 80px; }
             .form-row { flex-direction: column; }
+            .phone-prefix { flex-wrap: wrap; }
         }
     </style>
 </head>
@@ -179,7 +197,7 @@
             <div class="search-section">
                 <div class="search-box">
                     <i class="fas fa-search" style="color:#8ba9c0;"></i>
-                    <input type="text" id="searchStudentInput" placeholder="Search by student name, email or subject...">
+                    <input type="text" id="searchStudentInput" placeholder="Search by name, email, phone or subject...">
                     <button id="searchBtn" class="secondary"><i class="fas fa-search"></i> Search</button>
                     <button id="resetSearchBtn" class="secondary"><i class="fas fa-undo"></i> Reset</button>
                 </div>
@@ -192,6 +210,14 @@
                     <div class="form-group"><label>Email (Optional)</label><input type="email" id="studentEmail" placeholder="student@example.com"></div>
                 </div>
                 <div class="form-row">
+                    <div class="form-group">
+                        <label>Phone Number (Malaysia)</label>
+                        <div class="phone-prefix">
+                            <span>+60</span>
+                            <input type="tel" id="studentPhone" placeholder="12 345 6789" maxlength="11">
+                        </div>
+                        <div class="subject-hint"><i class="fas fa-info-circle"></i> Enter numbers only (e.g., 123456789)</div>
+                    </div>
                     <div class="form-group"><label>Birthday</label><input type="date" id="studentBirthday"></div>
                     <div class="form-group"><label>Gender</label>
                         <select id="studentGender"><option value="Male">Male</option><option value="Female">Female</option></select>
@@ -238,6 +264,13 @@
             <div class="modal-header"><h3>Edit Student</h3><button class="close-modal">&times;</button></div>
             <div class="form-group"><label>Name *</label><input type="text" id="editStudentName"></div>
             <div class="form-group"><label>Email</label><input type="email" id="editStudentEmail" placeholder="student@example.com"></div>
+            <div class="form-group">
+                <label>Phone Number</label>
+                <div class="phone-prefix">
+                    <span>+60</span>
+                    <input type="tel" id="editStudentPhone" placeholder="12 345 6789" maxlength="11">
+                </div>
+            </div>
             <div class="form-group"><label>Birthday</label><input type="date" id="editStudentBirthday"></div>
             <div class="form-group"><label>Gender</label><select id="editStudentGender"><option>Male</option><option>Female</option></select></div>
             <div class="form-group"><label>Enrolled Subjects</label><div id="editSubjectsContainer"></div></div>
@@ -362,6 +395,15 @@
             });
         }
 
+        // Format phone number for display
+        function formatPhoneNumber(phoneNumber) {
+            if (!phoneNumber) return null;
+            // Remove any non-digit characters
+            const cleaned = phoneNumber.toString().replace(/\D/g, '');
+            if (cleaned.length === 0) return null;
+            return cleaned;
+        }
+
         // Selected subjects for new student
         let currentSelectedSubjects = [];
 
@@ -421,6 +463,7 @@
         document.getElementById('saveStudentBtn')?.addEventListener('click', async () => {
             const name = document.getElementById('studentName').value.trim();
             const email = document.getElementById('studentEmail').value.trim();
+            const phoneRaw = document.getElementById('studentPhone').value.trim();
             const birthday = document.getElementById('studentBirthday').value;
             const gender = document.getElementById('studentGender').value;
             
@@ -433,10 +476,20 @@
                 return;
             }
             
+            // Format phone number
+            let phoneNumber = null;
+            if (phoneRaw) {
+                const cleaned = phoneRaw.replace(/\D/g, '');
+                if (cleaned.length > 0) {
+                    phoneNumber = cleaned;
+                }
+            }
+            
             try {
                 await addDoc(collection(db, 'students'), {
                     name,
                     email: email || null,
+                    phone: phoneNumber,
                     birthday,
                     gender,
                     enrolledSubjects: currentSelectedSubjects,
@@ -446,6 +499,7 @@
                 alert('Student registered successfully');
                 document.getElementById('studentName').value = '';
                 document.getElementById('studentEmail').value = '';
+                document.getElementById('studentPhone').value = '';
                 document.getElementById('studentBirthday').value = '';
                 currentSelectedSubjects = [];
                 renderSelectedSubjects();
@@ -484,7 +538,7 @@
             tbody.innerHTML = '';
             
             if (students.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:2rem; color:#8ba9c0;">No students yet. Register a student above.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:2rem; color:#8ba9c0;">No students yet. Register a student above.</td></td>';
                 return;
             }
             
@@ -494,12 +548,16 @@
                     `<span class="subject-tag" style="background:#e8f4f8;">${s.subjectName} (${s.teacherName})</span>`
                 ).join('');
                 
-                // Contact column with email
+                // Contact column with email and phone
                 let contactHtml = '';
                 if (student.email) {
-                    contactHtml = `<span class="email-badge"><i class="fas fa-envelope"></i> ${student.email}</span>`;
-                } else {
-                    contactHtml = '<span style="color:#8ba9c0; font-size:0.75rem;">No email</span>';
+                    contactHtml += `<div class="contact-badge"><i class="fas fa-envelope"></i> ${student.email}</div>`;
+                }
+                if (student.phone) {
+                    contactHtml += `<div class="contact-badge"><i class="fas fa-phone"></i> +60 ${student.phone}</div>`;
+                }
+                if (!student.email && !student.phone) {
+                    contactHtml = '<span style="color:#8ba9c0; font-size:0.75rem;">No contact</span>';
                 }
                 
                 const row = tbody.insertRow();
@@ -529,14 +587,15 @@
             });
         }
 
-        // Search functionality (includes email search)
+        // Search functionality (includes email and phone search)
         document.getElementById('searchBtn')?.addEventListener('click', () => {
             const searchTerm = document.getElementById('searchStudentInput').value.toLowerCase();
             const filtered = allStudents.filter(student => {
                 const matchesName = student.name?.toLowerCase().includes(searchTerm);
                 const matchesEmail = student.email?.toLowerCase().includes(searchTerm);
+                const matchesPhone = student.phone?.includes(searchTerm);
                 const matchesSubject = (student.enrolledSubjects || []).some(s => s.subjectName.toLowerCase().includes(searchTerm));
-                return matchesName || matchesEmail || matchesSubject;
+                return matchesName || matchesEmail || matchesPhone || matchesSubject;
             });
             renderStudentTable(filtered);
         });
@@ -556,6 +615,7 @@
             currentEditId = studentId;
             document.getElementById('editStudentName').value = student.name || '';
             document.getElementById('editStudentEmail').value = student.email || '';
+            document.getElementById('editStudentPhone').value = student.phone || '';
             document.getElementById('editStudentBirthday').value = student.birthday || '';
             document.getElementById('editStudentGender').value = student.gender || 'Male';
             
@@ -626,6 +686,7 @@
         document.getElementById('updateStudentBtn')?.addEventListener('click', async () => {
             const name = document.getElementById('editStudentName').value.trim();
             const email = document.getElementById('editStudentEmail').value.trim();
+            const phoneRaw = document.getElementById('editStudentPhone').value.trim();
             const birthday = document.getElementById('editStudentBirthday').value;
             const gender = document.getElementById('editStudentGender').value;
             
@@ -637,10 +698,20 @@
                 return;
             }
             
+            // Format phone number
+            let phoneNumber = null;
+            if (phoneRaw) {
+                const cleaned = phoneRaw.replace(/\D/g, '');
+                if (cleaned.length > 0) {
+                    phoneNumber = cleaned;
+                }
+            }
+            
             try {
                 await updateDoc(doc(db, 'students', currentEditId), {
                     name, 
                     email: email || null,
+                    phone: phoneNumber,
                     birthday, 
                     gender,
                     enrolledSubjects: editSelectedSubjects
