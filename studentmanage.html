@@ -11,7 +11,6 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Inter', sans-serif; background: #f0f7fc; color: #1a2c3e; }
         
-        /* Login Overlay */
         .login-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: linear-gradient(135deg, #1a5f7a 0%, #0d3b4f 100%);
@@ -33,7 +32,6 @@
         }
         .login-error { color: #d9534f; margin-top: 0.8rem; }
         
-        /* App Layout */
         .app { display: none; min-height: 100vh; }
         .sidebar {
             position: fixed; left: 0; top: 0; width: 260px; height: 100%;
@@ -67,13 +65,11 @@
         .nav-item.active { background: #2c7da0; color: white; }
         .sidebar-footer { padding: 1rem; border-top: 1px solid #e4edf2; }
         
-        /* Main Content */
         .main-content {
             margin-left: 260px; transition: all 0.3s ease; padding: 1.5rem 2rem;
         }
         .main-content.expanded { margin-left: 80px; }
         
-        /* Search Section */
         .search-section {
             background: white; border-radius: 24px; padding: 1.5rem;
             margin-bottom: 1.5rem; border: 1px solid #e4edf2;
@@ -85,7 +81,6 @@
         }
         .search-box input:focus { border-color: #2c7da0; }
         
-        /* Cards */
         .card {
             background: white; border-radius: 24px; padding: 1.5rem;
             margin-bottom: 1.5rem; border: 1px solid #e4edf2;
@@ -98,19 +93,18 @@
             text-transform: uppercase; color: #6b8ba0; margin-bottom: 5px;
         }
         input, select {
-            width: 100%; padding: 10px 14px; border: 2px solid #e0eef5;
+            width: 100%; padding: 12px 16px; border: 2px solid #e0eef5;
             border-radius: 30px; font-family: inherit; font-size: 0.9rem; outline: none;
+            background: white;
         }
         input:focus, select:focus { border-color: #2c7da0; }
         button {
-            background: #2c7da0; color: white; border: none; padding: 10px 24px;
+            background: #2c7da0; color: white; border: none; padding: 12px 24px;
             border-radius: 40px; font-weight: 600; cursor: pointer; transition: 0.2s;
         }
         button:hover { background: #1a5f7a; transform: translateY(-1px); }
         button.secondary { background: #e8f4f8; color: #2c7da0; border: 1px solid #cde5ef; }
-        button.danger { background: #fee; color: #c33; }
         
-        /* Selected Subjects */
         .selected-subjects {
             background: #f8fbfd; border-radius: 16px; padding: 1rem;
             margin-top: 0.5rem;
@@ -123,7 +117,6 @@
             margin-left: 8px; cursor: pointer; color: #c33;
         }
         
-        /* Student Table */
         .table-wrapper { overflow-x: auto; border-radius: 16px; }
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 14px 10px; text-align: left; border-bottom: 1px solid #eef3f7; }
@@ -132,7 +125,6 @@
         .action-icons i:hover { color: #2c7da0; }
         .birthday-badge { background: #ffe8e0; padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; display: inline-block; }
         
-        /* Modal */
         .modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center;
@@ -143,6 +135,12 @@
         }
         .modal-header { display: flex; justify-content: space-between; margin-bottom: 1rem; }
         .close-modal { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #999; }
+        
+        .subject-hint {
+            font-size: 0.7rem;
+            color: #8ba9c0;
+            margin-top: 5px;
+        }
         
         @media (max-width: 768px) {
             .sidebar { width: 80px; }
@@ -177,17 +175,15 @@
         </div>
 
         <div class="main-content" id="mainContent">
-            <!-- Search Section -->
             <div class="search-section">
                 <div class="search-box">
                     <i class="fas fa-search" style="color:#8ba9c0;"></i>
                     <input type="text" id="searchStudentInput" placeholder="Search by student name or subject...">
-                    <button id="searchBtn" class="secondary">Search</button>
-                    <button id="resetSearchBtn" class="secondary">Reset</button>
+                    <button id="searchBtn" class="secondary"><i class="fas fa-search"></i> Search</button>
+                    <button id="resetSearchBtn" class="secondary"><i class="fas fa-undo"></i> Reset</button>
                 </div>
             </div>
 
-            <!-- Register New Student -->
             <div class="card">
                 <h3><i class="fas fa-user-plus"></i> Register New Student</h3>
                 <div class="form-row">
@@ -198,18 +194,20 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Select Subjects (from available packages)</label>
-                    <select id="subjectSelect"></select>
-                    <button type="button" id="addSubjectBtn" class="secondary" style="margin-top: 8px;">+ Add Subject</button>
+                    <label><i class="fas fa-book"></i> Select Subjects (from available packages)</label>
+                    <select id="subjectSelect">
+                        <option value="">-- Loading subjects --</option>
+                    </select>
+                    <button type="button" id="addSubjectBtn" class="secondary" style="margin-top: 8px;"><i class="fas fa-plus"></i> Add Subject</button>
+                    <div class="subject-hint"><i class="fas fa-info-circle"></i> Subjects come from Package Manage. Create packages first.</div>
                 </div>
                 <div class="selected-subjects" id="selectedSubjectsList">
                     <label>Enrolled Subjects:</label>
                     <div id="subjectsTags"></div>
                 </div>
-                <button id="saveStudentBtn" style="margin-top: 1rem;">Register Student</button>
+                <button id="saveStudentBtn" style="margin-top: 1rem;"><i class="fas fa-save"></i> Register Student</button>
             </div>
 
-            <!-- Student List -->
             <div class="card">
                 <h3><i class="fas fa-users"></i> Student Directory</h3>
                 <div class="table-wrapper">
@@ -222,7 +220,6 @@
         </div>
     </div>
 
-    <!-- Edit Modal -->
     <div id="editModal" class="modal">
         <div class="modal-content">
             <div class="modal-header"><h3>Edit Student</h3><button class="close-modal">&times;</button></div>
@@ -236,7 +233,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCkfEdLDlHW7DvGxLpbDY7Us2nb3j7oTjQ",
@@ -297,7 +294,7 @@
 
         // Data stores
         let allStudents = [];
-        let allPackages = [];  // Packages from Firebase (subjects with teacher info)
+        let allPackages = [];
         let teacherCache = {};
 
         async function loadPackages() {
@@ -308,24 +305,47 @@
                     const pkg = { id: pkgDoc.id, ...pkgDoc.data() };
                     // Get teacher name
                     if (pkg.teacherId && !teacherCache[pkg.teacherId]) {
-                        const teacherDoc = await getDoc(doc(db, 'teachers', pkg.teacherId));
-                        teacherCache[pkg.teacherId] = teacherDoc.exists() ? teacherDoc.data().name : 'Unknown';
+                        try {
+                            const teacherDoc = await getDoc(doc(db, 'teachers', pkg.teacherId));
+                            teacherCache[pkg.teacherId] = teacherDoc.exists() ? teacherDoc.data().name : 'Unknown Teacher';
+                        } catch (e) {
+                            teacherCache[pkg.teacherId] = 'Unknown Teacher';
+                        }
                     }
                     allPackages.push(pkg);
                 }
                 updateSubjectSelect();
+                console.log("Loaded packages:", allPackages.length);
             } catch (e) {
                 console.warn("Error loading packages:", e);
+                const select = document.getElementById('subjectSelect');
+                if (select) {
+                    select.innerHTML = '<option value="">-- Error loading subjects --</option>';
+                }
             }
         }
 
         function updateSubjectSelect() {
             const select = document.getElementById('subjectSelect');
             if (!select) return;
+            
+            if (allPackages.length === 0) {
+                select.innerHTML = '<option value="">-- No packages available --</option>';
+                select.innerHTML += '<option value="__create__">+ Go to Package Manage to create</option>';
+                return;
+            }
+            
             select.innerHTML = '<option value="">-- Select Subject --</option>';
             allPackages.forEach(pkg => {
                 const teacherName = teacherCache[pkg.teacherId] || 'Unknown';
-                select.innerHTML += `<option value="${pkg.id}" data-subject="${pkg.subjectName}" data-teacher="${teacherName}" data-fee="${pkg.fee || 0}">${pkg.subjectName} (${teacherName}) - ${pkg.dayOfWeek} ${pkg.time}</option>`;
+                select.innerHTML += `<option value="${pkg.id}" 
+                    data-subject="${pkg.subjectName}" 
+                    data-teacher="${teacherName}" 
+                    data-fee="${pkg.fee || 0}"
+                    data-day="${pkg.dayOfWeek || ''}"
+                    data-time="${pkg.time || ''}">
+                    ${pkg.subjectName} (${teacherName}) - ${pkg.dayOfWeek || ''} ${pkg.time || ''} - RM${pkg.fee || 0}
+                </option>`;
             });
         }
 
@@ -336,6 +356,10 @@
             const container = document.getElementById('subjectsTags');
             if (!container) return;
             container.innerHTML = '';
+            if (currentSelectedSubjects.length === 0) {
+                container.innerHTML = '<span style="color:#8ba9c0; font-size:0.8rem;">No subjects added yet</span>';
+                return;
+            }
             currentSelectedSubjects.forEach((sub, idx) => {
                 const tag = document.createElement('span');
                 tag.className = 'subject-tag';
@@ -350,14 +374,23 @@
 
         document.getElementById('addSubjectBtn')?.addEventListener('click', () => {
             const select = document.getElementById('subjectSelect');
-            const selectedOption = select.options[select.selectedIndex];
             const pkgId = select.value;
-            if (!pkgId) { alert('Please select a subject'); return; }
+            if (!pkgId || pkgId === '__create__') { 
+                if (pkgId === '__create__') {
+                    alert('No packages available. Please go to Package Manage to create class packages first.');
+                } else {
+                    alert('Please select a subject');
+                }
+                return; 
+            }
             const pkg = allPackages.find(p => p.id === pkgId);
             if (pkg) {
                 const teacherName = teacherCache[pkg.teacherId] || 'Unknown';
                 const exists = currentSelectedSubjects.some(s => s.packageId === pkgId);
-                if (exists) { alert('Subject already added'); return; }
+                if (exists) { 
+                    alert('Subject already added'); 
+                    return; 
+                }
                 currentSelectedSubjects.push({
                     packageId: pkg.id,
                     subjectName: pkg.subjectName,
@@ -385,6 +418,7 @@
                     birthday,
                     gender,
                     enrolledSubjects: currentSelectedSubjects,
+                    regMonth: new Date().toISOString().slice(0, 7),
                     createdAt: new Date()
                 });
                 alert('Student registered successfully');
@@ -425,6 +459,12 @@
         function renderStudentTable(students) {
             const tbody = document.getElementById('studentsTableBody');
             tbody.innerHTML = '';
+            
+            if (students.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:2rem; color:#8ba9c0;">No students yet. Register a student above.用它</td>';
+                return;
+            }
+            
             students.forEach(student => {
                 const age = calculateAge(student.birthday);
                 const subjectsHtml = (student.enrolledSubjects || []).map(s => 
@@ -432,14 +472,14 @@
                 ).join('');
                 const row = tbody.insertRow();
                 row.innerHTML = `
-                    <td>${student.name || ''}</td>
-                    <td>${age}${student.birthday ? ` <span class="birthday-badge"><i class="fas fa-birthday-cake"></i> ${student.birthday}</span>` : ''}</td>
+                    <td><strong>${student.name || ''}</strong></td>
+                    <td>${age}${student.birthday ? `<br><span class="birthday-badge"><i class="fas fa-birthday-cake"></i> ${student.birthday}</span>` : ''}</td>
                     <td>${student.gender || '-'}</td>
                     <td>${subjectsHtml || '-'}</td>
                     <td class="action-icons">
-                        <i class="fas fa-edit edit-student" data-id="${student.id}"></i>
-                        <i class="fas fa-trash-alt delete-student" data-id="${student.id}"></i>
-                    </td>
+                        <i class="fas fa-edit edit-student" data-id="${student.id}" title="Edit"></i>
+                        <i class="fas fa-trash-alt delete-student" data-id="${student.id}" title="Delete"></i>
+                     </td>
                 `;
             });
             
@@ -498,10 +538,10 @@
                         <option value="">-- Add Subject --</option>
                         ${allPackages.map(pkg => {
                             const teacherName = teacherCache[pkg.teacherId] || 'Unknown';
-                            return `<option value="${pkg.id}" data-subject="${pkg.subjectName}" data-teacher="${teacherName}" data-fee="${pkg.fee || 0}">${pkg.subjectName} (${teacherName})</option>`;
+                            return `<option value="${pkg.id}" data-subject="${pkg.subjectName}" data-teacher="${teacherName}" data-fee="${pkg.fee || 0}">${pkg.subjectName} (${teacherName}) - RM${pkg.fee || 0}</option>`;
                         }).join('')}
                     </select>
-                    <button id="editAddSubjectBtn" class="secondary" style="width: 90px;">Add</button>
+                    <button id="editAddSubjectBtn" class="secondary" style="width: 90px;"><i class="fas fa-plus"></i> Add</button>
                 </div>
                 <div id="editSubjectsTags" style="margin-top: 10px;"></div>
             `;
@@ -509,6 +549,10 @@
             function renderTags() {
                 const tagsContainer = document.getElementById('editSubjectsTags');
                 tagsContainer.innerHTML = '';
+                if (editSelectedSubjects.length === 0) {
+                    tagsContainer.innerHTML = '<span style="color:#8ba9c0; font-size:0.8rem;">No subjects enrolled</span>';
+                    return;
+                }
                 editSelectedSubjects.forEach((sub, idx) => {
                     const tag = document.createElement('span');
                     tag.className = 'subject-tag';
