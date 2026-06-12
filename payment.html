@@ -71,7 +71,6 @@
         }
         .main-content.expanded { margin-left: 80px; }
         
-        /* Payment Steps */
         .step-container {
             display: flex;
             gap: 1rem;
@@ -224,8 +223,14 @@
             color: #2c7da0;
             border: 1px solid #cde5ef;
         }
+        .btn-success {
+            background: #25D366;
+            color: white;
+        }
+        .btn-success:hover {
+            background: #1da15a;
+        }
         
-        /* Invoice Preview for Step 1 */
         .subjects-list {
             margin: 1rem 0;
         }
@@ -235,7 +240,6 @@
             padding: 8px 0;
         }
         
-        /* Final Invoice styling for download */
         .final-invoice {
             background: white;
             max-width: 800px;
@@ -244,10 +248,24 @@
             border-radius: 24px;
         }
         
+        .discount-amount {
+            color: #e67e22;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+        
         @media (max-width: 768px) {
             .sidebar { width: 80px; }
             .main-content { margin-left: 80px; padding: 1rem; }
             .payment-methods { flex-direction: column; }
+            .action-buttons { flex-direction: column; }
+            .action-buttons button { width: 100%; }
         }
     </style>
 </head>
@@ -310,7 +328,8 @@
                     <div class="extra-fee-item">
                         <input type="checkbox" id="discountCheck">
                         <label>Discount / No Class</label>
-                        <input type="number" id="discountAmount" placeholder="RM (negative)" value="0" step="0.01" disabled style="width:100px;">
+                        <input type="number" id="discountAmount" placeholder="RM" value="0" step="0.01" disabled style="width:100px;">
+                        <small style="color:#8ba9c0;">Enter positive number (will show as -RM)</small>
                     </div>
                 </div>
                 
@@ -349,7 +368,7 @@
                 </div>
             </div>
             
-            <!-- Step 3: Final Invoice & Download -->
+            <!-- Step 3: Final Invoice & Actions -->
             <div id="step3Panel" class="payment-panel">
                 <div class="step-container">
                     <div class="step"><div class="step-number">1</div><div>Review & Extras</div></div>
@@ -358,14 +377,13 @@
                 </div>
                 
                 <div class="card" id="invoiceContainer">
-                    <div id="finalInvoice" class="final-invoice">
-                        <!-- Invoice will be rendered here -->
-                    </div>
+                    <div id="finalInvoice" class="final-invoice"></div>
                 </div>
                 
-                <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1rem;">
-                    <button id="downloadInvoiceBtn" class="btn"><i class="fas fa-download"></i> Download as PNG</button>
-                    <button id="backToHomeBtn" class="btn-secondary">Back to Home</button>
+                <div class="action-buttons">
+                    <button id="downloadInvoiceBtn" class="btn"><i class="fas fa-download"></i> Download PNG</button>
+                    <button id="sendEmailBtn" class="btn btn-success"><i class="fab fa-google"></i> Send via Gmail</button>
+                    <button id="backToInvoiceBtn" class="btn-secondary"><i class="fas fa-arrow-left"></i> Back to Invoices</button>
                 </div>
             </div>
         </div>
@@ -436,12 +454,23 @@
         let selectedInvoiceIds = [];
         let invoicesData = [];
         let studentsMap = new Map();
-        let packagesMap = new Map();
         let baseTotal = 0;
         let selectedPaymentMethod = null;
+        let currentInvoiceNumber = '';
+        let currentGrandTotal = 0;
+        let currentStudentNames = [];
         
-        // Extra fees
-        let regFee = 0, photoFee = 0, discount = 0;
+        // Helper function to format amount
+        function formatAmount(amount, isDiscount = false) {
+            if (amount === 0) return 'RM 0.00';
+            if (isDiscount && amount < 0) {
+                return `-RM ${Math.abs(amount).toFixed(2)}`;
+            }
+            if (amount < 0) {
+                return `-RM ${Math.abs(amount).toFixed(2)}`;
+            }
+            return `RM ${amount.toFixed(2)}`;
+        }
         
         async function loadPaymentData() {
             const storedIds = sessionStorage.getItem('selectedInvoices');
@@ -459,22 +488,15 @@
                 studentsMap.set(doc.id, doc.data());
             });
             
-            // Load packages for subject names
-            const packagesSnap = await getDocs(collection(db, 'packages'));
-            packagesSnap.forEach(doc => {
-                packagesMap.set(doc.id, doc.data());
-            });
-            
             // Load selected invoices
             for (const invId of selectedInvoiceIds) {
                 const invDoc = await getDoc(doc(db, 'invoices', invId));
                 if (invDoc.exists()) {
                     const inv = { id: invDoc.id, ...invDoc.data() };
-                    // Get student name
                     const student = studentsMap.get(inv.studentId);
                     inv.studentName = student?.name || 'Unknown';
+                    inv.studentEmail = student?.email || null;
                     
-                    // Get package/subject details
                     const subjects = inv.subjects || [];
                     inv.subjectsWithDetails = subjects.map(s => ({
                         ...s,
@@ -505,12 +527,12 @@
                 (inv.subjectsWithDetails || []).forEach(sub => {
                     html += `<div class="subject-row">
                                 <span>${sub.subjectName} (${sub.teacherName})</span>
-                                <span>RM ${(sub.fee || 0).toFixed(2)}</span>
+                                <span>${formatAmount(sub.fee || 0)}</span>
                             </div>`;
                 });
-                html += `</div><div style="text-align:right; font-weight:600;">Subtotal: RM ${(inv.totalAmount || 0).toFixed(2)}</div></div>`;
+                html += `</div><div style="text-align:right; font-weight:600;">Subtotal: ${formatAmount(inv.totalAmount || 0)}</div></div>`;
             });
-            html += `<div class="invoice-total" style="margin-top:0;">Base Total: RM ${baseTotal.toFixed(2)}</div>`;
+            html += `<div class="invoice-total" style="margin-top:0;">Base Total: ${formatAmount(baseTotal)}</div>`;
             container.innerHTML = html;
             updateTotalWithExtras();
         }
@@ -518,12 +540,20 @@
         function updateTotalWithExtras() {
             const reg = parseFloat(document.getElementById('regFeeAmount').value) || 0;
             const photo = parseFloat(document.getElementById('photoFeeAmount').value) || 0;
-            const disc = parseFloat(document.getElementById('discountAmount').value) || 0;
-            const extrasTotal = reg + photo + disc;
+            let disc = parseFloat(document.getElementById('discountAmount').value) || 0;
+            // Make discount negative for display
+            const discValue = -disc;
+            const extrasTotal = reg + photo + discValue;
             const grandTotal = baseTotal + extrasTotal;
-            document.getElementById('previewTotal').innerHTML = `Base Total: RM ${baseTotal.toFixed(2)}<br>
-                                                                  Extras: RM ${extrasTotal.toFixed(2)}<br>
-                                                                  <strong>Grand Total: RM ${grandTotal.toFixed(2)}</strong>`;
+            
+            let extrasDisplay = '';
+            if (reg !== 0) extrasDisplay += `Registration Fee: ${formatAmount(reg)}<br>`;
+            if (photo !== 0) extrasDisplay += `Photocopy Fee: ${formatAmount(photo)}<br>`;
+            if (disc !== 0) extrasDisplay += `Discount: <span class="discount-amount">-RM ${disc.toFixed(2)}</span><br>`;
+            
+            document.getElementById('previewTotal').innerHTML = `Base Total: ${formatAmount(baseTotal)}<br>
+                                                                  ${extrasDisplay}
+                                                                  <strong>Grand Total: ${formatAmount(grandTotal)}</strong>`;
         }
         
         // Checkbox handlers
@@ -578,102 +608,109 @@
             });
         });
         
-        // Confirm payment and generate final invoice
+        // Generate final invoice HTML
+        function generateFinalInvoiceHTML(reg, photo, disc, grandTotal) {
+            const invoiceNumber = `INV-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+            currentInvoiceNumber = invoiceNumber;
+            currentGrandTotal = grandTotal;
+            currentStudentNames = invoicesData.map(i => i.studentName);
+            
+            const today = new Date();
+            const formattedDate = today.toLocaleDateString('en-MY');
+            
+            let subjectsHtml = '';
+            invoicesData.forEach(inv => {
+                (inv.subjectsWithDetails || []).forEach(sub => {
+                    subjectsHtml += `<tr><td style="padding: 8px 0;">${sub.subjectName} (${sub.teacherName}) - ${inv.monthKey}</td>
+                                    <td style="padding: 8px 0; text-align: right;">${formatAmount(sub.fee || 0)}</td></tr>`;
+                });
+            });
+            
+            let extrasHtml = '';
+            if (reg !== 0) extrasHtml += `<tr><td style="padding: 8px 0;">Registration Fee</td>
+                                        <td style="text-align: right;">${formatAmount(reg)}</td></tr>`;
+            if (photo !== 0) extrasHtml += `<tr><td style="padding: 8px 0;">Photocopy Fee</td>
+                                        <td style="text-align: right;">${formatAmount(photo)}</td></tr>`;
+            if (disc !== 0) extrasHtml += `<tr><td style="padding: 8px 0; color: #e67e22;">Discount / Adjustment</td>
+                                        <td style="text-align: right; color: #e67e22;">-RM ${disc.toFixed(2)}</td></tr>`;
+            
+            return `
+                <div id="invoiceToSend" style="background: white; padding: 1.5rem; border-radius: 20px;">
+                    <div style="text-align: center; margin-bottom: 1.5rem;">
+                        <img src="icon.png" alt="Logo" style="width: 60px; margin-bottom: 10px;" onerror="this.style.display='none'">
+                        <h2 style="color: #1a5f7a;">Pusat Tuisyen Perintis Aspirasi</h2>
+                        <p style="font-size: 0.8rem; color: #6b8ba0;">No. 21, Lorong 1, Taman Perlis, Kangar, Malaysia</p>
+                        <p style="font-size: 0.8rem; color: #6b8ba0;">TEL/FAX: 012-520 0919 | RA 095223949</p>
+                    </div>
+                    <div style="border-top: 2px solid #2c7da0; border-bottom: 2px solid #2c7da0; padding: 10px 0; margin-bottom: 1rem;">
+                        <h3 style="text-align: center;">INVOICE</h3>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
+                        <div><strong>Invoice No:</strong> ${invoiceNumber}</div>
+                        <div><strong>Date:</strong> ${formattedDate}</div>
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <div><strong>Student:</strong> ${invoicesData.map(i => i.studentName).join(', ')}</div>
+                        <div><strong>Payment Method:</strong> ${selectedPaymentMethod?.toUpperCase() || 'N/A'}</div>
+                    </div>
+                    <table style="width: 100%; border-collapse: collapse; margin: 1rem 0;">
+                        <thead><tr style="border-bottom: 1px solid #cde5ef;">
+                            <th style="padding: 8px 0; text-align: left;">Description</th>
+                            <th style="padding: 8px 0; text-align: right;">Amount (RM)</th>
+                        </tr></thead>
+                        <tbody>
+                            ${subjectsHtml}
+                            ${extrasHtml}
+                            <tr style="border-top: 2px solid #2c7da0; font-weight: 700;">
+                                <td style="padding: 12px 0;">TOTAL</td>
+                                <td style="padding: 12px 0; text-align: right;">${formatAmount(grandTotal)}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div style="text-align: center; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #cde5ef; font-size: 0.75rem; color: #8ba9c0;">
+                        PerintisAspirasi123@gmail.com
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Confirm payment
         document.getElementById('confirmPayBtn').addEventListener('click', async () => {
             if (!selectedPaymentMethod) {
                 alert('Please select a payment method');
                 return;
             }
             
-            // Calculate extras
             const reg = document.getElementById('regFeeCheck').checked ? (parseFloat(document.getElementById('regFeeAmount').value) || 0) : 0;
             const photo = document.getElementById('photoFeeCheck').checked ? (parseFloat(document.getElementById('photoFeeAmount').value) || 0) : 0;
             const disc = document.getElementById('discountCheck').checked ? (parseFloat(document.getElementById('discountAmount').value) || 0) : 0;
-            const extrasTotal = reg + photo + disc;
+            const extrasTotal = reg + photo + (-disc);
             const grandTotal = baseTotal + extrasTotal;
             
-            // Generate invoice number
             const invoiceNumber = `INV-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
             const today = new Date();
             const formattedDate = today.toLocaleDateString('en-MY');
             
-            // Build final invoice HTML
-            let subjectsHtml = '';
-            invoicesData.forEach(inv => {
-                (inv.subjectsWithDetails || []).forEach(sub => {
-                    subjectsHtml += `
-                        <tr>
-                            <td style="padding: 8px 0;">${sub.subjectName} (${sub.teacherName}) - ${inv.monthKey}</td>
-                            <td style="padding: 8px 0; text-align: right;">RM ${(sub.fee || 0).toFixed(2)}</td>
-                        </tr>
-                    `;
-                });
-            });
-            
-            let extrasHtml = '';
-            if (reg !== 0) extrasHtml += `<tr><td>Registration Fee</td><td style="text-align: right;">RM ${reg.toFixed(2)}</td></tr>`;
-            if (photo !== 0) extrasHtml += `<tr><td>Photocopy Fee</td><td style="text-align: right;">RM ${photo.toFixed(2)}</td></tr>`;
-            if (disc !== 0) extrasHtml += `<tr><td>Discount / Adjustment</td><td style="text-align: right;">RM ${disc.toFixed(2)}</td></tr>`;
-            
-            const invoiceHtml = `
-                <div style="text-align: center; margin-bottom: 1.5rem;">
-                    <img src="icon.png" alt="Logo" style="width: 60px; margin-bottom: 10px;" onerror="this.style.display='none'">
-                    <h2 style="color: #1a5f7a;">Pusat Tuisyen Perintis Aspirasi</h2>
-                    <p style="font-size: 0.8rem; color: #6b8ba0;">No. 21, Lorong 1, Taman Perlis, Kangar, Malaysia</p>
-                    <p style="font-size: 0.8rem; color: #6b8ba0;">TEL/FAX: 012-520 0919</p>
-                </div>
-                <div style="border-top: 2px solid #2c7da0; border-bottom: 2px solid #2c7da0; padding: 10px 0; margin-bottom: 1rem;">
-                    <h3 style="text-align: center;">INVOICE</h3>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
-                    <div><strong>Invoice No:</strong> ${invoiceNumber}</div>
-                    <div><strong>Date:</strong> ${formattedDate}</div>
-                </div>
-                <div style="margin-bottom: 1rem;">
-                    <div><strong>Student:</strong> ${invoicesData.map(i => i.studentName).join(', ')}</div>
-                    <div><strong>Payment Method:</strong> ${selectedPaymentMethod.toUpperCase()}</div>
-                </div>
-                <table style="width: 100%; border-collapse: collapse; margin: 1rem 0;">
-                    <thead>
-                        <tr><th style="border-bottom: 1px solid #cde5ef; padding: 8px 0; text-align: left;">Description</th>
-                        <th style="border-bottom: 1px solid #cde5ef; padding: 8px 0; text-align: right;">Amount (RM)</th></tr>
-                    </thead>
-                    <tbody>
-                        ${subjectsHtml}
-                        ${extrasHtml}
-                        <tr style="border-top: 2px solid #2c7da0; font-weight: 700;">
-                            <td style="padding: 12px 0;">TOTAL</td>
-                            <td style="padding: 12px 0; text-align: right;">RM ${grandTotal.toFixed(2)}</td>
-                        </tr>
-                    </tbody>
-                </table>
-                <div style="text-align: center; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #cde5ef; font-size: 0.75rem; color: #8ba9c0;">
-                    Thank you for your payment!
-                </div>
-            `;
-            
+            const invoiceHtml = generateFinalInvoiceHTML(reg, photo, disc, grandTotal);
             document.getElementById('finalInvoice').innerHTML = invoiceHtml;
             
-            // Mark invoices as paid in Firebase
+            // Mark invoices as paid
             for (const invId of selectedInvoiceIds) {
                 await updateDoc(doc(db, 'invoices', invId), {
                     paid: true,
                     paidAt: new Date(),
                     paymentMethod: selectedPaymentMethod,
                     invoiceNumber: invoiceNumber,
-                    extras: { registrationFee: reg, photocopyFee: photo, discount: disc },
+                    extras: { registrationFee: reg, photocopyFee: photo, discount: -disc },
                     grandTotal: grandTotal
                 });
             }
-            
-            // Store for download
-            sessionStorage.setItem('lastInvoice', invoiceHtml);
             
             showPanel('step3Panel');
         });
         
         // Download invoice as PNG
-        document.getElementById('downloadInvoiceBtn').addEventListener('click', async () => {
+        async function downloadInvoiceAsPNG() {
             const invoiceElement = document.getElementById('finalInvoice');
             if (!invoiceElement) return;
             
@@ -684,19 +721,48 @@
                     logging: false
                 });
                 const link = document.createElement('a');
-                const invoiceNumber = document.querySelector('#finalInvoice div:first-child + div h3') ? 
-                    document.querySelector('#finalInvoice div:first-child + div h3')?.innerText : 'INVOICE';
-                link.download = `invoice_${Date.now()}.png`;
+                link.download = `invoice_${currentInvoiceNumber || Date.now()}.png`;
                 link.href = canvas.toDataURL();
                 link.click();
+                return canvas;
             } catch (err) {
                 console.error('Download error:', err);
                 alert('Failed to download invoice. Please try again.');
+                return null;
+            }
+        }
+        
+        document.getElementById('downloadInvoiceBtn').addEventListener('click', async () => {
+            await downloadInvoiceAsPNG();
+        });
+        
+        // Send via Gmail
+        document.getElementById('sendEmailBtn').addEventListener('click', async () => {
+            // Get student emails
+            const studentEmails = invoicesData.map(i => i.studentEmail).filter(e => e);
+            const toEmail = studentEmails.length > 0 ? studentEmails.join(',') : '';
+            
+            const subject = `Invoice from Pusat Tuisyen Perintis Aspirasi - ${currentStudentNames.join(', ')}`;
+            const body = `Dear ${currentStudentNames.join(', ')},\n\nPlease find attached your invoice.\n\nTotal Amount: ${formatAmount(currentGrandTotal)}\n\nThank you for your continued support!\n\nBest regards,\nPusat Tuisyen Perintis Aspirasi`;
+            
+            // Download invoice first
+            const canvas = await downloadInvoiceAsPNG();
+            
+            if (canvas) {
+                // Open Gmail compose
+                const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(toEmail)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                window.open(gmailUrl, '_blank');
+                alert('Gmail opened. Please attach the downloaded invoice PNG to your email.');
+            } else {
+                // Fallback: just open Gmail without attachment
+                const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(toEmail)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body + '\n\n(Please download the invoice PNG separately)')}`;
+                window.open(gmailUrl, '_blank');
             }
         });
         
-        document.getElementById('backToHomeBtn').addEventListener('click', () => {
-            window.location.href = 'index.html';
+        // Back to invoice page
+        document.getElementById('backToInvoiceBtn').addEventListener('click', () => {
+            window.location.href = 'invoice.html';
         });
         
         checkLogin();
