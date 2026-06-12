@@ -151,6 +151,7 @@
         .action-icon.download { background: #e8f4f8; color: #2c7da0; }
         .action-icon.email { background: #ea433520; color: #ea4335; }
         .action-icon.gmail { background: #ea433520; color: #ea4335; }
+        .action-icon.pay { background: #2cae6c20; color: #2cae6c; }
         .action-icon:hover { transform: translateY(-1px); opacity: 0.9; }
         
         .pagination { display: flex; justify-content: center; gap: 8px; margin-top: 1.5rem; }
@@ -196,6 +197,25 @@
             min-height: 100px;
         }
         
+        .bulk-pay-section {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 1.2rem;
+        }
+        .pay-bulk-btn {
+            background: #2cae6c;
+            padding: 12px 28px;
+            font-size: 0.9rem;
+            border-radius: 48px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border: none;
+            color: white;
+            cursor: pointer;
+        }
+        .pay-bulk-btn:hover { background: #229954; transform: translateY(-1px); }
+        
         @media (max-width: 768px) {
             .sidebar { width: 80px; }
             .main-content { margin-left: 80px; padding: 1rem; }
@@ -240,6 +260,9 @@
 
             <div class="card">
                 <h3><i class="fas fa-file-invoice-dollar"></i> All Invoices<span class="stats-badge" id="invoiceStats">Loading...</span></h3>
+                <div class="bulk-pay-section" id="bulkPaySection" style="display: none;">
+                    <button id="bulkPayBtn" class="pay-bulk-btn"><i class="fas fa-credit-card"></i> Pay Selected (<span id="selectedCount">0</span>)</button>
+                </div>
                 <div id="invoiceGrid" class="invoice-grid"><div class="no-results"><i class="fas fa-spinner fa-spin"></i> Loading invoices...</div></div>
                 <div class="pagination" id="pagination"></div>
             </div>
@@ -276,7 +299,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, doc } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCkfEdLDlHW7DvGxLpbDY7Us2nb3j7oTjQ",
@@ -338,6 +361,7 @@
         // Data stores
         let allInvoices = [];
         let studentsCache = new Map();
+        let selectedInvoices = new Set();
         
         async function loadStudentsData() {
             try {
@@ -448,6 +472,10 @@
             const paginated = filtered.slice(start, start + rowsPerPage);
             renderInvoiceGrid(paginated);
             renderPagination(totalPages);
+            
+            const unpaidInView = filtered.filter(inv => !inv.paid).length;
+            const bulkSection = document.getElementById('bulkPaySection');
+            bulkSection.style.display = unpaidInView > 0 ? 'flex' : 'none';
         }
         
         function renderInvoiceGrid(invoices) {
@@ -459,13 +487,15 @@
             grid.innerHTML = '';
             invoices.forEach(inv => {
                 const isPaid = inv.paid === true;
+                const isSelected = selectedInvoices.has(inv.id);
                 const invNumber = `INV-${inv.monthKey?.replace('-', '')}-${inv.studentId?.slice(-4)}`;
                 const subjects = inv.subjects || [];
                 const packagesHtml = subjects.map(s => `<span class="package-tag">${s.subjectName} (RM${s.fee})</span>`).join('');
                 
                 const card = document.createElement('div');
-                card.className = `invoice-card ${isPaid ? 'paid' : 'unpaid'}`;
+                card.className = `invoice-card ${isPaid ? 'paid' : 'unpaid'} ${isSelected ? 'selected' : ''}`;
                 card.innerHTML = `
+                    ${!isPaid ? `<input type="checkbox" class="invoice-checkbox" data-id="${inv.id}" style="position:absolute; top:12px; right:12px; width:18px; height:18px; cursor:pointer;" ${isSelected ? 'checked' : ''}>` : ''}
                     <div class="invoice-number ${isPaid ? 'paid' : 'unpaid'}"><i class="fas ${isPaid ? 'fa-check-circle' : 'fa-clock'}"></i> ${invNumber}</div>
                     <div class="invoice-student"><i class="fas fa-user-graduate"></i> ${inv.studentName}</div>
                     <div class="invoice-details"><i class="fas fa-calendar-alt"></i> ${inv.monthKey || 'N/A'}</div>
@@ -473,16 +503,44 @@
                     <div class="invoice-amount">RM ${(inv.totalAmount || 0).toFixed(2)}</div>
                     <div class="invoice-actions">
                         <button class="action-icon view" data-id="${inv.id}"><i class="fas fa-eye"></i> View</button>
-                        ${isPaid ? `<button class="action-icon download" data-id="${inv.id}"><i class="fas fa-download"></i> Download</button>
-                        <button class="action-icon gmail" data-id="${inv.id}" data-email="${inv.studentEmail || ''}" data-name="${inv.studentName}"><i class="fab fa-google"></i> Gmail</button>` : ''}
+                        ${!isPaid ? `<button class="action-icon pay" data-id="${inv.id}" style="background:#2cae6c20; color:#2cae6c;"><i class="fas fa-credit-card"></i> Pay Now</button>` : `
+                        <button class="action-icon download" data-id="${inv.id}"><i class="fas fa-download"></i> Download</button>
+                        <button class="action-icon gmail" data-id="${inv.id}" data-email="${inv.studentEmail || ''}" data-name="${inv.studentName}"><i class="fab fa-google"></i> Gmail</button>`}
                     </div>
                 `;
                 grid.appendChild(card);
+                
+                // Add checkbox event listener
+                if (!isPaid) {
+                    const checkbox = card.querySelector('.invoice-checkbox');
+                    if (checkbox) {
+                        checkbox.addEventListener('change', (e) => {
+                            e.stopPropagation();
+                            if (checkbox.checked) {
+                                selectedInvoices.add(inv.id);
+                            } else {
+                                selectedInvoices.delete(inv.id);
+                            }
+                            document.getElementById('selectedCount').innerText = selectedInvoices.size;
+                        });
+                    }
+                    
+                    const payBtn = card.querySelector('.pay');
+                    if (payBtn) {
+                        payBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            sessionStorage.setItem('selectedInvoices', JSON.stringify([inv.id]));
+                            window.location.href = 'payment.html';
+                        });
+                    }
+                }
             });
             
             document.querySelectorAll('.view').forEach(btn => btn.addEventListener('click', () => openViewModal(btn.dataset.id)));
             document.querySelectorAll('.download').forEach(btn => btn.addEventListener('click', () => downloadInvoice(btn.dataset.id)));
             document.querySelectorAll('.gmail').forEach(btn => btn.addEventListener('click', () => openGmailModal(btn.dataset.id, btn.dataset.email, btn.dataset.name)));
+            
+            document.getElementById('selectedCount').innerText = selectedInvoices.size;
         }
         
         function renderPagination(totalPages) {
@@ -534,7 +592,6 @@
             document.body.removeChild(tempDiv);
         }
         
-        // Gmail functionality
         let currentGmailInvoiceId = null;
         
         function openGmailModal(invoiceId, studentEmail, studentName) {
@@ -567,7 +624,6 @@
             btn.disabled = true;
             
             try {
-                // Generate invoice and download PNG
                 const html = await generateInvoiceHTML(invoice);
                 const tempDiv = document.createElement('div');
                 tempDiv.innerHTML = html;
@@ -579,17 +635,13 @@
                 const canvas = await html2canvas(tempDiv.querySelector('.final-invoice') || tempDiv, { scale: 2, backgroundColor: '#ffffff' });
                 document.body.removeChild(tempDiv);
                 
-                // Download the invoice
                 const link = document.createElement('a');
                 const filename = `invoice_${invoice.studentName}_${invoice.monthKey}.png`;
                 link.download = filename;
                 link.href = canvas.toDataURL();
                 link.click();
                 
-                // Build Gmail compose URL
                 const gmailComposeUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(to)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body + '\n\n---\nInvoice attached: ' + filename)}`;
-                
-                // Open Gmail in new tab
                 window.open(gmailComposeUrl, '_blank');
                 
                 alert(`Invoice downloaded as "${filename}".\n\nPlease attach this file to your Gmail message.`);
@@ -619,10 +671,21 @@
             }
         });
         
+        document.getElementById('bulkPayBtn')?.addEventListener('click', () => {
+            const selectedIds = Array.from(selectedInvoices);
+            if (selectedIds.length === 0) {
+                alert('Please select at least one invoice to pay');
+                return;
+            }
+            sessionStorage.setItem('selectedInvoices', JSON.stringify(selectedIds));
+            window.location.href = 'payment.html';
+        });
+        
         document.getElementById('searchBtn')?.addEventListener('click', () => {
             currentFilters.search = document.getElementById('searchInvoiceInput').value;
             currentFilters.status = document.getElementById('statusFilter').value;
             currentPage = 1;
+            selectedInvoices.clear();
             applyFiltersAndRender();
         });
         
@@ -631,6 +694,7 @@
             document.getElementById('statusFilter').value = 'all';
             currentFilters = { search: '', status: 'all' };
             currentPage = 1;
+            selectedInvoices.clear();
             applyFiltersAndRender();
         });
         
