@@ -7,11 +7,11 @@
     <link rel="icon" type="image/png" href="icon.png">
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Inter', sans-serif; background: #f0f7fc; color: #1a2c3e; }
         
-        /* Login Overlay */
         .login-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: linear-gradient(135deg, #1a5f7a 0%, #0d3b4f 100%);
@@ -33,7 +33,6 @@
         }
         .login-error { color: #d9534f; margin-top: 0.8rem; }
         
-        /* App Layout */
         .app { display: none; min-height: 100vh; }
         .sidebar {
             position: fixed; left: 0; top: 0; width: 260px; height: 100%;
@@ -67,17 +66,14 @@
         .nav-item.active { background: #2c7da0; color: white; }
         .sidebar-footer { padding: 1rem; border-top: 1px solid #e4edf2; }
         
-        /* Main Content */
         .main-content {
             margin-left: 260px; transition: all 0.3s ease; padding: 1.5rem 2rem;
         }
         .main-content.expanded { margin-left: 80px; }
         
-        /* Search Section - Enhanced UI */
         .search-section {
             background: white; border-radius: 24px; padding: 1.5rem;
             margin-bottom: 1.5rem; border: 1px solid #e4edf2;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
         }
         .search-title {
             font-size: 0.85rem;
@@ -94,92 +90,37 @@
             gap: 1rem;
             align-items: flex-end;
         }
-        .search-group {
-            flex: 2;
-            min-width: 200px;
-        }
-        .filter-group {
-            flex: 1;
-            min-width: 150px;
-        }
-        .button-group {
-            display: flex;
-            gap: 0.8rem;
-            flex-wrap: wrap;
-        }
+        .search-group { flex: 2; min-width: 200px; }
+        .filter-group { flex: 1; min-width: 150px; }
+        .button-group { display: flex; gap: 0.8rem; flex-wrap: wrap; }
         .search-section label {
-            display: block;
-            font-size: 0.7rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            color: #6b8ba0;
-            margin-bottom: 5px;
-            letter-spacing: 0.5px;
+            display: block; font-size: 0.7rem; font-weight: 600;
+            text-transform: uppercase; color: #6b8ba0; margin-bottom: 5px;
         }
-        .search-section input,
-        .search-section select {
-            width: 100%;
-            padding: 12px 16px;
-            border: 2px solid #e0eef5;
-            border-radius: 48px;
-            outline: none;
-            font-size: 0.9rem;
-            background: white;
-            transition: all 0.2s;
-        }
-        .search-section input:focus,
-        .search-section select:focus {
-            border-color: #2c7da0;
-            box-shadow: 0 0 0 3px rgba(44,125,160,0.1);
+        .search-section input, .search-section select {
+            width: 100%; padding: 12px 16px; border: 2px solid #e0eef5;
+            border-radius: 48px; outline: none; font-size: 0.9rem;
         }
         .search-btn {
-            background: #2c7da0;
-            color: white;
-            border: none;
-            padding: 12px 28px;
-            border-radius: 48px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.9rem;
-        }
-        .search-btn:hover {
-            background: #1a5f7a;
-            transform: translateY(-1px);
+            background: #2c7da0; color: white; border: none;
+            padding: 12px 28px; border-radius: 48px; font-weight: 600;
+            cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
         }
         .reset-btn {
-            background: #e8f4f8;
-            color: #2c7da0;
-            border: 2px solid #cde5ef;
-            padding: 12px 28px;
-            border-radius: 48px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.9rem;
-        }
-        .reset-btn:hover {
-            background: #d4eaf2;
-            transform: translateY(-1px);
+            background: #e8f4f8; color: #2c7da0; border: 2px solid #cde5ef;
+            padding: 12px 28px; border-radius: 48px; font-weight: 600;
+            cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
         }
         
-        /* Cards */
         .card {
             background: white; border-radius: 24px; padding: 1.5rem;
             margin-bottom: 1.5rem; border: 1px solid #e4edf2;
         }
         .card h3 { color: #1a5f7a; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px; }
         
-        /* Invoice Grid */
         .invoice-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
             gap: 1.2rem;
             margin-bottom: 1.5rem;
         }
@@ -189,146 +130,76 @@
             border-radius: 20px;
             padding: 1.2rem;
             transition: all 0.2s;
-            cursor: pointer;
             position: relative;
         }
-        .invoice-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 12px 24px rgba(0,0,0,0.08);
-        }
-        .invoice-card.selected {
-            border-color: #2c7da0;
-            background: #f0f9ff;
-        }
-        .invoice-card.paid {
-            border-left: 5px solid #2cae6c;
-        }
-        .invoice-card.unpaid {
-            border-left: 5px solid #e67e22;
-        }
-        .invoice-checkbox {
-            position: absolute;
-            top: 12px;
-            right: 12px;
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
-            accent-color: #2c7da0;
-        }
+        .invoice-card:hover { transform: translateY(-3px); box-shadow: 0 12px 24px rgba(0,0,0,0.08); }
+        .invoice-card.paid { border-left: 5px solid #2cae6c; }
+        .invoice-card.unpaid { border-left: 5px solid #e67e22; }
         .invoice-number {
-            font-size: 0.7rem;
-            font-weight: 700;
-            padding: 4px 12px;
-            border-radius: 20px;
-            display: inline-block;
-            margin-bottom: 12px;
-            letter-spacing: 0.5px;
+            font-size: 0.7rem; font-weight: 700; padding: 4px 12px;
+            border-radius: 20px; display: inline-block; margin-bottom: 12px;
         }
-        .invoice-number.paid {
-            background: #2cae6c20;
-            color: #2cae6c;
-        }
-        .invoice-number.unpaid {
-            background: #e67e2220;
-            color: #e67e22;
-        }
-        .invoice-student {
-            font-size: 1rem;
-            font-weight: 700;
-            color: #1a5f7a;
-            margin-bottom: 8px;
-        }
-        .invoice-details {
-            font-size: 0.8rem;
-            color: #6b8ba0;
-            margin-bottom: 8px;
-        }
-        .invoice-amount {
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: #1a5f7a;
-            margin-top: 8px;
-        }
-        .package-tag {
-            background: #e8f4f8;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 0.7rem;
-            display: inline-block;
-            margin: 2px;
-        }
+        .invoice-number.paid { background: #2cae6c20; color: #2cae6c; }
+        .invoice-number.unpaid { background: #e67e2220; color: #e67e22; }
+        .invoice-student { font-size: 1rem; font-weight: 700; color: #1a5f7a; margin-bottom: 8px; }
+        .invoice-details { font-size: 0.8rem; color: #6b8ba0; margin-bottom: 8px; }
+        .invoice-amount { font-size: 1.3rem; font-weight: 700; color: #1a5f7a; margin-top: 8px; }
+        .package-tag { background: #e8f4f8; padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; display: inline-block; margin: 2px; }
+        .invoice-actions { display: flex; gap: 8px; margin-top: 12px; padding-top: 10px; border-top: 1px solid #eef3f7; flex-wrap: wrap; }
+        .action-icon { background: none; border: none; padding: 6px 12px; border-radius: 30px; cursor: pointer; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 6px; }
+        .action-icon.view { background: #e8f4f8; color: #2c7da0; }
+        .action-icon.download { background: #e8f4f8; color: #2c7da0; }
+        .action-icon.email { background: #ea433520; color: #ea4335; }
+        .action-icon.gmail { background: #ea433520; color: #ea4335; }
+        .action-icon:hover { transform: translateY(-1px); opacity: 0.9; }
         
-        /* Pagination */
-        .pagination {
-            display: flex;
-            justify-content: center;
-            gap: 8px;
-            margin-top: 1.5rem;
-            flex-wrap: wrap;
-        }
+        .pagination { display: flex; justify-content: center; gap: 8px; margin-top: 1.5rem; }
         .page-btn {
+            background: white; color: #2c7da0; border: 1px solid #cde5ef;
+            padding: 8px 14px; border-radius: 30px; cursor: pointer;
+        }
+        .page-btn.active-page { background: #2c7da0; color: white; }
+        
+        .stats-badge { background: #e8f4f8; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; margin-left: 12px; }
+        
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center;
+        }
+        .modal-content {
+            background: white; border-radius: 28px; padding: 1.5rem;
+            max-width: 600px; width: 90%; max-height: 85vh; overflow-y: auto;
+        }
+        .modal-header { display: flex; justify-content: space-between; margin-bottom: 1rem; }
+        .close-modal { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #999; }
+        
+        .final-invoice {
             background: white;
-            color: #2c7da0;
-            border: 1px solid #cde5ef;
-            padding: 8px 14px;
-            border-radius: 30px;
-            min-width: 40px;
-            cursor: pointer;
-            transition: 0.2s;
-            font-weight: 500;
-        }
-        .page-btn:hover {
-            background: #e8f4f8;
-            transform: translateY(-1px);
-        }
-        .page-btn.active-page {
-            background: #2c7da0;
-            color: white;
-            border-color: #2c7da0;
-        }
-        
-        /* Bulk Pay Button */
-        .bulk-pay-section {
-            display: flex;
-            justify-content: flex-end;
-            margin-bottom: 1.2rem;
-        }
-        .pay-bulk-btn {
-            background: #2cae6c;
-            padding: 12px 28px;
-            font-size: 0.9rem;
-            border-radius: 48px;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .pay-bulk-btn:hover {
-            background: #229954;
-            transform: translateY(-1px);
-        }
-        
-        .no-results {
-            text-align: center;
-            padding: 3rem;
-            color: #8ba9c0;
-        }
-        
-        .stats-badge {
-            background: #e8f4f8;
-            padding: 4px 12px;
+            padding: 1.5rem;
             border-radius: 20px;
-            font-size: 0.75rem;
-            margin-left: 12px;
+        }
+        
+        /* Email Modal */
+        .email-modal-content {
+            max-width: 500px;
+        }
+        .email-modal-content input, .email-modal-content textarea, .email-modal-content select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 2px solid #e0eef5;
+            border-radius: 30px;
+            margin-bottom: 12px;
+            font-family: inherit;
+        }
+        .email-modal-content textarea {
+            resize: vertical;
+            min-height: 100px;
         }
         
         @media (max-width: 768px) {
             .sidebar { width: 80px; }
             .main-content { margin-left: 80px; padding: 1rem; }
             .invoice-grid { grid-template-columns: 1fr; }
-            .search-box { flex-direction: column; }
-            .search-group, .filter-group { width: 100%; }
-            .button-group { width: 100%; justify-content: stretch; }
-            .search-btn, .reset-btn { flex: 1; justify-content: center; }
         }
     </style>
 </head>
@@ -358,52 +229,54 @@
         </div>
 
         <div class="main-content" id="mainContent">
-            <!-- Enhanced Search Section -->
             <div class="search-section">
-                <div class="search-title">
-                    <i class="fas fa-filter"></i> Filter Invoices
-                </div>
+                <div class="search-title"><i class="fas fa-filter"></i> Filter Invoices</div>
                 <div class="search-box">
-                    <div class="search-group">
-                        <label><i class="fas fa-search"></i> Search</label>
-                        <input type="text" id="searchInvoiceInput" placeholder="Student name or subject...">
-                    </div>
-                    <div class="filter-group">
-                        <label><i class="fas fa-flag"></i> Payment Status</label>
-                        <select id="statusFilter">
-                            <option value="all">All Status</option>
-                            <option value="unpaid">Unpaid Only</option>
-                            <option value="paid">Paid Only</option>
-                        </select>
-                    </div>
-                    <div class="button-group">
-                        <button id="searchBtn" class="search-btn"><i class="fas fa-search"></i> Search</button>
-                        <button id="resetSearchBtn" class="reset-btn"><i class="fas fa-undo-alt"></i> Reset</button>
-                    </div>
+                    <div class="search-group"><label>Search</label><input type="text" id="searchInvoiceInput" placeholder="Student name or subject..."></div>
+                    <div class="filter-group"><label>Payment Status</label><select id="statusFilter"><option value="all">All Status</option><option value="unpaid">Unpaid Only</option><option value="paid">Paid Only</option></select></div>
+                    <div class="button-group"><button id="searchBtn" class="search-btn"><i class="fas fa-search"></i> Search</button><button id="resetSearchBtn" class="reset-btn"><i class="fas fa-undo-alt"></i> Reset</button></div>
                 </div>
             </div>
 
-            <!-- Invoices -->
             <div class="card">
-                <h3>
-                    <i class="fas fa-file-invoice-dollar"></i> 
-                    All Invoices
-                    <span class="stats-badge" id="invoiceStats">Loading...</span>
-                </h3>
-                <div class="bulk-pay-section" id="bulkPaySection" style="display: none;">
-                    <button id="bulkPayBtn" class="pay-bulk-btn"><i class="fas fa-credit-card"></i> Pay Selected (<span id="selectedCount">0</span>)</button>
-                </div>
-                <div id="invoiceGrid" class="invoice-grid">
-                    <div class="no-results"><i class="fas fa-spinner fa-spin"></i> Loading invoices...</div>
-                </div>
+                <h3><i class="fas fa-file-invoice-dollar"></i> All Invoices<span class="stats-badge" id="invoiceStats">Loading...</span></h3>
+                <div id="invoiceGrid" class="invoice-grid"><div class="no-results"><i class="fas fa-spinner fa-spin"></i> Loading invoices...</div></div>
                 <div class="pagination" id="pagination"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Invoice Modal -->
+    <div id="viewModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header"><h3>Invoice Details</h3><button class="close-modal">&times;</button></div>
+            <div id="viewInvoiceContent"></div>
+            <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1rem; flex-wrap: wrap;">
+                <button id="downloadFromModalBtn" class="action-icon download"><i class="fas fa-download"></i> Download PNG</button>
+                <button id="gmailFromModalBtn" class="action-icon gmail"><i class="fab fa-google"></i> Send via Gmail</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gmail Modal -->
+    <div id="gmailModal" class="modal">
+        <div class="modal-content email-modal-content">
+            <div class="modal-header"><h3><i class="fab fa-google"></i> Send via Gmail</h3><button class="close-gmail-modal">&times;</button></div>
+            <div id="gmailForm">
+                <div class="form-group"><label>To:</label><input type="email" id="gmailTo" placeholder="student@gmail.com"></div>
+                <div class="form-group"><label>Subject:</label><input type="text" id="gmailSubject" placeholder="Invoice from Pusat Tuisyen Perintis Aspirasi"></div>
+                <div class="form-group"><label>Message:</label><textarea id="gmailBody" placeholder="Dear student,&#10;&#10;Please find attached your invoice.&#10;&#10;Thank you!"></textarea></div>
+                <div style="background: #e8f4f8; padding: 10px; border-radius: 16px; margin-bottom: 12px; font-size: 0.75rem;">
+                    <i class="fas fa-info-circle"></i> The invoice PNG will be downloaded. Please attach it manually in Gmail.
+                </div>
+                <button id="openGmailBtn" class="action-icon gmail" style="width:100%; justify-content:center;"><i class="fab fa-google"></i> Open Gmail & Download Invoice</button>
             </div>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, updateDoc, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCkfEdLDlHW7DvGxLpbDY7Us2nb3j7oTjQ",
@@ -466,88 +339,85 @@
         let allInvoices = [];
         let studentsCache = new Map();
         
-        async function loadStudentsAndPackages() {
+        async function loadStudentsData() {
             try {
                 const studentsSnap = await getDocs(collection(db, 'students'));
                 studentsSnap.forEach(doc => {
-                    studentsCache.set(doc.id, doc.data().name);
+                    studentsCache.set(doc.id, {
+                        name: doc.data().name,
+                        phone: doc.data().phone,
+                        email: doc.data().email
+                    });
                 });
             } catch (e) {
                 console.warn("Error loading students:", e);
             }
         }
         
-        async function generateMonthlyInvoices() {
-            try {
-                const studentsSnap = await getDocs(collection(db, 'students'));
-                const now = new Date();
-                const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-                
-                for (const studentDoc of studentsSnap.docs) {
-                    const student = studentDoc.data();
-                    const enrolledSubjects = student.enrolledSubjects || [];
-                    
-                    // Get registration month or use current
-                    let regMonth = student.regMonth;
-                    if (!regMonth) {
-                        if (student.createdAt?.toDate) {
-                            regMonth = student.createdAt.toDate().toISOString().slice(0, 7);
-                        } else {
-                            regMonth = currentMonth;
-                        }
-                    }
-                    
-                    const [regYear, regMon] = regMonth.split('-').map(Number);
-                    if (isNaN(regYear)) continue;
-                    
-                    const regDate = new Date(regYear, regMon - 1, 1);
-                    let iterDate = new Date(regDate);
-                    
-                    while (iterDate <= now) {
-                        const monthKey = `${iterDate.getFullYear()}-${String(iterDate.getMonth() + 1).padStart(2, '0')}`;
-                        const invoiceId = `${studentDoc.id}_${monthKey}`;
-                        const invoiceRef = doc(db, 'invoices', invoiceId);
-                        const existing = await getDoc(invoiceRef);
-                        
-                        if (!existing.exists()) {
-                            let totalAmount = 0;
-                            for (const sub of enrolledSubjects) {
-                                totalAmount += sub.fee || 0;
-                            }
-                            
-                            await setDoc(invoiceRef, {
-                                studentId: studentDoc.id,
-                                monthKey: monthKey,
-                                totalAmount: totalAmount,
-                                paid: false,
-                                subjects: enrolledSubjects,
-                                createdAt: new Date()
-                            });
-                        }
-                        iterDate.setMonth(iterDate.getMonth() + 1);
-                    }
-                }
-            } catch (e) {
-                console.warn("Error generating invoices:", e);
-            }
+        async function generateInvoiceHTML(invoice) {
+            const student = studentsCache.get(invoice.studentId) || { name: 'Unknown', phone: null, email: null };
+            const invoiceNumber = `INV-${invoice.monthKey?.replace('-', '')}-${invoice.studentId?.slice(-4)}`;
+            const today = new Date();
+            const formattedDate = today.toLocaleDateString('en-MY');
+            
+            const subjects = invoice.subjects || [];
+            let subjectsHtml = '';
+            subjects.forEach(sub => {
+                subjectsHtml += `<tr><td style="padding: 8px 0;">${sub.subjectName} (${sub.teacherName || 'Unknown'})</td><td style="text-align: right;">RM ${(sub.fee || 0).toFixed(2)}</td></tr>`;
+            });
+            
+            const extras = invoice.extras || { registrationFee: 0, photocopyFee: 0, discount: 0 };
+            let extrasHtml = '';
+            if (extras.registrationFee) extrasHtml += `<tr><td style="padding: 8px 0;">Registration Fee</td><td style="text-align: right;">RM ${extras.registrationFee.toFixed(2)}</td></tr>`;
+            if (extras.photocopyFee) extrasHtml += `<tr><td style="padding: 8px 0;">Photocopy Fee</td><td style="text-align: right;">RM ${extras.photocopyFee.toFixed(2)}</td></tr>`;
+            if (extras.discount) extrasHtml += `<tr><td style="padding: 8px 0;">Discount / Adjustment</td><td style="text-align: right;">RM ${extras.discount.toFixed(2)}</td></tr>`;
+            
+            return `
+                <div class="final-invoice" id="invoiceToSend">
+                    <div style="text-align: center; margin-bottom: 1rem;">
+                        <img src="icon.png" alt="Logo" style="width: 60px; margin-bottom: 8px;" onerror="this.style.display='none'">
+                        <h2 style="color: #1a5f7a; margin: 0;">Pusat Tuisyen Perintis Aspirasi</h2>
+                        <p style="font-size: 0.7rem; color: #6b8ba0; margin: 4px 0;">No. 21, Lorong 1, Taman Perlis, Kangar, Malaysia</p>
+                        <p style="font-size: 0.7rem; color: #6b8ba0;">TEL/FAX: 012-520 0919 | RA 095223949</p>
+                    </div>
+                    <div style="border-top: 2px solid #2c7da0; border-bottom: 2px solid #2c7da0; padding: 8px 0; text-align: center;">
+                        <h3 style="margin: 0;">INVOICE</h3>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin: 1rem 0;">
+                        <div><strong>Invoice No:</strong> ${invoiceNumber}</div>
+                        <div><strong>Date:</strong> ${formattedDate}</div>
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <div><strong>Student:</strong> ${student.name}</div>
+                        <div><strong>Month:</strong> ${invoice.monthKey || 'N/A'}</div>
+                        ${student.email ? `<div><strong>Email:</strong> ${student.email}</div>` : ''}
+                    </div>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead><tr style="border-bottom: 1px solid #cde5ef;"><th style="text-align: left; padding: 8px 0;">Description</th><th style="text-align: right; padding: 8px 0;">Amount (RM)</th></tr></thead>
+                        <tbody>${subjectsHtml}${extrasHtml}<tr style="border-top: 2px solid #2c7da0; font-weight: 700;"><td style="padding: 12px 0;">TOTAL</td><td style="text-align: right;">RM ${(invoice.totalAmount || 0).toFixed(2)}</td></tr></tbody>
+                    </table>
+                    <div style="text-align: center; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #cde5ef; font-size: 0.7rem; color: #8ba9c0;">
+                        PerintisAspirasi123@gmail.com
+                    </div>
+                </div>
+            `;
         }
         
         async function loadAllInvoices() {
             try {
-                await loadStudentsAndPackages();
-                await generateMonthlyInvoices();
+                await loadStudentsData();
                 
                 const invoicesSnap = await getDocs(collection(db, 'invoices'));
                 allInvoices = [];
                 for (const invDoc of invoicesSnap.docs) {
                     const inv = { id: invDoc.id, ...invDoc.data() };
-                    inv.studentName = studentsCache.get(inv.studentId) || 'Unknown';
+                    const student = studentsCache.get(inv.studentId);
+                    inv.studentName = student?.name || 'Unknown';
+                    inv.studentEmail = student?.email || null;
                     allInvoices.push(inv);
                 }
-                
                 allInvoices.sort((a, b) => (b.monthKey || '').localeCompare(a.monthKey || ''));
                 
-                // Update stats
                 const unpaidCount = allInvoices.filter(i => !i.paid).length;
                 const paidCount = allInvoices.filter(i => i.paid).length;
                 document.getElementById('invoiceStats').innerHTML = `${paidCount} Paid / ${unpaidCount} Unpaid`;
@@ -555,43 +425,29 @@
                 applyFiltersAndRender();
             } catch (e) {
                 console.warn("Error loading invoices:", e);
-                document.getElementById('invoiceGrid').innerHTML = '<div class="no-results">Error loading invoices. Please check Firebase permissions.</div>';
+                document.getElementById('invoiceGrid').innerHTML = '<div class="no-results">Error loading invoices.</div>';
             }
         }
         
-        // Search and filter state
         let currentFilters = { search: '', status: 'all' };
         let currentPage = 1;
         let rowsPerPage = 10;
-        let selectedInvoices = new Set();
         
         function applyFiltersAndRender() {
             let filtered = [...allInvoices];
-            
             if (currentFilters.search) {
                 const searchLower = currentFilters.search.toLowerCase();
-                filtered = filtered.filter(inv => 
-                    inv.studentName?.toLowerCase().includes(searchLower) ||
-                    (inv.subjects || []).some(s => s.subjectName?.toLowerCase().includes(searchLower))
-                );
+                filtered = filtered.filter(inv => inv.studentName?.toLowerCase().includes(searchLower) ||
+                    (inv.subjects || []).some(s => s.subjectName?.toLowerCase().includes(searchLower)));
             }
-            
-            if (currentFilters.status === 'paid') {
-                filtered = filtered.filter(inv => inv.paid === true);
-            } else if (currentFilters.status === 'unpaid') {
-                filtered = filtered.filter(inv => inv.paid !== true);
-            }
+            if (currentFilters.status === 'paid') filtered = filtered.filter(inv => inv.paid === true);
+            else if (currentFilters.status === 'unpaid') filtered = filtered.filter(inv => inv.paid !== true);
             
             const totalPages = Math.ceil(filtered.length / rowsPerPage);
             const start = (currentPage - 1) * rowsPerPage;
             const paginated = filtered.slice(start, start + rowsPerPage);
-            
             renderInvoiceGrid(paginated);
             renderPagination(totalPages);
-            
-            const unpaidInView = filtered.filter(inv => !inv.paid).length;
-            const bulkSection = document.getElementById('bulkPaySection');
-            bulkSection.style.display = unpaidInView > 0 ? 'flex' : 'none';
         }
         
         function renderInvoiceGrid(invoices) {
@@ -600,99 +456,173 @@
                 grid.innerHTML = '<div class="no-results"><i class="fas fa-inbox"></i> No invoices found</div>';
                 return;
             }
-            
             grid.innerHTML = '';
             invoices.forEach(inv => {
                 const isPaid = inv.paid === true;
-                const isSelected = selectedInvoices.has(inv.id);
                 const invNumber = `INV-${inv.monthKey?.replace('-', '')}-${inv.studentId?.slice(-4)}`;
-                
                 const subjects = inv.subjects || [];
-                const packagesHtml = subjects.map(s => 
-                    `<span class="package-tag">${s.subjectName} (RM${s.fee})</span>`
-                ).join('');
+                const packagesHtml = subjects.map(s => `<span class="package-tag">${s.subjectName} (RM${s.fee})</span>`).join('');
                 
                 const card = document.createElement('div');
-                card.className = `invoice-card ${isPaid ? 'paid' : 'unpaid'} ${isSelected ? 'selected' : ''}`;
+                card.className = `invoice-card ${isPaid ? 'paid' : 'unpaid'}`;
                 card.innerHTML = `
-                    <input type="checkbox" class="invoice-checkbox" data-id="${inv.id}" ${isPaid ? 'disabled' : ''} ${isSelected ? 'checked' : ''}>
-                    <div class="invoice-number ${isPaid ? 'paid' : 'unpaid'}">
-                        <i class="fas ${isPaid ? 'fa-check-circle' : 'fa-clock'}"></i> ${invNumber}
-                    </div>
-                    <div class="invoice-student">
-                        <i class="fas fa-user-graduate"></i> ${inv.studentName}
-                    </div>
-                    <div class="invoice-details">
-                        <i class="fas fa-calendar-alt"></i> ${inv.monthKey || 'N/A'}
-                    </div>
-                    <div class="invoice-details">
-                        ${packagesHtml || '<span class="package-tag">No subjects</span>'}
-                    </div>
-                    <div class="invoice-amount">
-                        RM ${(inv.totalAmount || 0).toFixed(2)}
-                    </div>
-                    <div style="margin-top: 10px; font-size:0.7rem; color:#8ba9c0;">
-                        ${isPaid ? '<i class="fas fa-check-circle"></i> Paid' : '<i class="fas fa-hourglass-half"></i> Pending'}
+                    <div class="invoice-number ${isPaid ? 'paid' : 'unpaid'}"><i class="fas ${isPaid ? 'fa-check-circle' : 'fa-clock'}"></i> ${invNumber}</div>
+                    <div class="invoice-student"><i class="fas fa-user-graduate"></i> ${inv.studentName}</div>
+                    <div class="invoice-details"><i class="fas fa-calendar-alt"></i> ${inv.monthKey || 'N/A'}</div>
+                    <div class="invoice-details">${packagesHtml || '<span class="package-tag">No subjects</span>'}</div>
+                    <div class="invoice-amount">RM ${(inv.totalAmount || 0).toFixed(2)}</div>
+                    <div class="invoice-actions">
+                        <button class="action-icon view" data-id="${inv.id}"><i class="fas fa-eye"></i> View</button>
+                        ${isPaid ? `<button class="action-icon download" data-id="${inv.id}"><i class="fas fa-download"></i> Download</button>
+                        <button class="action-icon gmail" data-id="${inv.id}" data-email="${inv.studentEmail || ''}" data-name="${inv.studentName}"><i class="fab fa-google"></i> Gmail</button>` : ''}
                     </div>
                 `;
-                
-                const checkbox = card.querySelector('.invoice-checkbox');
-                if (checkbox && !isPaid) {
-                    checkbox.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        if (checkbox.checked) {
-                            selectedInvoices.add(inv.id);
-                        } else {
-                            selectedInvoices.delete(inv.id);
-                        }
-                        document.getElementById('selectedCount').innerText = selectedInvoices.size;
-                        renderInvoiceGrid(invoices);
-                    });
-                }
-                
-                if (!isPaid) {
-                    card.style.cursor = 'pointer';
-                    card.addEventListener('click', (e) => {
-                        if (e.target.type !== 'checkbox') {
-                            sessionStorage.setItem('selectedInvoices', JSON.stringify([inv.id]));
-                            window.location.href = 'payment.html';
-                        }
-                    });
-                }
-                
                 grid.appendChild(card);
             });
             
-            document.getElementById('selectedCount').innerText = selectedInvoices.size;
+            document.querySelectorAll('.view').forEach(btn => btn.addEventListener('click', () => openViewModal(btn.dataset.id)));
+            document.querySelectorAll('.download').forEach(btn => btn.addEventListener('click', () => downloadInvoice(btn.dataset.id)));
+            document.querySelectorAll('.gmail').forEach(btn => btn.addEventListener('click', () => openGmailModal(btn.dataset.id, btn.dataset.email, btn.dataset.name)));
         }
         
         function renderPagination(totalPages) {
             const container = document.getElementById('pagination');
-            if (totalPages <= 1) {
-                container.innerHTML = '';
-                return;
-            }
-            
+            if (totalPages <= 1) { container.innerHTML = ''; return; }
             let html = '';
             for (let i = 1; i <= totalPages; i++) {
                 html += `<button class="page-btn ${i === currentPage ? 'active-page' : ''}" data-page="${i}">${i}</button>`;
             }
             container.innerHTML = html;
-            
-            document.querySelectorAll('.page-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    currentPage = parseInt(btn.dataset.page);
-                    applyFiltersAndRender();
-                });
-            });
+            document.querySelectorAll('.page-btn').forEach(btn => btn.addEventListener('click', () => {
+                currentPage = parseInt(btn.dataset.page);
+                applyFiltersAndRender();
+            }));
         }
         
-        // Event handlers
+        let currentViewInvoiceId = null;
+        async function openViewModal(invoiceId) {
+            currentViewInvoiceId = invoiceId;
+            const invoice = allInvoices.find(i => i.id === invoiceId);
+            if (invoice) {
+                const html = await generateInvoiceHTML(invoice);
+                document.getElementById('viewInvoiceContent').innerHTML = html;
+                document.getElementById('viewModal').style.display = 'flex';
+            }
+        }
+        
+        async function downloadInvoice(invoiceId) {
+            const invoice = allInvoices.find(i => i.id === invoiceId);
+            if (!invoice) return;
+            const html = await generateInvoiceHTML(invoice);
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = html;
+            tempDiv.style.position = 'absolute';
+            tempDiv.style.left = '-9999px';
+            tempDiv.style.top = '-9999px';
+            document.body.appendChild(tempDiv);
+            try {
+                const canvas = await html2canvas(tempDiv.querySelector('.final-invoice') || tempDiv, { scale: 2, backgroundColor: '#ffffff' });
+                const link = document.createElement('a');
+                link.download = `invoice_${invoice.studentName}_${invoice.monthKey}.png`;
+                link.href = canvas.toDataURL();
+                link.click();
+                alert('Invoice downloaded successfully!');
+            } catch (err) {
+                console.error('Download error:', err);
+                alert('Failed to download invoice');
+            }
+            document.body.removeChild(tempDiv);
+        }
+        
+        // Gmail functionality
+        let currentGmailInvoiceId = null;
+        
+        function openGmailModal(invoiceId, studentEmail, studentName) {
+            currentGmailInvoiceId = invoiceId;
+            const invoice = allInvoices.find(i => i.id === invoiceId);
+            if (!invoice) return;
+            
+            document.getElementById('gmailTo').value = studentEmail || '';
+            document.getElementById('gmailSubject').value = `Invoice from Pusat Tuisyen Perintis Aspirasi - ${studentName} (${invoice.monthKey})`;
+            document.getElementById('gmailBody').value = `Dear ${studentName},\n\nPlease find attached your invoice for ${invoice.monthKey}.\n\nTotal Amount: RM ${(invoice.totalAmount || 0).toFixed(2)}\n\nThank you for your continued support!\n\nBest regards,\nPusat Tuisyen Perintis Aspirasi`;
+            document.getElementById('gmailModal').style.display = 'flex';
+        }
+        
+        document.getElementById('openGmailBtn')?.addEventListener('click', async () => {
+            const to = document.getElementById('gmailTo').value.trim();
+            const subject = document.getElementById('gmailSubject').value;
+            const body = document.getElementById('gmailBody').value;
+            
+            if (!to) {
+                alert('Please enter recipient email address');
+                return;
+            }
+            
+            const invoice = allInvoices.find(i => i.id === currentGmailInvoiceId);
+            if (!invoice) return;
+            
+            const btn = document.getElementById('openGmailBtn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Preparing...';
+            btn.disabled = true;
+            
+            try {
+                // Generate invoice and download PNG
+                const html = await generateInvoiceHTML(invoice);
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = html;
+                tempDiv.style.position = 'absolute';
+                tempDiv.style.left = '-9999px';
+                tempDiv.style.top = '-9999px';
+                document.body.appendChild(tempDiv);
+                
+                const canvas = await html2canvas(tempDiv.querySelector('.final-invoice') || tempDiv, { scale: 2, backgroundColor: '#ffffff' });
+                document.body.removeChild(tempDiv);
+                
+                // Download the invoice
+                const link = document.createElement('a');
+                const filename = `invoice_${invoice.studentName}_${invoice.monthKey}.png`;
+                link.download = filename;
+                link.href = canvas.toDataURL();
+                link.click();
+                
+                // Build Gmail compose URL
+                const gmailComposeUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(to)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body + '\n\n---\nInvoice attached: ' + filename)}`;
+                
+                // Open Gmail in new tab
+                window.open(gmailComposeUrl, '_blank');
+                
+                alert(`Invoice downloaded as "${filename}".\n\nPlease attach this file to your Gmail message.`);
+                
+                document.getElementById('gmailModal').style.display = 'none';
+                document.getElementById('gmailTo').value = '';
+                
+            } catch (err) {
+                console.error('Gmail error:', err);
+                alert('Error preparing invoice. Please try again.');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        });
+        
+        document.getElementById('downloadFromModalBtn')?.addEventListener('click', async () => {
+            if (currentViewInvoiceId) await downloadInvoice(currentViewInvoiceId);
+        });
+        
+        document.getElementById('gmailFromModalBtn')?.addEventListener('click', async () => {
+            if (currentViewInvoiceId) {
+                const invoice = allInvoices.find(i => i.id === currentViewInvoiceId);
+                if (invoice) {
+                    openGmailModal(currentViewInvoiceId, invoice.studentEmail, invoice.studentName);
+                }
+            }
+        });
+        
         document.getElementById('searchBtn')?.addEventListener('click', () => {
             currentFilters.search = document.getElementById('searchInvoiceInput').value;
             currentFilters.status = document.getElementById('statusFilter').value;
             currentPage = 1;
-            selectedInvoices.clear();
             applyFiltersAndRender();
         });
         
@@ -701,24 +631,18 @@
             document.getElementById('statusFilter').value = 'all';
             currentFilters = { search: '', status: 'all' };
             currentPage = 1;
-            selectedInvoices.clear();
             applyFiltersAndRender();
         });
         
-        document.getElementById('bulkPayBtn')?.addEventListener('click', () => {
-            const selectedIds = Array.from(selectedInvoices);
-            if (selectedIds.length === 0) {
-                alert('Please select at least one invoice to pay');
-                return;
-            }
-            sessionStorage.setItem('selectedInvoices', JSON.stringify(selectedIds));
-            window.location.href = 'payment.html';
+        document.querySelectorAll('.close-modal, .close-gmail-modal').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.getElementById('viewModal').style.display = 'none';
+                document.getElementById('gmailModal').style.display = 'none';
+            });
         });
-        
-        document.getElementById('searchInvoiceInput')?.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                document.getElementById('searchBtn').click();
-            }
+        window.addEventListener('click', (e) => {
+            if (e.target === document.getElementById('viewModal')) document.getElementById('viewModal').style.display = 'none';
+            if (e.target === document.getElementById('gmailModal')) document.getElementById('gmailModal').style.display = 'none';
         });
         
         checkLogin();
