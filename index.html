@@ -5,251 +5,77 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Dashboard | Pusat Tuisyen Perintis Aspirasi</title>
     <link rel="icon" type="image/png" href="icon.png">
-    <link rel="apple-touch-icon" href="icon.png">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background: #f0f7fc;
-            color: #1a2c3e;
-            overflow-x: hidden;
-        }
-
-        /* Login Overlay */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #f0f7fc; color: #1a2c3e; }
+        
         .login-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: linear-gradient(135deg, #1a5f7a 0%, #0d3b4f 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 3000;
-            transition: all 0.3s ease;
+            display: flex; align-items: center; justify-content: center; z-index: 3000;
         }
-
         .login-card {
-            background: white;
-            max-width: 420px;
-            width: 90%;
-            padding: 2.5rem;
-            border-radius: 32px;
-            box-shadow: 0 30px 50px rgba(0,0,0,0.3);
-            text-align: center;
-            animation: fadeInUp 0.5s ease;
+            background: white; max-width: 420px; width: 90%; padding: 2.5rem;
+            border-radius: 32px; text-align: center;
         }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .login-card img {
-            width: 80px;
-            height: 80px;
-            margin-bottom: 1rem;
-        }
-
-        .login-card h2 {
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-            color: #1a5f7a;
-        }
-
-        .login-card .subtitle {
-            color: #6b8ba0;
-            font-size: 0.85rem;
-            margin-bottom: 1.5rem;
-        }
-
+        .login-card img { width: 80px; margin-bottom: 1rem; }
         .login-card input {
-            width: 100%;
-            padding: 14px 18px;
-            border: 2px solid #e0eef5;
-            border-radius: 48px;
-            margin-bottom: 1.2rem;
-            outline: none;
-            font-size: 1rem;
-            transition: 0.2s;
+            width: 100%; padding: 14px 18px; border: 2px solid #e0eef5;
+            border-radius: 48px; margin-bottom: 1.2rem; outline: none; font-size: 1rem;
         }
-
-        .login-card input:focus {
-            border-color: #2c7da0;
-            box-shadow: 0 0 0 3px rgba(44,125,160,0.2);
-        }
-
+        .login-card input:focus { border-color: #2c7da0; }
         .login-card button {
-            background: #2c7da0;
-            color: white;
-            border: none;
-            padding: 12px 28px;
-            border-radius: 48px;
-            font-weight: 600;
-            font-size: 1rem;
-            cursor: pointer;
-            width: 100%;
-            transition: 0.2s;
+            background: #2c7da0; color: white; border: none; padding: 12px 28px;
+            border-radius: 48px; font-weight: 600; cursor: pointer; width: 100%;
         }
-
-        .login-card button:hover {
-            background: #1a5f7a;
-            transform: translateY(-2px);
-        }
-
-        .login-error {
-            color: #d9534f;
-            margin-top: 0.8rem;
-            font-size: 0.85rem;
-        }
-
-        /* Main App Layout */
-        .app {
-            display: none;
-            min-height: 100vh;
-        }
-
-        /* Sidebar */
+        .login-error { color: #d9534f; margin-top: 0.8rem; }
+        
+        .app { display: none; min-height: 100vh; }
         .sidebar {
-            position: fixed;
-            left: 0;
-            top: 0;
-            width: 260px;
-            height: 100%;
-            background: white;
-            box-shadow: 2px 0 20px rgba(0,0,0,0.05);
-            z-index: 1000;
-            transition: all 0.3s ease;
-            display: flex;
-            flex-direction: column;
+            position: fixed; left: 0; top: 0; width: 260px; height: 100%;
+            background: white; box-shadow: 2px 0 20px rgba(0,0,0,0.05);
+            z-index: 1000; transition: all 0.3s ease; display: flex; flex-direction: column;
         }
-
-        .sidebar.collapsed {
-            width: 80px;
-        }
-
+        .sidebar.collapsed { width: 80px; }
         .sidebar.collapsed .sidebar-logo h2,
         .sidebar.collapsed .nav-item span,
-        .sidebar.collapsed .sidebar-footer span {
-            display: none;
-        }
-
-        .sidebar.collapsed .nav-item {
-            justify-content: center;
-        }
-
-        .sidebar.collapsed .nav-item i {
-            margin-right: 0;
-        }
-
+        .sidebar.collapsed .sidebar-footer span { display: none; }
+        .sidebar.collapsed .nav-item { justify-content: center; }
         .sidebar-toggle {
-            position: absolute;
-            right: -12px;
-            top: 20px;
-            background: #2c7da0;
-            color: white;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 0.7rem;
-            z-index: 1001;
+            position: absolute; right: -12px; top: 20px; background: #2c7da0;
+            color: white; width: 24px; height: 24px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 0.7rem; z-index: 1001;
         }
-
         .sidebar-logo {
-            padding: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 12px;
+            padding: 1.5rem; display: flex; align-items: center; gap: 12px;
             border-bottom: 1px solid #e4edf2;
         }
-
-        .sidebar-logo img {
-            width: 40px;
-            height: 40px;
-            border-radius: 10px;
-        }
-
-        .sidebar-logo h2 {
-            font-size: 1rem;
-            font-weight: 600;
-            color: #1a5f7a;
-        }
-
-        .nav-menu {
-            flex: 1;
-            padding: 1.5rem 1rem;
-        }
-
+        .sidebar-logo img { width: 40px; height: 40px; border-radius: 10px; }
+        .sidebar-logo h2 { font-size: 1rem; font-weight: 600; color: #1a5f7a; }
+        .nav-menu { flex: 1; padding: 1.5rem 1rem; }
         .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 16px;
-            margin-bottom: 8px;
-            border-radius: 12px;
-            color: #4a6f8a;
-            cursor: pointer;
-            transition: 0.2s;
-            text-decoration: none;
+            display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+            margin-bottom: 8px; border-radius: 12px; color: #4a6f8a;
+            cursor: pointer; transition: 0.2s; text-decoration: none;
         }
-
-        .nav-item:hover {
-            background: #e8f4f8;
-            color: #2c7da0;
-        }
-
-        .nav-item.active {
-            background: #2c7da0;
-            color: white;
-        }
-
-        .nav-item i {
-            width: 20px;
-            font-size: 1.1rem;
-        }
-
-        .sidebar-footer {
-            padding: 1rem;
-            border-top: 1px solid #e4edf2;
-        }
-
-        /* Main Content */
+        .nav-item:hover { background: #e8f4f8; color: #2c7da0; }
+        .nav-item.active { background: #2c7da0; color: white; }
+        .sidebar-footer { padding: 1rem; border-top: 1px solid #e4edf2; }
+        
         .main-content {
-            margin-left: 260px;
-            transition: all 0.3s ease;
-            padding: 1.5rem 2rem;
+            margin-left: 260px; transition: all 0.3s ease; padding: 1.5rem 2rem;
         }
-
-        .main-content.expanded {
-            margin-left: 80px;
-        }
-
-        /* Dashboard Stats */
+        .main-content.expanded { margin-left: 80px; }
+        
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 1.5rem;
             margin-bottom: 2rem;
         }
-
         .stat-card {
             background: white;
             border-radius: 24px;
@@ -258,12 +84,7 @@
             border: 1px solid #e4edf2;
             transition: 0.2s;
         }
-
-        .stat-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 24px rgba(0,0,0,0.08);
-        }
-
+        .stat-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
         .stat-title {
             font-size: 0.85rem;
             text-transform: uppercase;
@@ -271,27 +92,19 @@
             letter-spacing: 1px;
             margin-bottom: 0.5rem;
         }
-
         .stat-value {
             font-size: 2.5rem;
             font-weight: 700;
             color: #1a5f7a;
         }
-
-        .stat-icon {
-            float: right;
-            font-size: 2.5rem;
-            color: #cde5ef;
-        }
-
-        /* Schedule Table */
+        .stat-icon { float: right; font-size: 2.5rem; color: #cde5ef; }
+        
         .schedule-section {
             background: white;
             border-radius: 24px;
             padding: 1.5rem;
             border: 1px solid #e4edf2;
         }
-
         .section-title {
             font-size: 1.2rem;
             font-weight: 600;
@@ -301,121 +114,69 @@
             align-items: center;
             gap: 8px;
         }
-
         .schedule-table {
             width: 100%;
             border-collapse: collapse;
         }
-
         .schedule-table th,
         .schedule-table td {
             padding: 12px 8px;
             text-align: left;
             border-bottom: 1px solid #eef3f7;
         }
-
         .schedule-table th {
             font-weight: 600;
             color: #2c7da0;
             background: #f8fbfd;
         }
-
         .day-badge {
             background: #e8f4f8;
             padding: 4px 12px;
             border-radius: 20px;
             font-size: 0.8rem;
             font-weight: 500;
+            display: inline-block;
         }
-
         .empty-schedule {
             text-align: center;
             padding: 2rem;
             color: #8ba9c0;
         }
-
-        /* Responsive */
+        
         @media (max-width: 768px) {
-            .sidebar {
-                width: 80px;
-            }
-            .sidebar .sidebar-logo h2,
-            .sidebar .nav-item span,
-            .sidebar .sidebar-footer span {
-                display: none;
-            }
-            .sidebar .nav-item {
-                justify-content: center;
-            }
-            .sidebar .nav-item i {
-                margin-right: 0;
-            }
-            .main-content {
-                margin-left: 80px;
-            }
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
+            .sidebar { width: 80px; }
+            .main-content { margin-left: 80px; }
+            .stats-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
-    <!-- Login Overlay -->
     <div class="login-overlay" id="loginOverlay">
         <div class="login-card">
             <img src="icon.png" alt="Logo" onerror="this.src='https://via.placeholder.com/80?text=Logo'">
-            <h2>Pusat Tuisyen<br>Perintis Aspirasi</h2>
-            <div class="subtitle">Management System</div>
+            <h3>Pusat Tuisyen<br>Perintis Aspirasi</h3>
+            <div class="subtitle" style="color:#6b8ba0; margin-bottom:1rem;">Management System</div>
             <input type="password" id="loginPassword" placeholder="Enter Password" autocomplete="off">
             <button id="loginBtn">Sign In</button>
             <div class="login-error" id="loginError"></div>
         </div>
     </div>
 
-    <!-- Main App -->
     <div class="app" id="mainApp">
-        <!-- Sidebar -->
         <div class="sidebar" id="sidebar">
-            <div class="sidebar-toggle" id="sidebarToggle">
-                <i class="fas fa-chevron-left"></i>
-            </div>
-            <div class="sidebar-logo">
-                <img src="icon.png" alt="Logo" onerror="this.src='https://via.placeholder.com/40?text=Logo'">
-                <h2>Perintis Aspirasi</h2>
-            </div>
+            <div class="sidebar-toggle" id="sidebarToggle"><i class="fas fa-chevron-left"></i></div>
+            <div class="sidebar-logo"><img src="icon.png" alt="Logo"><h2>Perintis Aspirasi</h2></div>
             <div class="nav-menu">
-                <a href="index.html" class="nav-item active">
-                    <i class="fas fa-home"></i>
-                    <span>Home</span>
-                </a>
-                <a href="teachermanage.html" class="nav-item">
-                    <i class="fas fa-chalkboard-user"></i>
-                    <span>Teacher Manage</span>
-                </a>
-                <a href="studentmanage.html" class="nav-item">
-                    <i class="fas fa-user-graduate"></i>
-                    <span>Student Manage</span>
-                </a>
-                <a href="package.html" class="nav-item">
-                    <i class="fas fa-calendar-alt"></i>
-                    <span>Package Manage</span>
-                </a>
-                <a href="invoice.html" class="nav-item">
-                    <i class="fas fa-file-invoice"></i>
-                    <span>Invoice</span>
-                </a>
+                <a href="index.html" class="nav-item active"><i class="fas fa-home"></i><span>Home</span></a>
+                <a href="teachermanage.html" class="nav-item"><i class="fas fa-chalkboard-user"></i><span>Teacher Manage</span></a>
+                <a href="studentmanage.html" class="nav-item"><i class="fas fa-user-graduate"></i><span>Student Manage</span></a>
+                <a href="package.html" class="nav-item"><i class="fas fa-calendar-alt"></i><span>Package Manage</span></a>
+                <a href="invoice.html" class="nav-item"><i class="fas fa-file-invoice"></i><span>Invoice</span></a>
             </div>
-            <div class="sidebar-footer">
-                <div class="nav-item" id="logoutBtn">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span>Log Out</span>
-                </div>
-            </div>
+            <div class="sidebar-footer"><div class="nav-item" id="logoutBtn"><i class="fas fa-sign-out-alt"></i><span>Log Out</span></div></div>
         </div>
 
-        <!-- Main Content -->
         <div class="main-content" id="mainContent">
-            <!-- Stats -->
             <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-icon"><i class="fas fa-dollar-sign"></i></div>
@@ -429,7 +190,6 @@
                 </div>
             </div>
 
-            <!-- Schedule -->
             <div class="schedule-section">
                 <div class="section-title">
                     <i class="fas fa-clock"></i>
@@ -439,19 +199,12 @@
                     <table class="schedule-table" id="scheduleTable">
                         <thead>
                             <tr>
-                                <th>Monday</th>
-                                <th>Tuesday</th>
-                                <th>Wednesday</th>
-                                <th>Thursday</th>
-                                <th>Friday</th>
-                                <th>Saturday</th>
-                                <th>Sunday</th>
+                                <th>Monday</th><th>Tuesday</th><th>Wednesday</th>
+                                <th>Thursday</th><th>Friday</th><th>Saturday</th><th>Sunday</th>
                             </tr>
                         </thead>
                         <tbody id="scheduleBody">
-                            <tr>
-                                <td colspan="7" class="empty-schedule">Loading schedule...</td>
-                            </tr>
+                            <tr><td colspan="7" class="empty-schedule">Loading schedule...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -461,7 +214,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, doc, updateDoc, query, where } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCkfEdLDlHW7DvGxLpbDY7Us2nb3j7oTjQ",
@@ -476,18 +229,17 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Login logic
+        // Auth
         const loginOverlay = document.getElementById('loginOverlay');
         const mainApp = document.getElementById('mainApp');
         const loginPassword = document.getElementById('loginPassword');
         const loginBtn = document.getElementById('loginBtn');
         const loginError = document.getElementById('loginError');
-        const logoutButton = document.getElementById('logoutBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
         const sidebarToggle = document.getElementById('sidebarToggle');
         const sidebar = document.getElementById('sidebar');
         const mainContent = document.getElementById('mainContent');
 
-        // Check login status
         function checkLogin() {
             if (sessionStorage.getItem('tutor_auth') === '0919') {
                 loginOverlay.style.display = 'none';
@@ -501,8 +253,7 @@
         }
 
         loginBtn.addEventListener('click', () => {
-            const pwd = loginPassword.value;
-            if (pwd === '0919') {
+            if (loginPassword.value === '0919') {
                 sessionStorage.setItem('tutor_auth', '0919');
                 checkLogin();
             } else {
@@ -519,48 +270,41 @@
             }
         });
 
-        logoutButton?.addEventListener('click', () => {
+        logoutBtn?.addEventListener('click', () => {
             sessionStorage.removeItem('tutor_auth');
             checkLogin();
-            loginPassword.value = '';
-            loginError.innerText = '';
         });
 
-        // Sidebar toggle
         let isCollapsed = false;
         sidebarToggle.addEventListener('click', () => {
             isCollapsed = !isCollapsed;
-            if (isCollapsed) {
-                sidebar.classList.add('collapsed');
-                mainContent.classList.add('expanded');
-                sidebarToggle.innerHTML = '<i class="fas fa-chevron-right"></i>';
-            } else {
-                sidebar.classList.remove('collapsed');
-                mainContent.classList.remove('expanded');
-                sidebarToggle.innerHTML = '<i class="fas fa-chevron-left"></i>';
-            }
+            sidebar.classList.toggle('collapsed', isCollapsed);
+            mainContent.classList.toggle('expanded', isCollapsed);
+            sidebarToggle.innerHTML = isCollapsed ? '<i class="fas fa-chevron-right"></i>' : '<i class="fas fa-chevron-left"></i>';
         });
 
-        // Load dashboard stats
         async function loadDashboardData() {
             try {
                 const studentsSnap = await getDocs(collection(db, 'students'));
                 const totalStudents = studentsSnap.size;
-
-                // Calculate monthly revenue (from paid invoices of current month)
+                document.getElementById('totalStudents').innerText = totalStudents;
+                
+                // Calculate monthly revenue from paid invoices
                 const now = new Date();
                 const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-                const invoicesSnap = await getDocs(collection(db, 'invoices'));
-                let monthlyRevenue = 0;
-                invoicesSnap.forEach(doc => {
-                    const inv = doc.data();
-                    if (inv.monthKey === currentMonth && inv.paid === true) {
-                        monthlyRevenue += inv.totalAmount || 0;
-                    }
-                });
-
-                document.getElementById('totalStudents').innerText = totalStudents;
-                document.getElementById('monthlyRevenue').innerText = `RM ${monthlyRevenue.toFixed(2)}`;
+                try {
+                    const invoicesSnap = await getDocs(collection(db, 'invoices'));
+                    let monthlyRevenue = 0;
+                    invoicesSnap.forEach(doc => {
+                        const inv = doc.data();
+                        if (inv.monthKey === currentMonth && inv.paid === true) {
+                            monthlyRevenue += inv.totalAmount || 0;
+                        }
+                    });
+                    document.getElementById('monthlyRevenue').innerText = `RM ${monthlyRevenue.toFixed(2)}`;
+                } catch (e) {
+                    document.getElementById('monthlyRevenue').innerText = 'RM 0';
+                }
             } catch (e) {
                 console.warn("Error loading dashboard:", e);
                 document.getElementById('totalStudents').innerText = '0';
@@ -568,7 +312,6 @@
             }
         }
 
-        // Load schedule from packages
         async function loadSchedule() {
             const scheduleBody = document.getElementById('scheduleBody');
             try {
@@ -577,38 +320,34 @@
                 packagesSnap.forEach(doc => {
                     packages.push({ id: doc.id, ...doc.data() });
                 });
-
-                // Group by day of week (0=Sunday, 1=Monday, etc.)
+                
+                // Group by day of week
                 const scheduleMap = {
-                    'Monday': [],
-                    'Tuesday': [],
-                    'Wednesday': [],
-                    'Thursday': [],
-                    'Friday': [],
-                    'Saturday': [],
-                    'Sunday': []
+                    'Monday': [], 'Tuesday': [], 'Wednesday': [],
+                    'Thursday': [], 'Friday': [], 'Saturday': [], 'Sunday': []
                 };
-
+                
                 for (let pkg of packages) {
-                    const teacherDoc = await getDoc(doc(db, 'teachers', pkg.teacherId));
-                    const teacherName = teacherDoc.exists() ? teacherDoc.data().name : 'Unknown';
+                    let teacherName = 'Unknown';
+                    if (pkg.teacherId) {
+                        try {
+                            const teacherDoc = await getDoc(doc(db, 'teachers', pkg.teacherId));
+                            teacherName = teacherDoc.exists() ? teacherDoc.data().name : 'Unknown';
+                        } catch (e) {}
+                    }
                     scheduleMap[pkg.dayOfWeek].push({
                         time: pkg.time,
                         subject: pkg.subjectName,
-                        teacher: teacherName,
-                        packageId: pkg.id
+                        teacher: teacherName
                     });
                 }
-
-                // Sort by time
+                
                 for (let day in scheduleMap) {
                     scheduleMap[day].sort((a, b) => a.time.localeCompare(b.time));
                 }
-
-                // Find the maximum number of entries for any day
+                
                 const maxEntries = Math.max(...Object.values(scheduleMap).map(arr => arr.length), 1);
-
-                // Build table rows
+                
                 let html = '';
                 for (let i = 0; i < maxEntries; i++) {
                     html += '<tr>';
@@ -627,25 +366,15 @@
                     }
                     html += '</tr>';
                 }
-
+                
                 if (packages.length === 0) {
-                    scheduleBody.innerHTML = '<tr><td colspan="7" class="empty-schedule">No classes scheduled. Go to Package Manage to create.</td></tr>';
+                    scheduleBody.innerHTML = '<tr><td colspan="7" class="empty-schedule"><i class="fas fa-calendar-plus"></i> No classes scheduled. Go to Package Manage to create.</td></tr>';
                 } else {
                     scheduleBody.innerHTML = html;
                 }
             } catch (e) {
                 console.warn("Error loading schedule:", e);
-                scheduleBody.innerHTML = '<tr><td colspan="7" class="empty-schedule">Error loading schedule. Please check Firebase permissions.</td></tr>';
-            }
-        }
-
-        // Helper function for getting teacher name
-        async function getTeacherName(teacherId) {
-            try {
-                const teacherDoc = await getDoc(doc(db, 'teachers', teacherId));
-                return teacherDoc.exists() ? teacherDoc.data().name : 'Unknown';
-            } catch (e) {
-                return 'Unknown';
+                scheduleBody.innerHTML = '<tr><td colspan="7" class="empty-schedule"><i class="fas fa-exclamation-triangle"></i> Unable to load schedule. Please make sure Firebase collections exist and security rules are set to allow read/write.</td></tr>';
             }
         }
 
