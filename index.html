@@ -139,22 +139,29 @@
             display: inline-block;
         }
         .schedule-entry {
-            margin-bottom: 8px;
-            padding: 6px 0;
-            border-bottom: 1px dashed #eef3f7;
+            margin-bottom: 12px;
+            padding: 8px;
+            background: #f8fbfd;
+            border-radius: 12px;
+            border-left: 3px solid #2c7da0;
         }
         .schedule-entry:last-child {
-            border-bottom: none;
+            margin-bottom: 0;
         }
         .empty-schedule {
             text-align: center;
             padding: 2rem;
             color: #8ba9c0;
         }
+        .teacher-name {
+            font-size: 0.7rem;
+            color: #2c7da0;
+            margin-top: 4px;
+        }
         
         @media (max-width: 768px) {
             .sidebar { width: 80px; }
-            .main-content { margin-left: 80px; }
+            .main-content { margin-left: 80px; padding: 1rem; }
             .stats-grid { grid-template-columns: 1fr; }
         }
     </style>
@@ -329,7 +336,7 @@
         let teacherNameCache = new Map();
         
         async function getTeacherName(teacherId) {
-            if (!teacherId) return 'No teacher assigned';
+            if (!teacherId) return 'No teacher';
             if (teacherNameCache.has(teacherId)) {
                 return teacherNameCache.get(teacherId);
             }
@@ -340,23 +347,22 @@
                 return name;
             } catch (e) {
                 console.warn("Error getting teacher name:", e);
-                return 'Error loading';
+                return 'Unknown';
             }
         }
 
         async function loadSchedule() {
             const scheduleBody = document.getElementById('scheduleBody');
             try {
-                // Load all packages first
                 const packagesSnap = await getDocs(collection(db, 'packages'));
                 const packages = [];
                 packagesSnap.forEach(doc => {
                     packages.push({ id: doc.id, ...doc.data() });
                 });
                 
-                console.log("Loaded packages:", packages); // Debug log
+                console.log("Loaded packages:", packages);
                 
-                // Group by day of week
+                // Initialize schedule map for each day
                 const scheduleMap = {
                     'Monday': [],
                     'Tuesday': [],
@@ -367,21 +373,61 @@
                     'Sunday': []
                 };
                 
-                // For each package, get the teacher name
+                // Process each package
                 for (let pkg of packages) {
-                    let teacherName = 'No teacher';
-                    if (pkg.teacherId) {
-                        teacherName = await getTeacherName(pkg.teacherId);
-                    } else if (pkg.teacherName) {
-                        teacherName = pkg.teacherName;
+                    // Get package name
+                    const packageName = pkg.packageName || pkg.subjectName || 'Untitled';
+                    const time = pkg.time || 'Time not set';
+                    const fee = pkg.fee || 0;
+                    
+                    // Determine which days this package applies to
+                    let daysOfWeek = [];
+                    if (pkg.daysOfWeek && Array.isArray(pkg.daysOfWeek)) {
+                        // New format: multiple days
+                        daysOfWeek = pkg.daysOfWeek;
+                    } else if (pkg.dayOfWeek) {
+                        // Old format: single day
+                        daysOfWeek = [pkg.dayOfWeek];
+                    } else {
+                        continue; // Skip if no days specified
                     }
                     
-                    scheduleMap[pkg.dayOfWeek].push({
-                        time: pkg.time,
-                        subject: pkg.subjectName,
-                        teacher: teacherName,
-                        fee: pkg.fee
-                    });
+                    // Determine teachers
+                    let teachers = [];
+                    if (pkg.teachers && Array.isArray(pkg.teachers)) {
+                        // New format: multiple teachers with subjects
+                        for (let t of pkg.teachers) {
+                            const teacherName = await getTeacherName(t.teacherId);
+                            teachers.push({
+                                name: teacherName,
+                                subject: t.subjectName
+                            });
+                        }
+                    } else if (pkg.teacherId) {
+                        // Old format: single teacher
+                        const teacherName = await getTeacherName(pkg.teacherId);
+                        teachers.push({
+                            name: teacherName,
+                            subject: pkg.subjectName || packageName
+                        });
+                    } else {
+                        teachers.push({
+                            name: 'No teacher assigned',
+                            subject: packageName
+                        });
+                    }
+                    
+                    // Add to schedule for each selected day
+                    for (let day of daysOfWeek) {
+                        if (scheduleMap[day]) {
+                            scheduleMap[day].push({
+                                time: time,
+                                packageName: packageName,
+                                teachers: teachers,
+                                fee: fee
+                            });
+                        }
+                    }
                 }
                 
                 // Sort each day by time
@@ -389,10 +435,8 @@
                     scheduleMap[day].sort((a, b) => a.time.localeCompare(b.time));
                 }
                 
-                // Build the table - show multiple entries per cell
+                // Build the table
                 const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-                
-                // Check if there's any data
                 const hasAnyData = days.some(day => scheduleMap[day].length > 0);
                 
                 if (!hasAnyData) {
@@ -409,14 +453,21 @@
                     for (let day of days) {
                         const entry = scheduleMap[day][i];
                         if (entry) {
+                            // Build teachers list HTML
+                            let teachersHtml = '';
+                            entry.teachers.forEach(teacher => {
+                                teachersHtml += `<div class="teacher-name">
+                                    <i class="fas fa-chalkboard-user"></i> ${teacher.name}
+                                    ${teacher.subject !== entry.packageName ? ` - ${teacher.subject}` : ''}
+                                </div>`;
+                            });
+                            
                             html += `<td class="schedule-entry">
                                 <div class="day-badge">${entry.time}</div>
-                                <div><strong>${entry.subject}</strong></div>
-                                <div style="font-size:0.75rem; color:#2c7da0; margin-top:4px;">
-                                    <i class="fas fa-chalkboard-user"></i> ${entry.teacher}
-                                </div>
-                                <div style="font-size:0.7rem; color:#8ba9c0;">RM ${(entry.fee || 0).toFixed(2)}</div>
-                            </td>`;
+                                <div><strong>${entry.packageName}</strong></div>
+                                ${teachersHtml}
+                                <div style="font-size:0.7rem; color:#8ba9c0; margin-top:4px;">RM ${entry.fee.toFixed(2)}</div>
+                             </td>`;
                         } else {
                             html += '<td style="color:#c0d4e0; vertical-align:middle;">—</td>';
                         }
@@ -428,7 +479,7 @@
                 
             } catch (e) {
                 console.error("Error loading schedule:", e);
-                scheduleBody.innerHTML = `<tr><td colspan="7" class="empty-schedule"><i class="fas fa-exclamation-triangle"></i> Error loading schedule: ${e.message}. Please make sure Firebase collections exist.</td></tr>`;
+                scheduleBody.innerHTML = `</table><td colspan="7" class="empty-schedule"><i class="fas fa-exclamation-triangle"></i> Error loading schedule: ${e.message}. Please make sure Firebase collections exist.</td></tr>`;
             }
         }
 
