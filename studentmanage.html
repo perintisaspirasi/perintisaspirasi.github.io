@@ -350,7 +350,22 @@
                 allPackages = [];
                 for (const pkgDoc of snap.docs) {
                     const pkg = { id: pkgDoc.id, ...pkgDoc.data() };
-                    if (pkg.teacherId && !teacherCache[pkg.teacherId]) {
+                    
+                    // Handle new package format with multiple teachers
+                    if (pkg.teachers && Array.isArray(pkg.teachers)) {
+                        // For each teacher in the package, cache their names
+                        for (const teacher of pkg.teachers) {
+                            if (teacher.teacherId && !teacherCache[teacher.teacherId]) {
+                                try {
+                                    const teacherDoc = await getDoc(doc(db, 'teachers', teacher.teacherId));
+                                    teacherCache[teacher.teacherId] = teacherDoc.exists() ? teacherDoc.data().name : 'Unknown Teacher';
+                                } catch (e) {
+                                    teacherCache[teacher.teacherId] = 'Unknown Teacher';
+                                }
+                            }
+                        }
+                    } else if (pkg.teacherId && !teacherCache[pkg.teacherId]) {
+                        // Old format: single teacher
                         try {
                             const teacherDoc = await getDoc(doc(db, 'teachers', pkg.teacherId));
                             teacherCache[pkg.teacherId] = teacherDoc.exists() ? teacherDoc.data().name : 'Unknown Teacher';
@@ -358,6 +373,7 @@
                             teacherCache[pkg.teacherId] = 'Unknown Teacher';
                         }
                     }
+                    
                     allPackages.push(pkg);
                 }
                 updateSubjectSelect();
@@ -381,16 +397,42 @@
                 return;
             }
             
-            select.innerHTML = '<option value="">-- Select Subject --</option>';
+            select.innerHTML = '<option value="">-- Select Package --</option>';
             allPackages.forEach(pkg => {
-                const teacherName = teacherCache[pkg.teacherId] || 'Unknown';
+                // Get package name (prefer packageName over subjectName)
+                const packageName = pkg.packageName || pkg.subjectName || 'Unnamed';
+                
+                // Get teacher names for display
+                let teacherNames = [];
+                if (pkg.teachers && Array.isArray(pkg.teachers)) {
+                    // New format: multiple teachers
+                    teacherNames = pkg.teachers.map(t => teacherCache[t.teacherId] || t.teacherId?.slice(0,8) || 'Unknown');
+                } else if (pkg.teacherId) {
+                    // Old format: single teacher
+                    teacherNames = [teacherCache[pkg.teacherId] || 'Unknown'];
+                } else {
+                    teacherNames = ['No teacher assigned'];
+                }
+                
+                const teacherDisplay = teacherNames.join(', ');
+                
+                // Get days display
+                let daysDisplay = '';
+                if (pkg.daysOfWeek && Array.isArray(pkg.daysOfWeek)) {
+                    daysDisplay = pkg.daysOfWeek.join(', ');
+                } else if (pkg.dayOfWeek) {
+                    daysDisplay = pkg.dayOfWeek;
+                } else {
+                    daysDisplay = 'No day set';
+                }
+                
                 select.innerHTML += `<option value="${pkg.id}" 
-                    data-subject="${pkg.subjectName}" 
-                    data-teacher="${teacherName}" 
+                    data-package-name="${packageName}"
+                    data-teacher-names='${JSON.stringify(teacherNames)}'
                     data-fee="${pkg.fee || 0}"
-                    data-day="${pkg.dayOfWeek || ''}"
+                    data-days="${daysDisplay}"
                     data-time="${pkg.time || ''}">
-                    ${pkg.subjectName} (${teacherName}) - ${pkg.dayOfWeek || ''} ${pkg.time || ''} - RM${pkg.fee || 0}
+                    ${packageName} (${teacherDisplay}) - ${daysDisplay} ${pkg.time || ''} - RM${pkg.fee || 0}
                 </option>`;
             });
         }
@@ -452,13 +494,13 @@
             if (!container) return;
             container.innerHTML = '';
             if (currentSelectedSubjects.length === 0) {
-                container.innerHTML = '<span style="color:#8ba9c0; font-size:0.8rem;">No subjects added yet</span>';
+                container.innerHTML = '<span style="color:#8ba9c0; font-size:0.8rem;">No packages added yet</span>';
                 return;
             }
             currentSelectedSubjects.forEach((sub, idx) => {
                 const tag = document.createElement('span');
                 tag.className = 'subject-tag';
-                tag.innerHTML = `${sub.subjectName} (${sub.teacherName}) - RM${sub.fee} <span class="remove" data-idx="${idx}">&times;</span>`;
+                tag.innerHTML = `${sub.packageName} (${sub.teacherNames.join(', ')}) - RM${sub.fee} <span class="remove" data-idx="${idx}">&times;</span>`;
                 tag.querySelector('.remove').addEventListener('click', () => {
                     currentSelectedSubjects.splice(idx, 1);
                     renderSelectedSubjects();
@@ -474,25 +516,41 @@
                 if (pkgId === '__create__') {
                     alert('No packages available. Please go to Package Manage to create class packages first.');
                 } else {
-                    alert('Please select a subject');
+                    alert('Please select a package');
                 }
                 return; 
             }
+            
+            const selectedOption = select.options[select.selectedIndex];
             const pkg = allPackages.find(p => p.id === pkgId);
             if (pkg) {
-                const teacherName = teacherCache[pkg.teacherId] || 'Unknown';
+                const packageName = pkg.packageName || pkg.subjectName || 'Unnamed';
+                let teacherNames = [];
+                let teacherIds = [];
+                
+                if (pkg.teachers && Array.isArray(pkg.teachers)) {
+                    // New format: multiple teachers
+                    teacherIds = pkg.teachers.map(t => t.teacherId);
+                    teacherNames = pkg.teachers.map(t => teacherCache[t.teacherId] || 'Unknown');
+                } else if (pkg.teacherId) {
+                    // Old format: single teacher
+                    teacherIds = [pkg.teacherId];
+                    teacherNames = [teacherCache[pkg.teacherId] || 'Unknown'];
+                }
+                
                 const exists = currentSelectedSubjects.some(s => s.packageId === pkgId);
                 if (exists) { 
-                    alert('Subject already added'); 
+                    alert('Package already added'); 
                     return; 
                 }
+                
                 currentSelectedSubjects.push({
                     packageId: pkg.id,
-                    subjectName: pkg.subjectName,
-                    teacherId: pkg.teacherId,
-                    teacherName: teacherName,
+                    packageName: packageName,
+                    teacherIds: teacherIds,
+                    teacherNames: teacherNames,
                     fee: pkg.fee || 0,
-                    dayOfWeek: pkg.dayOfWeek,
+                    daysOfWeek: pkg.daysOfWeek || [pkg.dayOfWeek].filter(d => d),
                     time: pkg.time
                 });
                 renderSelectedSubjects();
@@ -508,7 +566,7 @@
             const gender = document.getElementById('studentGender').value;
             
             if (!name) { alert('Please enter student name'); return; }
-            if (currentSelectedSubjects.length === 0) { alert('Please select at least one subject'); return; }
+            if (currentSelectedSubjects.length === 0) { alert('Please select at least one package'); return; }
             
             if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
                 alert('Please enter a valid email address');
@@ -526,14 +584,14 @@
             const regMonth = new Date().toISOString().slice(0, 7);
             
             try {
-                // Save student
+                // Save student with enrolled packages
                 const docRef = await addDoc(collection(db, 'students'), {
                     name,
                     email: email || null,
                     phone: phoneNumber,
                     birthday,
                     gender,
-                    enrolledSubjects: currentSelectedSubjects,
+                    enrolledPackages: currentSelectedSubjects,  // Using enrolledPackages instead of enrolledSubjects
                     regMonth: regMonth,
                     createdAt: new Date()
                 });
@@ -584,15 +642,19 @@
             tbody.innerHTML = '';
             
             if (students.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:2rem; color:#8ba9c0;">No students yet. Register a student above.用它</td>';
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:2rem; color:#8ba9c0;">No students yet. Register a student above.用它</tr>';
                 return;
             }
             
             students.forEach(student => {
                 const age = calculateAge(student.birthday);
-                const subjectsHtml = (student.enrolledSubjects || []).map(s => 
-                    `<span class="subject-tag" style="background:#e8f4f8;">${s.subjectName} (${s.teacherName})</span>`
-                ).join('');
+                // Support both old (enrolledSubjects) and new (enrolledPackages) format
+                const enrolledItems = student.enrolledPackages || student.enrolledSubjects || [];
+                const subjectsHtml = enrolledItems.map(s => {
+                    const packageName = s.packageName || s.subjectName || 'Unnamed';
+                    const teacherDisplay = Array.isArray(s.teacherNames) ? s.teacherNames.join(', ') : (s.teacherName || 'Unknown');
+                    return `<span class="subject-tag" style="background:#e8f4f8;">${packageName} (${teacherDisplay}) - RM${s.fee}</span>`;
+                }).join('');
                 
                 let contactHtml = '';
                 if (student.email) {
@@ -639,7 +701,12 @@
                 const matchesName = student.name?.toLowerCase().includes(searchTerm);
                 const matchesEmail = student.email?.toLowerCase().includes(searchTerm);
                 const matchesPhone = student.phone?.includes(searchTerm);
-                const matchesSubject = (student.enrolledSubjects || []).some(s => s.subjectName.toLowerCase().includes(searchTerm));
+                const enrolledItems = student.enrolledPackages || student.enrolledSubjects || [];
+                const matchesSubject = enrolledItems.some(s => {
+                    const packageName = (s.packageName || s.subjectName || '').toLowerCase();
+                    const teacherNames = Array.isArray(s.teacherNames) ? s.teacherNames.join(' ').toLowerCase() : (s.teacherName || '').toLowerCase();
+                    return packageName.includes(searchTerm) || teacherNames.includes(searchTerm);
+                });
                 return matchesName || matchesEmail || matchesPhone || matchesSubject;
             });
             renderStudentTable(filtered);
@@ -664,7 +731,7 @@
             document.getElementById('editStudentBirthday').value = student.birthday || '';
             document.getElementById('editStudentGender').value = student.gender || 'Male';
             
-            editSelectedSubjects = [...(student.enrolledSubjects || [])];
+            editSelectedSubjects = [...(student.enrolledPackages || student.enrolledSubjects || [])];
             renderEditSubjects();
             
             document.getElementById('editModal').style.display = 'flex';
@@ -675,10 +742,17 @@
             container.innerHTML = `
                 <div style="margin-bottom: 8px;">
                     <select id="editSubjectSelect" style="width: calc(100% - 100px); display: inline-block; margin-right: 8px;">
-                        <option value="">-- Add Subject --</option>
+                        <option value="">-- Add Package --</option>
                         ${allPackages.map(pkg => {
-                            const teacherName = teacherCache[pkg.teacherId] || 'Unknown';
-                            return `<option value="${pkg.id}" data-subject="${pkg.subjectName}" data-teacher="${teacherName}" data-fee="${pkg.fee || 0}">${pkg.subjectName} (${teacherName}) - RM${pkg.fee || 0}</option>`;
+                            let teacherNames = [];
+                            if (pkg.teachers && Array.isArray(pkg.teachers)) {
+                                teacherNames = pkg.teachers.map(t => teacherCache[t.teacherId] || 'Unknown');
+                            } else if (pkg.teacherId) {
+                                teacherNames = [teacherCache[pkg.teacherId] || 'Unknown'];
+                            }
+                            const packageName = pkg.packageName || pkg.subjectName || 'Unnamed';
+                            const teacherDisplay = teacherNames.join(', ');
+                            return `<option value="${pkg.id}" data-package-name="${packageName}" data-teacher-names='${JSON.stringify(teacherNames)}' data-fee="${pkg.fee || 0}">${packageName} (${teacherDisplay}) - RM${pkg.fee || 0}</option>`;
                         }).join('')}
                     </select>
                     <button id="editAddSubjectBtn" class="secondary" style="width: 90px;"><i class="fas fa-plus"></i> Add</button>
@@ -690,13 +764,15 @@
                 const tagsContainer = document.getElementById('editSubjectsTags');
                 tagsContainer.innerHTML = '';
                 if (editSelectedSubjects.length === 0) {
-                    tagsContainer.innerHTML = '<span style="color:#8ba9c0; font-size:0.8rem;">No subjects enrolled</span>';
+                    tagsContainer.innerHTML = '<span style="color:#8ba9c0; font-size:0.8rem;">No packages enrolled</span>';
                     return;
                 }
                 editSelectedSubjects.forEach((sub, idx) => {
+                    const packageName = sub.packageName || sub.subjectName || 'Unnamed';
+                    const teacherDisplay = Array.isArray(sub.teacherNames) ? sub.teacherNames.join(', ') : (sub.teacherName || 'Unknown');
                     const tag = document.createElement('span');
                     tag.className = 'subject-tag';
-                    tag.innerHTML = `${sub.subjectName} (${sub.teacherName}) - RM${sub.fee} <span class="remove" data-idx="${idx}">&times;</span>`;
+                    tag.innerHTML = `${packageName} (${teacherDisplay}) - RM${sub.fee} <span class="remove" data-idx="${idx}">&times;</span>`;
                     tag.querySelector('.remove').addEventListener('click', () => {
                         editSelectedSubjects.splice(idx, 1);
                         renderTags();
@@ -712,14 +788,25 @@
                 const pkg = allPackages.find(p => p.id === pkgId);
                 if (pkg) {
                     const exists = editSelectedSubjects.some(s => s.packageId === pkgId);
-                    if (exists) { alert('Subject already added'); return; }
+                    if (exists) { alert('Package already added'); return; }
+                    
+                    let teacherNames = [];
+                    let teacherIds = [];
+                    if (pkg.teachers && Array.isArray(pkg.teachers)) {
+                        teacherIds = pkg.teachers.map(t => t.teacherId);
+                        teacherNames = pkg.teachers.map(t => teacherCache[t.teacherId] || 'Unknown');
+                    } else if (pkg.teacherId) {
+                        teacherIds = [pkg.teacherId];
+                        teacherNames = [teacherCache[pkg.teacherId] || 'Unknown'];
+                    }
+                    
                     editSelectedSubjects.push({
                         packageId: pkg.id,
-                        subjectName: pkg.subjectName,
-                        teacherId: pkg.teacherId,
-                        teacherName: teacherCache[pkg.teacherId] || 'Unknown',
+                        packageName: pkg.packageName || pkg.subjectName || 'Unnamed',
+                        teacherIds: teacherIds,
+                        teacherNames: teacherNames,
                         fee: pkg.fee || 0,
-                        dayOfWeek: pkg.dayOfWeek,
+                        daysOfWeek: pkg.daysOfWeek || [pkg.dayOfWeek].filter(d => d),
                         time: pkg.time
                     });
                     renderTags();
@@ -757,7 +844,7 @@
                     phone: phoneNumber,
                     birthday, 
                     gender,
-                    enrolledSubjects: editSelectedSubjects
+                    enrolledPackages: editSelectedSubjects
                 });
                 alert('Student updated successfully');
                 document.getElementById('editModal').style.display = 'none';
