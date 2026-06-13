@@ -462,21 +462,16 @@
         .btn-download { background: #2c7da0; color: white; }
         .btn-whatsapp { background: #25D366; color: white; }
         
-        .month-selector {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 1rem;
-            flex-wrap: wrap;
+        .month-selector-modal .modal-container {
+            max-width: 400px;
         }
-        .month-selector label {
-            margin-bottom: 0;
-            white-space: nowrap;
+        .month-selector-modal .modal-body {
+            text-align: center;
         }
-        .month-selector input {
-            width: auto;
-            flex: 1;
-            min-width: 150px;
+        .month-selector-modal input {
+            width: 100%;
+            padding: 12px;
+            margin: 1rem 0;
         }
         
         @media (max-width: 768px) {
@@ -546,6 +541,22 @@
             </div>
             <div class="modal-body" id="salaryModalBody">
                 <div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Loading...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Month Selector Modal -->
+    <div id="monthSelectorModal" class="modal-overlay month-selector-modal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h2><i class="fas fa-calendar-alt"></i> Select Salary Month</h2>
+                <button class="close-modal" id="closeMonthSelectorBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Select the month for the salary slip:</p>
+                <input type="month" id="salaryMonthInput" value="">
+                <div id="monthError" style="color: #e67e22; font-size: 0.8rem; margin-top: 5px;"></div>
+                <button id="confirmMonthBtn" class="save-btn" style="margin-top: 1rem;">Generate Salary Slip</button>
             </div>
         </div>
     </div>
@@ -632,6 +643,9 @@
         let allTeachers = [];
         let studentsList = [];
         let salarySettingsCache = new Map();
+        let currentSlipTeacher = null;
+        let currentSlipSettings = null;
+        let currentSlipMonth = null;
 
         async function loadAllTeachers() {
             const teacherListDiv = document.getElementById('teacherList');
@@ -755,7 +769,6 @@
             return count;
         }
 
-        // Calculate center cut total for tuition
         function calculateCenterCutTotal(teacher) {
             let total = 0;
             const subjects = teacher.subjects || [];
@@ -802,8 +815,24 @@
             return total + adjustment;
         }
 
-        // Generate Salary Slip HTML with month selection and center cut display
+        // 修复：允许选择入职当月的薪水单（使用 >= 而不是 >）
+        function isValidMonth(selectedMonth, joinDate) {
+            if (!joinDate) return true;
+            const [year, month] = selectedMonth.split('-').map(Number);
+            const selected = new Date(year, month - 1, 1);
+            const join = new Date(joinDate);
+            // 获取入职当月的第一天
+            const joinMonth = new Date(join.getFullYear(), join.getMonth(), 1);
+            return selected >= joinMonth;  // 允许等于（当月）
+        }
+
+        function getSanitizedName(name) {
+            return name.replace(/[^a-zA-Z0-9]/g, '_');
+        }
+
+        // Generate Salary Slip HTML
         async function generateSalarySlipHTML(teacher, settings, selectedMonth) {
+            currentSlipMonth = selectedMonth;
             const employmentType = settings.employmentType || 'parttime';
             let totalSalary = 0;
             let centerCutTotal = 0;
@@ -811,7 +840,7 @@
             const today = new Date();
             const formattedDate = today.toLocaleDateString('en-MY');
             const slipNumber = `SLIP-${today.getFullYear()}${String(today.getMonth()+1).padStart(2,'0')}-${teacher.id.slice(-4)}`;
-            const monthDisplay = selectedMonth || `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}`;
+            const monthDisplay = selectedMonth;
             
             if (employmentType === 'parttime') {
                 const hourlyRate = settings.parttimeHourlyRate || 10;
@@ -861,7 +890,6 @@
             
             let phoneDisplay = teacher.phone ? `+60 ${teacher.phone}` : '-';
             
-            // Add center cut display for tuition mode
             let centerCutDisplay = '';
             if (employmentType === 'tuition' && centerCutTotal > 0) {
                 centerCutDisplay = `<div class="salary-slip-row center-fee-row" style="background: #fff3e0;">
@@ -1138,7 +1166,7 @@
                 });
             }
             
-            // View Salary Slip button with month selector
+            // View Salary Slip button - open month selector with validation
             const viewSlipBtn = document.getElementById('viewSalarySlipBtn');
             if (viewSlipBtn) {
                 viewSlipBtn.addEventListener('click', async () => {
@@ -1170,18 +1198,45 @@
                         latestSettings.adjustment = parseFloat(document.getElementById('tuitionAdjustment').value) || 0;
                     }
                     
-                    // Create month selector modal or prompt
-                    const monthInput = prompt("Enter salary month (YYYY-MM):", new Date().toISOString().slice(0, 7));
-                    if (!monthInput) return;
+                    currentSlipTeacher = teacher;
+                    currentSlipSettings = latestSettings;
                     
-                    const html = await generateSalarySlipHTML(teacher, latestSettings, monthInput);
-                    document.getElementById('salarySlipBody').innerHTML = html;
-                    document.getElementById('salarySlipModal').classList.add('active');
+                    // Set default month to current month
+                    const now = new Date();
+                    const defaultMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+                    document.getElementById('salaryMonthInput').value = defaultMonth;
+                    document.getElementById('monthError').innerHTML = '';
+                    document.getElementById('monthSelectorModal').classList.add('active');
                 });
             }
             
             updateFulltimeTotal();
         }
+        
+        // Month selector confirmation
+        document.getElementById('confirmMonthBtn')?.addEventListener('click', async () => {
+            const selectedMonth = document.getElementById('salaryMonthInput').value;
+            if (!selectedMonth) {
+                document.getElementById('monthError').innerHTML = 'Please select a month';
+                return;
+            }
+            
+            // Validate month against join date
+            if (currentSlipTeacher && currentSlipTeacher.joinDate) {
+                const joinDate = currentSlipTeacher.joinDate;
+                if (!isValidMonth(selectedMonth, joinDate)) {
+                    const joinDateFormatted = new Date(joinDate).toLocaleDateString('en-MY');
+                    document.getElementById('monthError').innerHTML = `Invalid month. This teacher joined on ${joinDateFormatted}. Only months from join date onwards are allowed.`;
+                    return;
+                }
+            }
+            
+            document.getElementById('monthSelectorModal').classList.remove('active');
+            
+            const html = await generateSalarySlipHTML(currentSlipTeacher, currentSlipSettings, selectedMonth);
+            document.getElementById('salarySlipBody').innerHTML = html;
+            document.getElementById('salarySlipModal').classList.add('active');
+        });
         
         // Salary Slip Modal actions
         document.getElementById('closeSlipModalBtn')?.addEventListener('click', () => {
@@ -1190,6 +1245,15 @@
         document.getElementById('salarySlipModal')?.addEventListener('click', (e) => {
             if (e.target === document.getElementById('salarySlipModal')) {
                 document.getElementById('salarySlipModal').classList.remove('active');
+            }
+        });
+        
+        document.getElementById('closeMonthSelectorBtn')?.addEventListener('click', () => {
+            document.getElementById('monthSelectorModal').classList.remove('active');
+        });
+        document.getElementById('monthSelectorModal')?.addEventListener('click', (e) => {
+            if (e.target === document.getElementById('monthSelectorModal')) {
+                document.getElementById('monthSelectorModal').classList.remove('active');
             }
         });
         
@@ -1203,7 +1267,8 @@
             try {
                 const canvas = await html2canvas(slipElement, { scale: 2, backgroundColor: '#ffffff' });
                 const link = document.createElement('a');
-                link.download = `salary_slip_${Date.now()}.png`;
+                const teacherName = currentSlipTeacher ? currentSlipTeacher.name.replace(/[^a-zA-Z0-9]/g, '_') : 'teacher';
+                link.download = `slip_${teacherName}_${currentSlipMonth}.png`;
                 link.href = canvas.toDataURL();
                 link.click();
                 alert('Salary slip downloaded!');
@@ -1215,25 +1280,18 @@
         document.getElementById('whatsappSlipBtn')?.addEventListener('click', async () => {
             const slipElement = document.getElementById('salarySlipContent');
             if (!slipElement) return;
-            let phoneNumber = null;
-            // Find current teacher from the modal title
-            const modalTitle = document.getElementById('modalTeacherName')?.innerText;
-            for (const t of allTeachers) {
-                if (modalTitle && t.name && modalTitle.includes(t.name)) {
-                    phoneNumber = t.phone;
-                    break;
-                }
-            }
+            let phoneNumber = currentSlipTeacher?.phone;
             
             try {
                 const canvas = await html2canvas(slipElement, { scale: 2, backgroundColor: '#ffffff' });
                 const link = document.createElement('a');
-                link.download = `salary_slip.png`;
+                const teacherName = currentSlipTeacher ? currentSlipTeacher.name.replace(/[^a-zA-Z0-9]/g, '_') : 'teacher';
+                link.download = `slip_${teacherName}_${currentSlipMonth}.png`;
                 link.href = canvas.toDataURL();
                 link.click();
                 
                 if (phoneNumber) {
-                    const message = `Dear Teacher,\n\nPlease find attached your salary slip.\n\nThank you for your hard work!\n\nPusat Tuisyen Perintis Aspirasi`;
+                    const message = `Dear ${currentSlipTeacher?.name},\n\nPlease find attached your salary slip for ${currentSlipMonth}.\n\nThank you for your hard work!\n\nPusat Tuisyen Perintis Aspirasi`;
                     const waLink = `https://wa.me/60${phoneNumber}?text=${encodeURIComponent(message)}`;
                     window.open(waLink, '_blank');
                     alert('Salary slip downloaded. WhatsApp opened. Please attach the image.');
