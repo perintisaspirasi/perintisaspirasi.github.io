@@ -245,21 +245,54 @@
             border: 1px solid #cde5ef;
         }
 
-        /* Card */
+        /* Card with internal scroll */
         .card {
             background: white;
             border-radius: 24px;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
             border: 1px solid #e4edf2;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            margin-bottom: 1.5rem;
         }
-
-        .card h3 {
+        .card-header {
+            padding: 1.5rem 1.5rem 0 1.5rem;
+        }
+        .card-header h3 {
             color: #1a5f7a;
-            margin-bottom: 1rem;
             display: flex;
             align-items: center;
             gap: 8px;
+        }
+        .card-body-scroll {
+            padding: 1rem 1.5rem 1.5rem 1.5rem;
+            max-height: 550px;
+            overflow-y: auto;
+        }
+        /* Custom scrollbar */
+        .card-body-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+        .card-body-scroll::-webkit-scrollbar-track {
+            background: #eef3f7;
+            border-radius: 10px;
+        }
+        .card-body-scroll::-webkit-scrollbar-thumb {
+            background: #2c7da0;
+            border-radius: 10px;
+        }
+
+        /* Register card doesn't need scroll */
+        .card:first-of-type {
+            overflow: visible;
+        }
+        .card:first-of-type .card-header,
+        .card:first-of-type .card-body-scroll {
+            padding: 1.5rem;
+        }
+        .card:first-of-type .card-body-scroll {
+            max-height: none;
+            overflow: visible;
         }
 
         .form-row {
@@ -442,7 +475,7 @@
             max-width: 550px;
             width: 90%;
             max-height: 85vh;
-            overflow-y: auto;  /* Enables vertical scrolling */
+            overflow-y: auto;
             overflow-x: hidden;
         }
 
@@ -533,44 +566,52 @@
 
             <!-- Register New Teacher -->
             <div class="card">
-                <h3><i class="fas fa-user-plus"></i> Register New Teacher</h3>
-                <div class="form-row">
-                    <div class="form-group"><label>Full Name *</label><input type="text" id="teacherName" placeholder="e.g., Mr. Ahmad"></div>
-                    <div class="form-group"><label>IC Number</label><input type="text" id="teacherIc" placeholder="IC Number"></div>
+                <div class="card-header">
+                    <h3><i class="fas fa-user-plus"></i> Register New Teacher</h3>
                 </div>
-                
-                <!-- Bank Details Section -->
-                <div class="form-row">
-                    <div class="form-group"><label>Bank Name</label><input type="text" id="teacherBankName" placeholder="e.g., Maybank, CIMB, Public Bank"></div>
-                    <div class="form-group"><label>Bank Account Number</label><input type="text" id="teacherBankAccount" placeholder="Bank Account Number"></div>
-                </div>
-                
-                <div class="subjects-container">
-                    <label><i class="fas fa-book"></i> Subjects & Fees</label>
-                    <div id="subjectsList">
-                        <div class="subject-item">
-                            <input type="text" placeholder="Subject Name" class="subject-name" value="">
-                            <input type="number" placeholder="Fee (RM)" class="subject-fee" value="0">
-                            <input type="number" placeholder="Center Cut (RM)" class="subject-cut" value="0">
-                            <input type="number" placeholder="Extra Fee (RM)" class="subject-extra" value="0">
-                            <button class="remove-subject secondary" style="display:none;">Remove</button>
-                        </div>
+                <div class="card-body-scroll" style="max-height: none; overflow: visible;">
+                    <div class="form-row">
+                        <div class="form-group"><label>Full Name *</label><input type="text" id="teacherName" placeholder="e.g., Mr. Ahmad"></div>
+                        <div class="form-group"><label>IC Number</label><input type="text" id="teacherIc" placeholder="IC Number"></div>
                     </div>
-                    <button type="button" class="add-subject-btn" id="addSubjectBtn">+ Add Subject</button>
+                    
+                    <!-- Bank Details Section -->
+                    <div class="form-row">
+                        <div class="form-group"><label>Bank Name</label><input type="text" id="teacherBankName" placeholder="e.g., Maybank, CIMB, Public Bank"></div>
+                        <div class="form-group"><label>Bank Account Number</label><input type="text" id="teacherBankAccount" placeholder="Bank Account Number"></div>
+                    </div>
+                    
+                    <div class="subjects-container">
+                        <label><i class="fas fa-book"></i> Subjects & Fees</label>
+                        <div id="subjectsList">
+                            <div class="subject-item">
+                                <input type="text" placeholder="Subject Name" class="subject-name" value="">
+                                <input type="number" placeholder="Fee (RM)" class="subject-fee" value="0">
+                                <input type="number" placeholder="Center Cut (RM)" class="subject-cut" value="0">
+                                <input type="number" placeholder="Extra Fee (RM)" class="subject-extra" value="0">
+                                <button class="remove-subject secondary" style="display:none;">Remove</button>
+                            </div>
+                        </div>
+                        <button type="button" class="add-subject-btn" id="addSubjectBtn">+ Add Subject</button>
+                    </div>
+                    <button id="saveTeacherBtn" style="margin-top: 1rem;">Register Teacher</button>
                 </div>
-                <button id="saveTeacherBtn" style="margin-top: 1rem;">Register Teacher</button>
             </div>
 
             <!-- Teacher List -->
             <div class="card">
-                <h3><i class="fas fa-list"></i> Teacher Directory</h3>
-                <div class="table-wrapper">
-                    <table id="teachersTable">
-                        <thead>
-                            <tr><th>Name</th><th>IC Number</th><th>Bank Info</th><th>Subjects</th><th>Actions</th></tr>
-                        </thead>
-                        <tbody id="teachersTableBody"></tbody>
-                    </table>
+                <div class="card-header">
+                    <h3><i class="fas fa-list"></i> Teacher Directory</h3>
+                </div>
+                <div class="card-body-scroll" id="teacherListContainer">
+                    <div id="teachersTableWrapper" class="table-wrapper">
+                        <table id="teachersTable">
+                            <thead>
+                                <tr><th>Name</th><th>IC Number</th><th>Bank Info</th><th>Subjects</th><th>Actions</th></tr>
+                            </thead>
+                            <tbody id="teachersTableBody"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -658,6 +699,14 @@
         function toUppercase(str) {
             if (!str) return str;
             return str.toUpperCase();
+        }
+
+        // Format bank account number with spaces every 4 digits
+        function formatBankAccount(accountNumber) {
+            if (!accountNumber) return '';
+            const cleaned = accountNumber.replace(/\s/g, '');
+            const groups = cleaned.match(/.{1,4}/g);
+            return groups ? groups.join(' ') : accountNumber;
         }
 
         // Subjects management
@@ -768,8 +817,9 @@
                     `<span class="subject-badge">${escapeHtml(s.subjectName)} (RM${s.fee})</span>`
                 ).join('');
                 
+                const formattedAccount = formatBankAccount(teacher.bankAccount);
                 const bankHtml = (teacher.bankName || teacher.bankAccount) ? 
-                    `<span class="bank-badge"><i class="fas fa-university"></i> ${escapeHtml(teacher.bankName || '')} ${teacher.bankAccount ? ' - ' + teacher.bankAccount : ''}</span>` : 
+                    `<span class="bank-badge"><i class="fas fa-university"></i> ${escapeHtml(teacher.bankName || '')} ${formattedAccount ? ' - ' + formattedAccount : ''}</span>` : 
                     '<span class="bank-badge" style="background:#eef3f7;">No bank info</span>';
                 
                 const row = tbody.insertRow();
