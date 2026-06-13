@@ -396,6 +396,59 @@
             margin-top: 0.8rem;
         }
         
+        /* Pay button styles */
+        .pay-salary-btn {
+            background: #2cae6c;
+            margin-top: 0.5rem;
+        }
+        .pay-salary-btn:disabled {
+            background: #8ba9c0;
+            cursor: not-allowed;
+        }
+        
+        /* Month selector with payment status */
+        .month-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 1rem;
+            border: 1px solid #e4edf2;
+            border-radius: 16px;
+        }
+        .month-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            border-bottom: 1px solid #eef3f7;
+        }
+        .month-item:last-child {
+            border-bottom: none;
+        }
+        .month-name {
+            font-weight: 500;
+        }
+        .payment-status {
+            font-size: 0.7rem;
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+        .payment-status.paid {
+            background: #e0f3e8;
+            color: #2cae6c;
+        }
+        .payment-status.unpaid {
+            background: #fff3e0;
+            color: #e67e22;
+        }
+        .month-actions {
+            display: flex;
+            gap: 8px;
+        }
+        .month-actions button {
+            padding: 6px 12px;
+            font-size: 0.7rem;
+        }
+        
         /* Salary Slip Styles */
         .salary-slip {
             background: white;
@@ -463,15 +516,7 @@
         .btn-whatsapp { background: #25D366; color: white; }
         
         .month-selector-modal .modal-container {
-            max-width: 400px;
-        }
-        .month-selector-modal .modal-body {
-            text-align: center;
-        }
-        .month-selector-modal input {
-            width: 100%;
-            padding: 12px;
-            margin: 1rem 0;
+            max-width: 500px;
         }
         
         @media (max-width: 768px) {
@@ -480,6 +525,8 @@
             .work-period { flex-direction: column; }
             .slip-actions { flex-direction: column; }
             .slip-actions button { width: 100%; }
+            .month-item { flex-direction: column; gap: 8px; align-items: flex-start; }
+            .month-actions { width: 100%; justify-content: flex-end; }
         }
     </style>
 </head>
@@ -549,14 +596,14 @@
     <div id="monthSelectorModal" class="modal-overlay month-selector-modal">
         <div class="modal-container">
             <div class="modal-header">
-                <h2><i class="fas fa-calendar-alt"></i> Select Salary Month</h2>
+                <h2><i class="fas fa-calendar-alt"></i> Salary Records</h2>
                 <button class="close-modal" id="closeMonthSelectorBtn">&times;</button>
             </div>
             <div class="modal-body">
-                <p>Select the month for the salary slip:</p>
-                <input type="month" id="salaryMonthInput" value="">
-                <div id="monthError" style="color: #e67e22; font-size: 0.8rem; margin-top: 5px;"></div>
-                <button id="confirmMonthBtn" class="save-btn" style="margin-top: 1rem;">Generate Salary Slip</button>
+                <p>Select a month to view salary slip:</p>
+                <div id="monthListContainer" class="month-list">
+                    <div class="loading-spinner">Loading months...</div>
+                </div>
             </div>
         </div>
     </div>
@@ -581,7 +628,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, getDoc, doc, setDoc } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, getDoc, doc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCkfEdLDlHW7DvGxLpbDY7Us2nb3j7oTjQ",
@@ -646,6 +693,7 @@
         let currentSlipTeacher = null;
         let currentSlipSettings = null;
         let currentSlipMonth = null;
+        let salaryRecordsCache = new Map(); // teacherId -> Map(monthKey -> { amount, paid, recordId })
 
         async function loadAllTeachers() {
             const teacherListDiv = document.getElementById('teacherList');
@@ -815,43 +863,15 @@
             return total + adjustment;
         }
 
-        // 修复：允许选择入职当月的薪水单（使用 >= 而不是 >）
-        function isValidMonth(selectedMonth, joinDate) {
-            if (!joinDate) return true;
-            const [year, month] = selectedMonth.split('-').map(Number);
-            const selected = new Date(year, month - 1, 1);
-            const join = new Date(joinDate);
-            // 获取入职当月的第一天
-            const joinMonth = new Date(join.getFullYear(), join.getMonth(), 1);
-            return selected >= joinMonth;  // 允许等于（当月）
-        }
-
-        function getSanitizedName(name) {
-            return name.replace(/[^a-zA-Z0-9]/g, '_');
-        }
-
-        // Generate Salary Slip HTML
-        async function generateSalarySlipHTML(teacher, settings, selectedMonth) {
-            currentSlipMonth = selectedMonth;
+        // 计算指定月份的薪水金额（根据当前设置计算）
+        function calculateSalaryForMonth(teacher, settings, monthKey) {
             const employmentType = settings.employmentType || 'parttime';
-            let totalSalary = 0;
-            let centerCutTotal = 0;
-            let detailsHtml = '';
-            const today = new Date();
-            const formattedDate = today.toLocaleDateString('en-MY');
-            const slipNumber = `SLIP-${today.getFullYear()}${String(today.getMonth()+1).padStart(2,'0')}-${teacher.id.slice(-4)}`;
-            const monthDisplay = selectedMonth;
             
             if (employmentType === 'parttime') {
                 const hourlyRate = settings.parttimeHourlyRate || 10;
                 const workPeriods = settings.parttimeWorkPeriods || [];
                 const adjustment = settings.parttimeAdjustment || 0;
-                totalSalary = calculateParttimeSalary(hourlyRate, workPeriods, adjustment);
-                detailsHtml = `
-                    <div class="salary-slip-row"><span>Hourly Rate:</span><span>RM ${hourlyRate.toFixed(2)}</span></div>
-                    ${workPeriods.map(p => `<div class="salary-slip-row"><span>Work Period:</span><span>${p.startDate} to ${p.endDate} (${p.hours} hrs/day)</span></div>`).join('')}
-                    <div class="salary-slip-row"><span>Adjustment:</span><span>RM ${adjustment.toFixed(2)}</span></div>
-                `;
+                return calculateParttimeSalary(hourlyRate, workPeriods, adjustment);
             } else if (employmentType === 'fulltime') {
                 const baseSalary = settings.fulltimeBaseSalary || 2000;
                 const leave = settings.fulltimeDeductions?.leave || 0;
@@ -860,79 +880,106 @@
                 const useSocso = settings.fulltimeDeductions?.useSocso || false;
                 const socso = settings.fulltimeDeductions?.socso || 0;
                 const adjustment = settings.fulltimeAdjustment || 0;
-                const epfAmount = useEpf ? baseSalary * (epf / 100) : 0;
-                totalSalary = calculateFulltimeSalary(baseSalary, leave, useEpf, epf, useSocso, socso, adjustment);
-                detailsHtml = `
-                    <div class="salary-slip-row"><span>Base Salary:</span><span>RM ${baseSalary.toFixed(2)}</span></div>
-                    ${leave ? `<div class="salary-slip-row"><span>Leave Deduction:</span><span>-RM ${leave.toFixed(2)}</span></div>` : ''}
-                    ${useEpf ? `<div class="salary-slip-row"><span>EPF (${epf}%):</span><span>-RM ${epfAmount.toFixed(2)}</span></div>` : ''}
-                    ${useSocso ? `<div class="salary-slip-row"><span>SOCSO:</span><span>-RM ${socso.toFixed(2)}</span></div>` : ''}
-                    <div class="salary-slip-row"><span>Adjustment:</span><span>RM ${adjustment.toFixed(2)}</span></div>
-                `;
+                return calculateFulltimeSalary(baseSalary, leave, useEpf, epf, useSocso, socso, adjustment);
             } else if (employmentType === 'tuition') {
                 const adjustment = settings.adjustment || 0;
-                totalSalary = calculateTuitionSalary(teacher, adjustment);
-                centerCutTotal = calculateCenterCutTotal(teacher);
-                const subjects = teacher.subjects || [];
-                detailsHtml = subjects.map(s => {
-                    const fee = s.fee || 0;
-                    const centerCut = s.centerCut || 0;
-                    const teacherShare = fee - centerCut;
-                    const studentCount = countStudentsForSubject(s.subjectName);
-                    const subjectTotal = teacherShare * studentCount;
-                    const centerTotal = centerCut * studentCount;
-                    return `<div class="salary-slip-row"><span>${escapeHtml(s.subjectName)} (${studentCount} students):</span><span>RM ${subjectTotal.toFixed(2)}</span></div>
-                            <div class="salary-slip-row" style="padding-left: 1rem; font-size: 0.8rem; color: #6b8ba0;"><span>  - Teacher Share (RM ${teacherShare}/student):</span><span>RM ${subjectTotal.toFixed(2)}</span></div>
-                            <div class="salary-slip-row" style="padding-left: 1rem; font-size: 0.8rem; color: #e67e22;"><span>  - Center Cut (RM ${centerCut}/student):</span><span>RM ${centerTotal.toFixed(2)}</span></div>`;
-                }).join('');
-                detailsHtml += `<div class="salary-slip-row"><span>Adjustment:</span><span>RM ${adjustment.toFixed(2)}</span></div>`;
+                return calculateTuitionSalary(teacher, adjustment);
             }
-            
-            let phoneDisplay = teacher.phone ? `+60 ${teacher.phone}` : '-';
-            
-            let centerCutDisplay = '';
-            if (employmentType === 'tuition' && centerCutTotal > 0) {
-                centerCutDisplay = `<div class="salary-slip-row center-fee-row" style="background: #fff3e0;">
-                    <span><strong>Center Fee:</strong></span>
-                    <span><strong>RM ${centerCutTotal.toFixed(2)}</strong></span>
-                </div>`;
+            return 0;
+        }
+
+        // 保存薪水记录到数据库
+        async function saveSalaryRecord(teacherId, monthKey, amount, paid = false) {
+            const recordId = `${teacherId}_${monthKey}`;
+            const recordRef = doc(db, 'salaryRecords', recordId);
+            await setDoc(recordRef, {
+                teacherId,
+                monthKey,
+                amount,
+                paid,
+                updatedAt: new Date()
+            }, { merge: true });
+            // 更新缓存
+            if (!salaryRecordsCache.has(teacherId)) {
+                salaryRecordsCache.set(teacherId, new Map());
             }
+            salaryRecordsCache.get(teacherId).set(monthKey, { amount, paid, recordId });
+        }
+
+        // 获取薪水记录
+        async function getSalaryRecord(teacherId, monthKey) {
+            if (salaryRecordsCache.has(teacherId) && salaryRecordsCache.get(teacherId).has(monthKey)) {
+                return salaryRecordsCache.get(teacherId).get(monthKey);
+            }
+            const recordId = `${teacherId}_${monthKey}`;
+            const recordDoc = await getDoc(doc(db, 'salaryRecords', recordId));
+            if (recordDoc.exists()) {
+                const data = recordDoc.data();
+                const record = { amount: data.amount, paid: data.paid, recordId };
+                if (!salaryRecordsCache.has(teacherId)) {
+                    salaryRecordsCache.set(teacherId, new Map());
+                }
+                salaryRecordsCache.get(teacherId).set(monthKey, record);
+                return record;
+            }
+            return null;
+        }
+
+        // 标记薪水为已支付
+        async function markSalaryAsPaid(teacherId, monthKey, amount) {
+            const recordId = `${teacherId}_${monthKey}`;
+            const recordRef = doc(db, 'salaryRecords', recordId);
+            await setDoc(recordRef, {
+                teacherId,
+                monthKey,
+                amount,
+                paid: true,
+                paidAt: new Date()
+            }, { merge: true });
+            if (!salaryRecordsCache.has(teacherId)) {
+                salaryRecordsCache.set(teacherId, new Map());
+            }
+            salaryRecordsCache.get(teacherId).set(monthKey, { amount, paid: true, recordId });
+        }
+
+        function isValidMonth(selectedMonth, joinDate) {
+            if (!joinDate) return true;
+            const [year, month] = selectedMonth.split('-').map(Number);
+            const selected = new Date(year, month - 1, 1);
+            const join = new Date(joinDate);
+            const joinMonth = new Date(join.getFullYear(), join.getMonth(), 1);
+            return selected >= joinMonth;
+        }
+
+        // 生成可用的月份列表
+        async function generateMonthList(teacher) {
+            const now = new Date();
+            const startDate = teacher.joinDate ? new Date(teacher.joinDate) : new Date(2024, 0, 1);
+            const startMonth = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+            const months = [];
+            let current = new Date(startMonth);
             
-            return `
-                <div class="salary-slip" id="salarySlipContent">
-                    <div class="salary-slip-header">
-                        <img src="icon.png" alt="Logo" onerror="this.style.display='none'">
-                        <h2>Pusat Tuisyen Perintis Aspirasi</h2>
-                        <p>No. 21, Lorong 1, Taman Perlis, Kangar, Malaysia</p>
-                        <p>TEL/FAX: 012-520 0919 | RA 095223949</p>
-                    </div>
-                    <div class="salary-slip-divider"><h3>SALARY SLIP</h3></div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
-                        <div><strong>Slip No:</strong> ${slipNumber}</div>
-                        <div><strong>Date:</strong> ${formattedDate}</div>
-                    </div>
-                    <div class="salary-slip-row" style="background: #e8f4f8;">
-                        <span><strong>Salary Month:</strong></span>
-                        <span><strong>${monthDisplay}</strong></span>
-                    </div>
-                    <div style="margin-bottom: 1rem;">
-                        <div><strong>Teacher:</strong> ${escapeHtml(teacher.name)}</div>
-                        <div><strong>IC Number:</strong> ${escapeHtml(teacher.ic) || '-'}</div>
-                        <div><strong>Phone:</strong> ${phoneDisplay}</div>
-                        <div><strong>Employment Type:</strong> ${employmentType.toUpperCase()}</div>
-                        <div><strong>Bank:</strong> ${escapeHtml(teacher.bankName) || '-'} ${escapeHtml(teacher.bankAccount) || ''}</div>
-                    </div>
-                    <div style="margin: 1rem 0;">
-                        <div class="salary-slip-row" style="background: #f8fbfd; font-weight: 700;"><span>Earnings / Deductions</span><span>Amount (RM)</span></div>
-                        ${detailsHtml}
-                        ${centerCutDisplay}
-                    </div>
-                    <div class="salary-slip-total"><strong>TOTAL SALARY: RM ${totalSalary.toFixed(2)}</strong></div>
-                    <div style="text-align: center; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #cde5ef; font-size: 0.7rem; color: #8ba9c0;">
-                        PerintisAspirasi123@gmail.com
-                    </div>
-                </div>
-            `;
+            // 获取当前月份对应的薪水设置（使用最新设置计算金额）
+            const settings = salarySettingsCache.get(teacher.id) || { employmentType: 'parttime' };
+            
+            while (current <= now) {
+                const monthKey = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}`;
+                // 检查是否有已保存的记录
+                const existingRecord = await getSalaryRecord(teacher.id, monthKey);
+                let amount, paid;
+                if (existingRecord) {
+                    amount = existingRecord.amount;
+                    paid = existingRecord.paid;
+                } else {
+                    // 如果没有记录，根据当前设置计算并保存
+                    amount = calculateSalaryForMonth(teacher, settings, monthKey);
+                    paid = false;
+                    await saveSalaryRecord(teacher.id, monthKey, amount, false);
+                }
+                months.push({ monthKey, amount, paid });
+                current.setMonth(current.getMonth() + 1);
+            }
+            return months;
         }
 
         async function showSalaryProfile(teacherId, teacherName) {
@@ -1013,13 +1060,13 @@
                 </div>
                 
                 <button id="saveSalaryBtn" class="save-btn"><i class="fas fa-save"></i> Save Salary Settings</button>
-                <button id="viewSalarySlipBtn" class="save-btn view-slip-btn"><i class="fas fa-receipt"></i> View Salary Slip</button>
+                <button id="viewSalaryRecordsBtn" class="save-btn view-slip-btn"><i class="fas fa-history"></i> View Salary Records</button>
                 <div id="saveStatus" class="salary-updated"></div>
             `;
             
             container.innerHTML = html;
             
-            // Real-time update functions (simplified)
+            // Real-time update functions
             const updateParttimeTotal = () => {
                 const hourlyRate = parseFloat(document.getElementById('hourlyRate')?.value) || 0;
                 const adjustment = parseFloat(document.getElementById('parttimeAdjustment')?.value) || 0;
@@ -1115,7 +1162,7 @@
             const tuitionAdjustmentInput = document.getElementById('tuitionAdjustment');
             if (tuitionAdjustmentInput) tuitionAdjustmentInput.addEventListener('input', () => updateTuitionTotal());
             
-            // Save button
+            // Save button - 保存设置后需要更新所有未来月份的记录
             const saveBtn = document.getElementById('saveSalaryBtn');
             if (saveBtn) {
                 saveBtn.addEventListener('click', async () => {
@@ -1154,89 +1201,217 @@
                     try {
                         await setDoc(doc(db, 'salarySettings', teacher.id), salaryData, { merge: true });
                         salarySettingsCache.set(teacher.id, salaryData);
+                        
+                        // 更新未来月份的薪水记录（从当前月份开始）
+                        const now = new Date();
+                        const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+                        const months = await generateMonthList(teacher);
+                        for (const month of months) {
+                            if (month.monthKey >= currentMonth && !month.paid) {
+                                const newAmount = calculateSalaryForMonth(teacher, salaryData, month.monthKey);
+                                await saveSalaryRecord(teacher.id, month.monthKey, newAmount, month.paid);
+                            }
+                        }
+                        
                         const teacherInList = allTeachers.find(t => t.id === teacher.id);
                         if (teacherInList) teacherInList.salaryType = selectedType;
                         renderTeacherList(allTeachers);
                         const statusDiv = document.getElementById('saveStatus');
                         if (statusDiv) {
-                            statusDiv.innerHTML = '<i class="fas fa-check-circle"></i> Saved!';
-                            setTimeout(() => statusDiv.innerHTML = '', 2000);
+                            statusDiv.innerHTML = '<i class="fas fa-check-circle"></i> Saved! Future months updated.';
+                            setTimeout(() => statusDiv.innerHTML = '', 3000);
                         }
                     } catch (e) { alert('Error: ' + e.message); }
                 });
             }
             
-            // View Salary Slip button - open month selector with validation
-            const viewSlipBtn = document.getElementById('viewSalarySlipBtn');
-            if (viewSlipBtn) {
-                viewSlipBtn.addEventListener('click', async () => {
-                    const selectedType = document.querySelector('.type-btn.active').dataset.type;
-                    let latestSettings = { employmentType: selectedType };
-                    
-                    if (selectedType === 'parttime') {
-                        latestSettings.parttimeHourlyRate = parseFloat(document.getElementById('hourlyRate').value) || 0;
-                        const workPeriods = [];
-                        document.querySelectorAll('#workPeriodsContainer .work-period').forEach(period => {
-                            const startDate = period.querySelector('.period-start')?.value;
-                            const endDate = period.querySelector('.period-end')?.value;
-                            const hours = parseFloat(period.querySelector('.period-hours')?.value) || 0;
-                            if (startDate && endDate && hours > 0) workPeriods.push({ startDate, endDate, hours });
-                        });
-                        latestSettings.parttimeWorkPeriods = workPeriods;
-                        latestSettings.parttimeAdjustment = parseFloat(document.getElementById('parttimeAdjustment').value) || 0;
-                    } else if (selectedType === 'fulltime') {
-                        latestSettings.fulltimeBaseSalary = parseFloat(document.getElementById('baseSalary').value) || 0;
-                        latestSettings.fulltimeDeductions = {
-                            leave: parseFloat(document.getElementById('leaveAmount').value) || 0,
-                            useEpf: document.getElementById('epfCheck').checked,
-                            epf: parseFloat(document.getElementById('epfPercent').value) || 11,
-                            useSocso: document.getElementById('socsoCheck').checked,
-                            socso: parseFloat(document.getElementById('socsoAmount').value) || 0
-                        };
-                        latestSettings.fulltimeAdjustment = parseFloat(document.getElementById('fulltimeAdjustment').value) || 0;
-                    } else if (selectedType === 'tuition') {
-                        latestSettings.adjustment = parseFloat(document.getElementById('tuitionAdjustment').value) || 0;
-                    }
-                    
+            // View Salary Records button
+            const viewRecordsBtn = document.getElementById('viewSalaryRecordsBtn');
+            if (viewRecordsBtn) {
+                viewRecordsBtn.addEventListener('click', async () => {
                     currentSlipTeacher = teacher;
-                    currentSlipSettings = latestSettings;
-                    
-                    // Set default month to current month
-                    const now = new Date();
-                    const defaultMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-                    document.getElementById('salaryMonthInput').value = defaultMonth;
-                    document.getElementById('monthError').innerHTML = '';
+                    const months = await generateMonthList(teacher);
+                    const container = document.getElementById('monthListContainer');
+                    container.innerHTML = '';
+                    for (const month of months) {
+                        const monthDiv = document.createElement('div');
+                        monthDiv.className = 'month-item';
+                        const monthName = new Date(month.monthKey + '-01').toLocaleDateString('en-MY', { year: 'numeric', month: 'long' });
+                        monthDiv.innerHTML = `
+                            <div class="month-name">${monthName}</div>
+                            <div class="month-actions">
+                                <span class="payment-status ${month.paid ? 'paid' : 'unpaid'}">${month.paid ? '✓ Paid' : '○ Unpaid'}</span>
+                                <button class="view-slip-month-btn" data-month="${month.monthKey}" data-amount="${month.amount}" data-paid="${month.paid}">View Slip</button>
+                                ${!month.paid ? `<button class="pay-month-btn" data-month="${month.monthKey}" data-amount="${month.amount}">Pay Salary</button>` : ''}
+                            </div>
+                        `;
+                        container.appendChild(monthDiv);
+                    }
                     document.getElementById('monthSelectorModal').classList.add('active');
+                    
+                    // 绑定按钮事件
+                    document.querySelectorAll('.view-slip-month-btn').forEach(btn => {
+                        btn.addEventListener('click', async () => {
+                            const month = btn.dataset.month;
+                            const amount = parseFloat(btn.dataset.amount);
+                            currentSlipMonth = month;
+                            await showSalarySlip(teacher, month, amount);
+                        });
+                    });
+                    document.querySelectorAll('.pay-month-btn').forEach(btn => {
+                        btn.addEventListener('click', async () => {
+                            const month = btn.dataset.month;
+                            const amount = parseFloat(btn.dataset.amount);
+                            if (confirm(`Mark salary for ${month} as PAID? Amount: RM ${amount.toFixed(2)}`)) {
+                                await markSalaryAsPaid(teacher.id, month, amount);
+                                // 刷新月份列表
+                                const updatedMonths = await generateMonthList(teacher);
+                                const updatedContainer = document.getElementById('monthListContainer');
+                                updatedContainer.innerHTML = '';
+                                for (const m of updatedMonths) {
+                                    const monthDiv = document.createElement('div');
+                                    monthDiv.className = 'month-item';
+                                    const monthName = new Date(m.monthKey + '-01').toLocaleDateString('en-MY', { year: 'numeric', month: 'long' });
+                                    monthDiv.innerHTML = `
+                                        <div class="month-name">${monthName}</div>
+                                        <div class="month-actions">
+                                            <span class="payment-status ${m.paid ? 'paid' : 'unpaid'}">${m.paid ? '✓ Paid' : '○ Unpaid'}</span>
+                                            <button class="view-slip-month-btn" data-month="${m.monthKey}" data-amount="${m.amount}" data-paid="${m.paid}">View Slip</button>
+                                            ${!m.paid ? `<button class="pay-month-btn" data-month="${m.monthKey}" data-amount="${m.amount}">Pay Salary</button>` : ''}
+                                        </div>
+                                    `;
+                                    updatedContainer.appendChild(monthDiv);
+                                }
+                                // 重新绑定事件
+                                document.querySelectorAll('.view-slip-month-btn').forEach(b => {
+                                    b.addEventListener('click', async () => {
+                                        await showSalarySlip(teacher, b.dataset.month, parseFloat(b.dataset.amount));
+                                    });
+                                });
+                                document.querySelectorAll('.pay-month-btn').forEach(b => {
+                                    b.addEventListener('click', async () => {
+                                        if (confirm(`Mark salary for ${b.dataset.month} as PAID?`)) {
+                                            await markSalaryAsPaid(teacher.id, b.dataset.month, parseFloat(b.dataset.amount));
+                                            location.reload();
+                                        }
+                                    });
+                                });
+                            }
+                        });
+                    });
                 });
             }
             
             updateFulltimeTotal();
         }
         
-        // Month selector confirmation
-        document.getElementById('confirmMonthBtn')?.addEventListener('click', async () => {
-            const selectedMonth = document.getElementById('salaryMonthInput').value;
-            if (!selectedMonth) {
-                document.getElementById('monthError').innerHTML = 'Please select a month';
-                return;
-            }
-            
-            // Validate month against join date
-            if (currentSlipTeacher && currentSlipTeacher.joinDate) {
-                const joinDate = currentSlipTeacher.joinDate;
-                if (!isValidMonth(selectedMonth, joinDate)) {
-                    const joinDateFormatted = new Date(joinDate).toLocaleDateString('en-MY');
-                    document.getElementById('monthError').innerHTML = `Invalid month. This teacher joined on ${joinDateFormatted}. Only months from join date onwards are allowed.`;
-                    return;
-                }
-            }
-            
+        async function showSalarySlip(teacher, monthKey, amount) {
+            const settings = salarySettingsCache.get(teacher.id) || { employmentType: 'parttime' };
+            const slipHtml = await generateSalarySlipHTML(teacher, settings, monthKey, amount);
+            document.getElementById('salarySlipBody').innerHTML = slipHtml;
             document.getElementById('monthSelectorModal').classList.remove('active');
-            
-            const html = await generateSalarySlipHTML(currentSlipTeacher, currentSlipSettings, selectedMonth);
-            document.getElementById('salarySlipBody').innerHTML = html;
             document.getElementById('salarySlipModal').classList.add('active');
-        });
+        }
+        
+        async function generateSalarySlipHTML(teacher, settings, selectedMonth, savedAmount) {
+            currentSlipMonth = selectedMonth;
+            const employmentType = settings.employmentType || 'parttime';
+            let centerCutTotal = 0;
+            let detailsHtml = '';
+            const today = new Date();
+            const formattedDate = today.toLocaleDateString('en-MY');
+            const slipNumber = `SLIP-${today.getFullYear()}${String(today.getMonth()+1).padStart(2,'0')}-${teacher.id.slice(-4)}`;
+            const monthDisplay = selectedMonth;
+            
+            if (employmentType === 'parttime') {
+                const hourlyRate = settings.parttimeHourlyRate || 10;
+                const workPeriods = settings.parttimeWorkPeriods || [];
+                const adjustment = settings.parttimeAdjustment || 0;
+                detailsHtml = `
+                    <div class="salary-slip-row"><span>Hourly Rate:</span><span>RM ${hourlyRate.toFixed(2)}</span></div>
+                    ${workPeriods.map(p => `<div class="salary-slip-row"><span>Work Period:</span><span>${p.startDate} to ${p.endDate} (${p.hours} hrs/day)</span></div>`).join('')}
+                    <div class="salary-slip-row"><span>Adjustment:</span><span>RM ${adjustment.toFixed(2)}</span></div>
+                `;
+            } else if (employmentType === 'fulltime') {
+                const baseSalary = settings.fulltimeBaseSalary || 2000;
+                const leave = settings.fulltimeDeductions?.leave || 0;
+                const useEpf = settings.fulltimeDeductions?.useEpf !== false;
+                const epf = settings.fulltimeDeductions?.epf || 11;
+                const useSocso = settings.fulltimeDeductions?.useSocso || false;
+                const socso = settings.fulltimeDeductions?.socso || 0;
+                const adjustment = settings.fulltimeAdjustment || 0;
+                const epfAmount = useEpf ? baseSalary * (epf / 100) : 0;
+                detailsHtml = `
+                    <div class="salary-slip-row"><span>Base Salary:</span><span>RM ${baseSalary.toFixed(2)}</span></div>
+                    ${leave ? `<div class="salary-slip-row"><span>Leave Deduction:</span><span>-RM ${leave.toFixed(2)}</span></div>` : ''}
+                    ${useEpf ? `<div class="salary-slip-row"><span>EPF (${epf}%):</span><span>-RM ${epfAmount.toFixed(2)}</span></div>` : ''}
+                    ${useSocso ? `<div class="salary-slip-row"><span>SOCSO:</span><span>-RM ${socso.toFixed(2)}</span></div>` : ''}
+                    <div class="salary-slip-row"><span>Adjustment:</span><span>RM ${adjustment.toFixed(2)}</span></div>
+                `;
+            } else if (employmentType === 'tuition') {
+                const adjustment = settings.adjustment || 0;
+                centerCutTotal = calculateCenterCutTotal(teacher);
+                const subjects = teacher.subjects || [];
+                detailsHtml = subjects.map(s => {
+                    const fee = s.fee || 0;
+                    const centerCut = s.centerCut || 0;
+                    const teacherShare = fee - centerCut;
+                    const studentCount = countStudentsForSubject(s.subjectName);
+                    const subjectTotal = teacherShare * studentCount;
+                    const centerTotal = centerCut * studentCount;
+                    return `<div class="salary-slip-row"><span>${escapeHtml(s.subjectName)} (${studentCount} students):</span><span>RM ${subjectTotal.toFixed(2)}</span></div>
+                            <div class="salary-slip-row" style="padding-left: 1rem; font-size: 0.8rem; color: #6b8ba0;"><span>  - Teacher Share (RM ${teacherShare}/student):</span><span>RM ${subjectTotal.toFixed(2)}</span></div>
+                            <div class="salary-slip-row" style="padding-left: 1rem; font-size: 0.8rem; color: #e67e22;"><span>  - Center Cut (RM ${centerCut}/student):</span><span>RM ${centerTotal.toFixed(2)}</span></div>`;
+                }).join('');
+                detailsHtml += `<div class="salary-slip-row"><span>Adjustment:</span><span>RM ${adjustment.toFixed(2)}</span></div>`;
+            }
+            
+            let phoneDisplay = teacher.phone ? `+60 ${teacher.phone}` : '-';
+            
+            let centerCutDisplay = '';
+            if (employmentType === 'tuition' && centerCutTotal > 0) {
+                centerCutDisplay = `<div class="salary-slip-row center-fee-row" style="background: #fff3e0;">
+                    <span><strong>Center Fee:</strong></span>
+                    <span><strong>RM ${centerCutTotal.toFixed(2)}</strong></span>
+                </div>`;
+            }
+            
+            return `
+                <div class="salary-slip" id="salarySlipContent">
+                    <div class="salary-slip-header">
+                        <img src="icon.png" alt="Logo" onerror="this.style.display='none'">
+                        <h2>Pusat Tuisyen Perintis Aspirasi</h2>
+                        <p>No. 21, Lorong 1, Taman Perlis, Kangar, Malaysia</p>
+                        <p>TEL/FAX: 012-520 0919 | RA 095223949</p>
+                    </div>
+                    <div class="salary-slip-divider"><h3>SALARY SLIP</h3></div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
+                        <div><strong>Slip No:</strong> ${slipNumber}</div>
+                        <div><strong>Date:</strong> ${formattedDate}</div>
+                    </div>
+                    <div class="salary-slip-row" style="background: #e8f4f8;">
+                        <span><strong>Salary Month:</strong></span>
+                        <span><strong>${monthDisplay}</strong></span>
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <div><strong>Teacher:</strong> ${escapeHtml(teacher.name)}</div>
+                        <div><strong>IC Number:</strong> ${escapeHtml(teacher.ic) || '-'}</div>
+                        <div><strong>Phone:</strong> ${phoneDisplay}</div>
+                        <div><strong>Employment Type:</strong> ${employmentType.toUpperCase()}</div>
+                        <div><strong>Bank:</strong> ${escapeHtml(teacher.bankName) || '-'} ${escapeHtml(teacher.bankAccount) || ''}</div>
+                    </div>
+                    <div style="margin: 1rem 0;">
+                        <div class="salary-slip-row" style="background: #f8fbfd; font-weight: 700;"><span>Earnings / Deductions</span><span>Amount (RM)</span></div>
+                        ${detailsHtml}
+                        ${centerCutDisplay}
+                    </div>
+                    <div class="salary-slip-total"><strong>TOTAL SALARY: RM ${savedAmount.toFixed(2)}</strong></div>
+                    <div style="text-align: center; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #cde5ef; font-size: 0.7rem; color: #8ba9c0;">
+                        PerintisAspirasi123@gmail.com
+                    </div>
+                </div>
+            `;
+        }
         
         // Salary Slip Modal actions
         document.getElementById('closeSlipModalBtn')?.addEventListener('click', () => {
