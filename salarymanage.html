@@ -190,7 +190,6 @@
         .loading-spinner { text-align: center; padding: 2rem; color: #8ba9c0; }
         .error-message { text-align: center; padding: 2rem; color: #d9534f; }
         
-        /* Modal Overlay */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -441,6 +440,10 @@
             text-align: center;
             font-weight: 700;
         }
+        .center-fee-row {
+            background: #fff3e0;
+            color: #e67e22;
+        }
         .slip-actions {
             display: flex;
             gap: 1rem;
@@ -458,6 +461,23 @@
         .btn-back { background: #e8f4f8; color: #2c7da0; border: 1px solid #cde5ef; }
         .btn-download { background: #2c7da0; color: white; }
         .btn-whatsapp { background: #25D366; color: white; }
+        
+        .month-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        .month-selector label {
+            margin-bottom: 0;
+            white-space: nowrap;
+        }
+        .month-selector input {
+            width: auto;
+            flex: 1;
+            min-width: 150px;
+        }
         
         @media (max-width: 768px) {
             .sidebar { width: 80px; }
@@ -530,7 +550,7 @@
         </div>
     </div>
 
-    <!-- Salary Slip Modal (独立页面) -->
+    <!-- Salary Slip Modal -->
     <div id="salarySlipModal" class="modal-overlay">
         <div class="modal-container">
             <div class="modal-header">
@@ -735,6 +755,18 @@
             return count;
         }
 
+        // Calculate center cut total for tuition
+        function calculateCenterCutTotal(teacher) {
+            let total = 0;
+            const subjects = teacher.subjects || [];
+            for (const subject of subjects) {
+                const centerCut = subject.centerCut || 0;
+                const studentCount = countStudentsForSubject(subject.subjectName);
+                total += centerCut * studentCount;
+            }
+            return total;
+        }
+
         function calculateParttimeSalary(hourlyRate, workPeriods, adjustment) {
             let total = 0;
             for (const period of workPeriods) {
@@ -770,14 +802,16 @@
             return total + adjustment;
         }
 
-        // Generate Salary Slip HTML
-        async function generateSalarySlipHTML(teacher, settings) {
+        // Generate Salary Slip HTML with month selection and center cut display
+        async function generateSalarySlipHTML(teacher, settings, selectedMonth) {
             const employmentType = settings.employmentType || 'parttime';
             let totalSalary = 0;
+            let centerCutTotal = 0;
             let detailsHtml = '';
             const today = new Date();
             const formattedDate = today.toLocaleDateString('en-MY');
             const slipNumber = `SLIP-${today.getFullYear()}${String(today.getMonth()+1).padStart(2,'0')}-${teacher.id.slice(-4)}`;
+            const monthDisplay = selectedMonth || `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}`;
             
             if (employmentType === 'parttime') {
                 const hourlyRate = settings.parttimeHourlyRate || 10;
@@ -809,6 +843,7 @@
             } else if (employmentType === 'tuition') {
                 const adjustment = settings.adjustment || 0;
                 totalSalary = calculateTuitionSalary(teacher, adjustment);
+                centerCutTotal = calculateCenterCutTotal(teacher);
                 const subjects = teacher.subjects || [];
                 detailsHtml = subjects.map(s => {
                     const fee = s.fee || 0;
@@ -816,13 +851,24 @@
                     const teacherShare = fee - centerCut;
                     const studentCount = countStudentsForSubject(s.subjectName);
                     const subjectTotal = teacherShare * studentCount;
-                    return `<div class="salary-slip-row"><span>${escapeHtml(s.subjectName)} (${studentCount} students):</span><span>RM ${subjectTotal.toFixed(2)}</span></div>`;
+                    const centerTotal = centerCut * studentCount;
+                    return `<div class="salary-slip-row"><span>${escapeHtml(s.subjectName)} (${studentCount} students):</span><span>RM ${subjectTotal.toFixed(2)}</span></div>
+                            <div class="salary-slip-row" style="padding-left: 1rem; font-size: 0.8rem; color: #6b8ba0;"><span>  - Teacher Share (RM ${teacherShare}/student):</span><span>RM ${subjectTotal.toFixed(2)}</span></div>
+                            <div class="salary-slip-row" style="padding-left: 1rem; font-size: 0.8rem; color: #e67e22;"><span>  - Center Cut (RM ${centerCut}/student):</span><span>RM ${centerTotal.toFixed(2)}</span></div>`;
                 }).join('');
                 detailsHtml += `<div class="salary-slip-row"><span>Adjustment:</span><span>RM ${adjustment.toFixed(2)}</span></div>`;
             }
             
-            // Format phone for display
             let phoneDisplay = teacher.phone ? `+60 ${teacher.phone}` : '-';
+            
+            // Add center cut display for tuition mode
+            let centerCutDisplay = '';
+            if (employmentType === 'tuition' && centerCutTotal > 0) {
+                centerCutDisplay = `<div class="salary-slip-row center-fee-row" style="background: #fff3e0;">
+                    <span><strong>Center Fee:</strong></span>
+                    <span><strong>RM ${centerCutTotal.toFixed(2)}</strong></span>
+                </div>`;
+            }
             
             return `
                 <div class="salary-slip" id="salarySlipContent">
@@ -837,6 +883,10 @@
                         <div><strong>Slip No:</strong> ${slipNumber}</div>
                         <div><strong>Date:</strong> ${formattedDate}</div>
                     </div>
+                    <div class="salary-slip-row" style="background: #e8f4f8;">
+                        <span><strong>Salary Month:</strong></span>
+                        <span><strong>${monthDisplay}</strong></span>
+                    </div>
                     <div style="margin-bottom: 1rem;">
                         <div><strong>Teacher:</strong> ${escapeHtml(teacher.name)}</div>
                         <div><strong>IC Number:</strong> ${escapeHtml(teacher.ic) || '-'}</div>
@@ -844,7 +894,11 @@
                         <div><strong>Employment Type:</strong> ${employmentType.toUpperCase()}</div>
                         <div><strong>Bank:</strong> ${escapeHtml(teacher.bankName) || '-'} ${escapeHtml(teacher.bankAccount) || ''}</div>
                     </div>
-                    <div style="margin: 1rem 0;">${detailsHtml}</div>
+                    <div style="margin: 1rem 0;">
+                        <div class="salary-slip-row" style="background: #f8fbfd; font-weight: 700;"><span>Earnings / Deductions</span><span>Amount (RM)</span></div>
+                        ${detailsHtml}
+                        ${centerCutDisplay}
+                    </div>
                     <div class="salary-slip-total"><strong>TOTAL SALARY: RM ${totalSalary.toFixed(2)}</strong></div>
                     <div style="text-align: center; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #cde5ef; font-size: 0.7rem; color: #8ba9c0;">
                         PerintisAspirasi123@gmail.com
@@ -924,7 +978,7 @@
                     <div><label>Subject Breakdown</label>${(() => {
                         const subjects = teacher.subjects || [];
                         if (subjects.length === 0) return '<div style="color:#8ba9c0; padding:1rem; text-align:center;">No subjects assigned</div>';
-                        return subjects.map(s => `<div class="subject-salary-item"><div class="subject-name">${escapeHtml(s.subjectName)}</div><div>Fee: RM ${s.fee} | Center Cut: RM ${s.centerCut} | Teacher Share: RM ${s.fee - s.centerCut}</div><div>Students: ${countStudentsForSubject(s.subjectName)} | Total: RM ${((s.fee - s.centerCut) * countStudentsForSubject(s.subjectName)).toFixed(2)}</div></div>`).join('');
+                        return subjects.map(s => `<div class="subject-salary-item"><div class="subject-name">${escapeHtml(s.subjectName)}</div><div>Fee: RM ${s.fee} | Center Cut: RM ${s.centerCut} | Teacher Share: RM ${s.fee - s.centerCut}</div><div>Students: ${countStudentsForSubject(s.subjectName)} | Total: RM ${((s.fee - s.centerCut) * countStudentsForSubject(s.subjectName)).toFixed(2)}</div><div style="color:#e67e22;">Center Receives: RM ${(s.centerCut * countStudentsForSubject(s.subjectName)).toFixed(2)}</div></div>`).join('');
                     })()}</div>
                     <div class="form-group"><label>Adjustment (RM)</label><input type="number" id="tuitionAdjustment" value="${tuitionAdjustment}" step="10"></div>
                     <div class="total-salary" id="tuitionTotal">Tuition Salary: <strong>RM ${tuitionSalary.toFixed(2)}</strong></div>
@@ -937,7 +991,7 @@
             
             container.innerHTML = html;
             
-            // Real-time update functions
+            // Real-time update functions (simplified)
             const updateParttimeTotal = () => {
                 const hourlyRate = parseFloat(document.getElementById('hourlyRate')?.value) || 0;
                 const adjustment = parseFloat(document.getElementById('parttimeAdjustment')?.value) || 0;
@@ -998,15 +1052,13 @@
                 });
             }
             
-            // Event listeners for real-time updates
+            // Event listeners
             const hourlyRateInput = document.getElementById('hourlyRate');
             if (hourlyRateInput) hourlyRateInput.addEventListener('input', () => updateParttimeTotal());
             const parttimeAdjustmentInput = document.getElementById('parttimeAdjustment');
             if (parttimeAdjustmentInput) parttimeAdjustmentInput.addEventListener('input', () => updateParttimeTotal());
             document.querySelectorAll('#workPeriodsContainer .work-period').forEach(period => {
                 period.querySelectorAll('input').forEach(input => input.addEventListener('input', () => updateParttimeTotal()));
-                const removeBtn = period.querySelector('.remove-period');
-                if (removeBtn) removeBtn.addEventListener('click', () => setTimeout(() => updateParttimeTotal(), 50));
             });
             
             const leaveCheck = document.getElementById('leaveCheck');
@@ -1086,7 +1138,7 @@
                 });
             }
             
-            // View Salary Slip button
+            // View Salary Slip button with month selector
             const viewSlipBtn = document.getElementById('viewSalarySlipBtn');
             if (viewSlipBtn) {
                 viewSlipBtn.addEventListener('click', async () => {
@@ -1118,7 +1170,11 @@
                         latestSettings.adjustment = parseFloat(document.getElementById('tuitionAdjustment').value) || 0;
                     }
                     
-                    const html = await generateSalarySlipHTML(teacher, latestSettings);
+                    // Create month selector modal or prompt
+                    const monthInput = prompt("Enter salary month (YYYY-MM):", new Date().toISOString().slice(0, 7));
+                    if (!monthInput) return;
+                    
+                    const html = await generateSalarySlipHTML(teacher, latestSettings, monthInput);
                     document.getElementById('salarySlipBody').innerHTML = html;
                     document.getElementById('salarySlipModal').classList.add('active');
                 });
@@ -1159,11 +1215,10 @@
         document.getElementById('whatsappSlipBtn')?.addEventListener('click', async () => {
             const slipElement = document.getElementById('salarySlipContent');
             if (!slipElement) return;
-            const teacher = allTeachers.find(t => t.id === document.getElementById('modalTeacherName')?.dataset?.teacherId);
             let phoneNumber = null;
-            // Find current teacher from the modal
+            // Find current teacher from the modal title
+            const modalTitle = document.getElementById('modalTeacherName')?.innerText;
             for (const t of allTeachers) {
-                const modalTitle = document.getElementById('modalTeacherName')?.innerText;
                 if (modalTitle && t.name && modalTitle.includes(t.name)) {
                     phoneNumber = t.phone;
                     break;
