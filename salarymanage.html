@@ -7,6 +7,7 @@
     <link rel="icon" type="image/png" href="icon.png">
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Inter', sans-serif; background: #f0f7fc; color: #1a2c3e; }
@@ -98,7 +99,6 @@
             border: 1px solid #cde5ef;
         }
         
-        /* Card with internal scroll */
         .card {
             background: white;
             border-radius: 24px;
@@ -106,6 +106,7 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            margin-bottom: 1.5rem;
         }
         .card-header {
             padding: 1.5rem 1.5rem 0 1.5rem;
@@ -121,7 +122,6 @@
             max-height: 550px;
             overflow-y: auto;
         }
-        /* Custom scrollbar */
         .card-body-scroll::-webkit-scrollbar {
             width: 6px;
         }
@@ -181,41 +181,14 @@
             padding: 4px 10px;
             border-radius: 30px;
             font-weight: 600;
-            letter-spacing: 0.5px;
         }
-        .status-badge.parttime {
-            background: #fff3e0;
-            color: #e67e22;
-        }
-        .status-badge.fulltime {
-            background: #e0f3e8;
-            color: #2cae6c;
-        }
-        .status-badge.tuition {
-            background: #e8f4f8;
-            color: #2c7da0;
-        }
-        .status-badge.not-set {
-            background: #eef3f7;
-            color: #8ba9c0;
-        }
+        .status-badge.parttime { background: #fff3e0; color: #e67e22; }
+        .status-badge.fulltime { background: #e0f3e8; color: #2cae6c; }
+        .status-badge.tuition { background: #e8f4f8; color: #2c7da0; }
+        .status-badge.not-set { background: #eef3f7; color: #8ba9c0; }
         
-        .loading-spinner {
-            text-align: center;
-            padding: 2rem;
-            color: #8ba9c0;
-        }
-        .error-message {
-            text-align: center;
-            padding: 2rem;
-            color: #d9534f;
-        }
-        
-        /* Bank account formatting */
-        .bank-account-formatted {
-            font-family: monospace;
-            letter-spacing: 1px;
-        }
+        .loading-spinner { text-align: center; padding: 2rem; color: #8ba9c0; }
+        .error-message { text-align: center; padding: 2rem; color: #d9534f; }
         
         /* Modal Overlay */
         .modal-overlay {
@@ -248,26 +221,12 @@
             box-shadow: 0 25px 50px rgba(0,0,0,0.3);
             animation: modalSlideIn 0.3s ease;
         }
-        .modal-container::-webkit-scrollbar {
-            width: 6px;
-        }
-        .modal-container::-webkit-scrollbar-track {
-            background: #eef3f7;
-            border-radius: 10px;
-        }
-        .modal-container::-webkit-scrollbar-thumb {
-            background: #2c7da0;
-            border-radius: 10px;
-        }
+        .modal-container::-webkit-scrollbar { width: 6px; }
+        .modal-container::-webkit-scrollbar-track { background: #eef3f7; border-radius: 10px; }
+        .modal-container::-webkit-scrollbar-thumb { background: #2c7da0; border-radius: 10px; }
         @keyframes modalSlideIn {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         .modal-header {
             display: flex;
@@ -332,26 +291,18 @@
             color: white;
             border-color: #2c7da0;
         }
-        .type-btn:hover:not(.active) {
-            background: #e8f4f8;
-            border-color: #2c7da0;
-        }
         
         .salary-section {
             display: none;
             animation: fadeIn 0.2s ease;
         }
-        .salary-section.active-section {
-            display: block;
-        }
+        .salary-section.active-section { display: block; }
         @keyframes fadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
         }
         
-        .form-group {
-            margin-bottom: 1rem;
-        }
+        .form-group { margin-bottom: 1rem; }
         label {
             display: block;
             font-size: 0.7rem;
@@ -359,7 +310,6 @@
             text-transform: uppercase;
             color: #6b8ba0;
             margin-bottom: 5px;
-            letter-spacing: 0.5px;
         }
         input, select {
             width: 100%;
@@ -369,13 +319,9 @@
             font-family: inherit;
             font-size: 0.9rem;
             outline: none;
-            transition: 0.2s;
         }
-        input:focus, select:focus { border-color: #2c7da0; box-shadow: 0 0 0 2px rgba(44,125,160,0.1); }
-        input:disabled {
-            background: #f5f7f9;
-            color: #8ba9c0;
-        }
+        input:focus, select:focus { border-color: #2c7da0; }
+        input:disabled { background: #f5f7f9; color: #8ba9c0; }
         
         .work-period {
             display: flex;
@@ -384,10 +330,7 @@
             align-items: center;
             flex-wrap: wrap;
         }
-        .work-period input {
-            flex: 1;
-            min-width: 100px;
-        }
+        .work-period input { flex: 1; min-width: 100px; }
         .work-period button {
             background: #fee;
             color: #c33;
@@ -395,7 +338,6 @@
             border-radius: 30px;
             border: none;
             cursor: pointer;
-            font-size: 0.75rem;
         }
         .add-period-btn {
             background: #e8f4f8;
@@ -404,7 +346,6 @@
             padding: 8px 16px;
             border-radius: 30px;
             cursor: pointer;
-            font-size: 0.8rem;
             margin-top: 0.5rem;
         }
         
@@ -415,14 +356,8 @@
             margin-bottom: 0.8rem;
             flex-wrap: wrap;
         }
-        .deduction-item input[type="checkbox"] {
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
-        }
-        .deduction-item input[type="number"] {
-            width: 120px;
-        }
+        .deduction-item input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; }
+        .deduction-item input[type="number"] { width: 120px; }
         
         .subject-salary-item {
             background: #f8fbfd;
@@ -431,10 +366,7 @@
             margin-bottom: 0.8rem;
             border-left: 3px solid #2c7da0;
         }
-        .subject-name {
-            font-weight: 700;
-            color: #1a5f7a;
-        }
+        .subject-name { font-weight: 700; color: #1a5f7a; }
         
         .total-salary {
             background: linear-gradient(135deg, #2c7da0, #1a5f7a);
@@ -457,33 +389,82 @@
             margin-top: 1.5rem;
             border: none;
             cursor: pointer;
-            transition: 0.2s;
         }
-        .save-btn:hover {
-            background: #229954;
-            transform: translateY(-1px);
+        .save-btn:hover { background: #229954; transform: translateY(-1px); }
+        
+        .view-slip-btn {
+            background: #2c7da0;
+            margin-top: 0.8rem;
         }
         
-        .adjustment-hint {
-            font-size: 0.7rem;
-            color: #8ba9c0;
-            margin-top: 4px;
+        /* Salary Slip Styles */
+        .salary-slip {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 24px;
         }
-        
-        .salary-updated {
-            font-size: 0.7rem;
-            color: #2cae6c;
+        .salary-slip-header {
             text-align: center;
-            margin-top: 8px;
+            margin-bottom: 1.2rem;
         }
+        .salary-slip-header img {
+            width: 60px;
+            margin-bottom: 8px;
+        }
+        .salary-slip-header h2 {
+            color: #1a5f7a;
+            font-size: 1.2rem;
+        }
+        .salary-slip-header p {
+            font-size: 0.7rem;
+            color: #6b8ba0;
+        }
+        .salary-slip-divider {
+            border-top: 2px solid #2c7da0;
+            border-bottom: 2px solid #2c7da0;
+            padding: 8px 0;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+        .salary-slip-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eef3f7;
+        }
+        .salary-slip-total {
+            background: linear-gradient(135deg, #2c7da0, #1a5f7a);
+            color: white;
+            padding: 12px;
+            border-radius: 16px;
+            margin-top: 1rem;
+            text-align: center;
+            font-weight: 700;
+        }
+        .slip-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+        }
+        .slip-actions button {
+            padding: 10px 20px;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+        }
+        .btn-back { background: #e8f4f8; color: #2c7da0; border: 1px solid #cde5ef; }
+        .btn-download { background: #2c7da0; color: white; }
+        .btn-whatsapp { background: #25D366; color: white; }
         
         @media (max-width: 768px) {
             .sidebar { width: 80px; }
             .main-content { margin-left: 80px; padding: 1rem; }
             .work-period { flex-direction: column; }
-            .work-period input { width: 100%; }
-            .deduction-item { flex-direction: column; align-items: stretch; }
-            .teacher-name { flex-direction: column; align-items: flex-start; }
+            .slip-actions { flex-direction: column; }
+            .slip-actions button { width: 100%; }
         }
     </style>
 </head>
@@ -516,7 +497,7 @@
         <div class="main-content" id="mainContent">
             <div class="search-section">
                 <div class="search-box">
-                    <i class="fas fa-search" style="color:#8ba9c0;"></i>
+                    <i class="fas fa-search"></i>
                     <input type="text" id="searchTeacherInput" placeholder="Search by teacher name or subject...">
                     <button id="searchBtn" class="search-btn"><i class="fas fa-search"></i> Search</button>
                     <button id="resetSearchBtn" class="reset-btn"><i class="fas fa-undo-alt"></i> Reset</button>
@@ -527,7 +508,7 @@
                 <div class="card-header">
                     <h3><i class="fas fa-chalkboard-user"></i> Teachers</h3>
                 </div>
-                <div class="card-body-scroll" id="teacherListContainer">
+                <div class="card-body-scroll">
                     <div id="teacherList" class="teacher-list">
                         <div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Loading teachers...</div>
                     </div>
@@ -545,6 +526,24 @@
             </div>
             <div class="modal-body" id="salaryModalBody">
                 <div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Loading...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Salary Slip Modal (独立页面) -->
+    <div id="salarySlipModal" class="modal-overlay">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h2><i class="fas fa-receipt"></i> Salary Slip</h2>
+                <button class="close-modal" id="closeSlipModalBtn">&times;</button>
+            </div>
+            <div class="modal-body" id="salarySlipBody">
+                <div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Generating...</div>
+            </div>
+            <div class="slip-actions" style="padding: 0 1.5rem 1.5rem 1.5rem;">
+                <button id="backToSalaryBtn" class="btn-back"><i class="fas fa-arrow-left"></i> Back to Salary</button>
+                <button id="downloadSlipBtn" class="btn-download"><i class="fas fa-download"></i> Save as PNG</button>
+                <button id="whatsappSlipBtn" class="btn-whatsapp"><i class="fab fa-whatsapp"></i> Send via WhatsApp</button>
             </div>
         </div>
     </div>
@@ -621,7 +620,6 @@
             try {
                 const teachersSnap = await getDocs(collection(db, 'teachers'));
                 allTeachers = [];
-                
                 for (const docSnap of teachersSnap.docs) {
                     const teacher = { id: docSnap.id, ...docSnap.data() };
                     try {
@@ -645,7 +643,6 @@
                         studentsList.push({ id: doc.id, ...doc.data() });
                     });
                 } catch (studentError) {
-                    console.warn("Error loading students:", studentError);
                     studentsList = [];
                 }
                 
@@ -655,12 +652,10 @@
                     renderTeacherList(allTeachers);
                 }
             } catch (e) {
-                console.error("Error loading teachers:", e);
-                teacherListDiv.innerHTML = '<div class="error-message"><i class="fas fa-exclamation-triangle"></i> Error loading teachers. Please check Firebase connection.</div>';
+                teacherListDiv.innerHTML = '<div class="error-message"><i class="fas fa-exclamation-triangle"></i> Error loading teachers.</div>';
             }
         }
 
-        // Format bank account number with spaces every 4 digits
         function formatBankAccount(accountNumber) {
             if (!accountNumber) return '';
             const cleaned = accountNumber.replace(/\s/g, '');
@@ -669,15 +664,10 @@
         }
 
         function getStatusBadge(salaryType) {
-            if (salaryType === 'parttime') {
-                return '<span class="status-badge parttime"><i class="fas fa-clock"></i> Part Time</span>';
-            } else if (salaryType === 'fulltime') {
-                return '<span class="status-badge fulltime"><i class="fas fa-briefcase"></i> Full Time</span>';
-            } else if (salaryType === 'tuition') {
-                return '<span class="status-badge tuition"><i class="fas fa-chalkboard-user"></i> Tuition</span>';
-            } else {
-                return '<span class="status-badge not-set"><i class="fas fa-question-circle"></i> Not Set</span>';
-            }
+            if (salaryType === 'parttime') return '<span class="status-badge parttime"><i class="fas fa-clock"></i> Part Time</span>';
+            if (salaryType === 'fulltime') return '<span class="status-badge fulltime"><i class="fas fa-briefcase"></i> Full Time</span>';
+            if (salaryType === 'tuition') return '<span class="status-badge tuition"><i class="fas fa-chalkboard-user"></i> Tuition</span>';
+            return '<span class="status-badge not-set"><i class="fas fa-question-circle"></i> Not Set</span>';
         }
 
         function renderTeacherList(teachers) {
@@ -686,29 +676,18 @@
                 container.innerHTML = '<div class="teacher-item">No teachers found</div>';
                 return;
             }
-            
             container.innerHTML = '';
             teachers.forEach(teacher => {
                 const subjects = teacher.subjects || [];
                 const subjectNames = subjects.map(s => s.subjectName).join(', ');
+                const formattedAccount = formatBankAccount(teacher.bankAccount);
+                const bankInfoHtml = (teacher.bankName || teacher.bankAccount) ? 
+                    `<div class="teacher-subjects" style="margin-top: 2px;"><i class="fas fa-university"></i> ${escapeHtml(teacher.bankName || '')} ${formattedAccount ? ' - ' + formattedAccount : ''}</div>` : '';
                 const div = document.createElement('div');
                 div.className = 'teacher-item';
-                
-                // Display bank info with formatted account number
-                let bankInfoHtml = '';
-                if (teacher.bankName || teacher.bankAccount) {
-                    const formattedAccount = formatBankAccount(teacher.bankAccount);
-                    bankInfoHtml = `<div class="teacher-subjects" style="margin-top: 2px;">
-                        <i class="fas fa-university"></i> ${escapeHtml(teacher.bankName || '')} ${formattedAccount ? ' - ' + formattedAccount : ''}
-                    </div>`;
-                }
-                
                 div.innerHTML = `
                     <div class="teacher-info">
-                        <div class="teacher-name">
-                            ${escapeHtml(teacher.name)}
-                            ${getStatusBadge(teacher.salaryType)}
-                        </div>
+                        <div class="teacher-name">${escapeHtml(teacher.name)} ${getStatusBadge(teacher.salaryType)}</div>
                         <div class="teacher-subjects">${escapeHtml(subjectNames) || 'No subjects'}</div>
                         ${bankInfoHtml}
                     </div>
@@ -729,14 +708,12 @@
             });
         }
 
-        // Search functionality
         document.getElementById('searchBtn')?.addEventListener('click', () => {
             const searchTerm = document.getElementById('searchTeacherInput').value.toLowerCase();
             const filtered = allTeachers.filter(teacher => {
                 const matchesName = teacher.name?.toLowerCase().includes(searchTerm);
                 const matchesSubject = (teacher.subjects || []).some(s => s.subjectName.toLowerCase().includes(searchTerm));
-                const matchesBank = teacher.bankName?.toLowerCase().includes(searchTerm) || 
-                                    teacher.bankAccount?.includes(searchTerm);
+                const matchesBank = teacher.bankName?.toLowerCase().includes(searchTerm) || teacher.bankAccount?.includes(searchTerm);
                 return matchesName || matchesSubject || matchesBank;
             });
             renderTeacherList(filtered);
@@ -752,15 +729,12 @@
             let count = 0;
             for (const student of studentsList) {
                 const enrolled = student.enrolledPackages || student.enrolledSubjects || [];
-                const isEnrolled = enrolled.some(e => {
-                    return e.subjectName === subjectName || e.packageName === subjectName;
-                });
+                const isEnrolled = enrolled.some(e => e.subjectName === subjectName || e.packageName === subjectName);
                 if (isEnrolled) count++;
             }
             return count;
         }
 
-        // Real-time calculation functions
         function calculateParttimeSalary(hourlyRate, workPeriods, adjustment) {
             let total = 0;
             for (const period of workPeriods) {
@@ -769,9 +743,7 @@
                         const start = new Date(period.startDate);
                         const end = new Date(period.endDate);
                         const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
-                        if (days > 0) {
-                            total += days * period.hours * hourlyRate;
-                        }
+                        if (days > 0) total += days * period.hours * hourlyRate;
                     } catch(e) {}
                 }
             }
@@ -780,12 +752,8 @@
 
         function calculateFulltimeSalary(baseSalary, leave, useEpf, epfPercent, useSocso, socso, adjustment) {
             let total = baseSalary - leave + adjustment;
-            if (useEpf) {
-                total -= baseSalary * (epfPercent / 100);
-            }
-            if (useSocso) {
-                total -= socso;
-            }
+            if (useEpf) total -= baseSalary * (epfPercent / 100);
+            if (useSocso) total -= socso;
             return total;
         }
 
@@ -802,6 +770,89 @@
             return total + adjustment;
         }
 
+        // Generate Salary Slip HTML
+        async function generateSalarySlipHTML(teacher, settings) {
+            const employmentType = settings.employmentType || 'parttime';
+            let totalSalary = 0;
+            let detailsHtml = '';
+            const today = new Date();
+            const formattedDate = today.toLocaleDateString('en-MY');
+            const slipNumber = `SLIP-${today.getFullYear()}${String(today.getMonth()+1).padStart(2,'0')}-${teacher.id.slice(-4)}`;
+            
+            if (employmentType === 'parttime') {
+                const hourlyRate = settings.parttimeHourlyRate || 10;
+                const workPeriods = settings.parttimeWorkPeriods || [];
+                const adjustment = settings.parttimeAdjustment || 0;
+                totalSalary = calculateParttimeSalary(hourlyRate, workPeriods, adjustment);
+                detailsHtml = `
+                    <div class="salary-slip-row"><span>Hourly Rate:</span><span>RM ${hourlyRate.toFixed(2)}</span></div>
+                    ${workPeriods.map(p => `<div class="salary-slip-row"><span>Work Period:</span><span>${p.startDate} to ${p.endDate} (${p.hours} hrs/day)</span></div>`).join('')}
+                    <div class="salary-slip-row"><span>Adjustment:</span><span>RM ${adjustment.toFixed(2)}</span></div>
+                `;
+            } else if (employmentType === 'fulltime') {
+                const baseSalary = settings.fulltimeBaseSalary || 2000;
+                const leave = settings.fulltimeDeductions?.leave || 0;
+                const useEpf = settings.fulltimeDeductions?.useEpf !== false;
+                const epf = settings.fulltimeDeductions?.epf || 11;
+                const useSocso = settings.fulltimeDeductions?.useSocso || false;
+                const socso = settings.fulltimeDeductions?.socso || 0;
+                const adjustment = settings.fulltimeAdjustment || 0;
+                const epfAmount = useEpf ? baseSalary * (epf / 100) : 0;
+                totalSalary = calculateFulltimeSalary(baseSalary, leave, useEpf, epf, useSocso, socso, adjustment);
+                detailsHtml = `
+                    <div class="salary-slip-row"><span>Base Salary:</span><span>RM ${baseSalary.toFixed(2)}</span></div>
+                    ${leave ? `<div class="salary-slip-row"><span>Leave Deduction:</span><span>-RM ${leave.toFixed(2)}</span></div>` : ''}
+                    ${useEpf ? `<div class="salary-slip-row"><span>EPF (${epf}%):</span><span>-RM ${epfAmount.toFixed(2)}</span></div>` : ''}
+                    ${useSocso ? `<div class="salary-slip-row"><span>SOCSO:</span><span>-RM ${socso.toFixed(2)}</span></div>` : ''}
+                    <div class="salary-slip-row"><span>Adjustment:</span><span>RM ${adjustment.toFixed(2)}</span></div>
+                `;
+            } else if (employmentType === 'tuition') {
+                const adjustment = settings.adjustment || 0;
+                totalSalary = calculateTuitionSalary(teacher, adjustment);
+                const subjects = teacher.subjects || [];
+                detailsHtml = subjects.map(s => {
+                    const fee = s.fee || 0;
+                    const centerCut = s.centerCut || 0;
+                    const teacherShare = fee - centerCut;
+                    const studentCount = countStudentsForSubject(s.subjectName);
+                    const subjectTotal = teacherShare * studentCount;
+                    return `<div class="salary-slip-row"><span>${escapeHtml(s.subjectName)} (${studentCount} students):</span><span>RM ${subjectTotal.toFixed(2)}</span></div>`;
+                }).join('');
+                detailsHtml += `<div class="salary-slip-row"><span>Adjustment:</span><span>RM ${adjustment.toFixed(2)}</span></div>`;
+            }
+            
+            // Format phone for display
+            let phoneDisplay = teacher.phone ? `+60 ${teacher.phone}` : '-';
+            
+            return `
+                <div class="salary-slip" id="salarySlipContent">
+                    <div class="salary-slip-header">
+                        <img src="icon.png" alt="Logo" onerror="this.style.display='none'">
+                        <h2>Pusat Tuisyen Perintis Aspirasi</h2>
+                        <p>No. 21, Lorong 1, Taman Perlis, Kangar, Malaysia</p>
+                        <p>TEL/FAX: 012-520 0919 | RA 095223949</p>
+                    </div>
+                    <div class="salary-slip-divider"><h3>SALARY SLIP</h3></div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
+                        <div><strong>Slip No:</strong> ${slipNumber}</div>
+                        <div><strong>Date:</strong> ${formattedDate}</div>
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <div><strong>Teacher:</strong> ${escapeHtml(teacher.name)}</div>
+                        <div><strong>IC Number:</strong> ${escapeHtml(teacher.ic) || '-'}</div>
+                        <div><strong>Phone:</strong> ${phoneDisplay}</div>
+                        <div><strong>Employment Type:</strong> ${employmentType.toUpperCase()}</div>
+                        <div><strong>Bank:</strong> ${escapeHtml(teacher.bankName) || '-'} ${escapeHtml(teacher.bankAccount) || ''}</div>
+                    </div>
+                    <div style="margin: 1rem 0;">${detailsHtml}</div>
+                    <div class="salary-slip-total"><strong>TOTAL SALARY: RM ${totalSalary.toFixed(2)}</strong></div>
+                    <div style="text-align: center; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #cde5ef; font-size: 0.7rem; color: #8ba9c0;">
+                        PerintisAspirasi123@gmail.com
+                    </div>
+                </div>
+            `;
+        }
+
         async function showSalaryProfile(teacherId, teacherName) {
             const teacher = allTeachers.find(t => t.id === teacherId);
             if (!teacher) return;
@@ -816,9 +867,7 @@
                     settings = salaryDoc.data();
                     salarySettingsCache.set(teacherId, settings);
                 }
-            } catch (e) {
-                console.warn("Error loading salary settings:", e);
-            }
+            } catch (e) {}
             
             renderSalaryModal(teacher, settings);
             const modal = document.getElementById('salaryModal');
@@ -829,24 +878,20 @@
             const container = document.getElementById('salaryModalBody');
             let currentEmploymentType = settings.employmentType || 'parttime';
             
-            // Part time values
             let parttimeHourlyRate = settings.parttimeHourlyRate || 10;
             let parttimeWorkPeriods = settings.parttimeWorkPeriods || [{ startDate: '', endDate: '', hours: 0 }];
             let parttimeAdjustment = settings.parttimeAdjustment || 0;
             
-            // Full time values
             let fulltimeBaseSalary = settings.fulltimeBaseSalary || 2000;
             let fulltimeLeave = settings.fulltimeDeductions?.leave || 0;
             let fulltimeUseEpf = settings.fulltimeDeductions?.useEpf !== undefined ? settings.fulltimeDeductions.useEpf : true;
-            let fulltimeEpf = settings.fulltimeDeductions?.epf !== undefined ? settings.fulltimeDeductions.epf : 11;
-            let fulltimeUseSocso = settings.fulltimeDeductions?.useSocso !== undefined ? settings.fulltimeDeductions.useSocso : false;
+            let fulltimeEpf = settings.fulltimeDeductions?.epf || 11;
+            let fulltimeUseSocso = settings.fulltimeDeductions?.useSocso || false;
             let fulltimeSocso = settings.fulltimeDeductions?.socso || 0;
             let fulltimeAdjustment = settings.fulltimeAdjustment || 0;
             
-            // Tuition values
             let tuitionAdjustment = settings.adjustment || 0;
             
-            // Calculate initial salaries
             let parttimeSalary = calculateParttimeSalary(parttimeHourlyRate, parttimeWorkPeriods, parttimeAdjustment);
             let fulltimeSalary = calculateFulltimeSalary(fulltimeBaseSalary, fulltimeLeave, fulltimeUseEpf, fulltimeEpf, fulltimeUseSocso, fulltimeSocso, fulltimeAdjustment);
             let tuitionSalary = calculateTuitionSalary(teacher, tuitionAdjustment);
@@ -859,95 +904,34 @@
                 </div>
                 
                 <div id="parttimeSection" class="salary-section ${currentEmploymentType === 'parttime' ? 'active-section' : ''}">
-                    <div class="form-group">
-                        <label>Hourly Rate (RM)</label>
-                        <input type="number" id="hourlyRate" value="${parttimeHourlyRate}" step="0.5">
-                    </div>
-                    <div id="workPeriodsContainer">
-                        ${parttimeWorkPeriods.map((period, idx) => `
-                            <div class="work-period" data-idx="${idx}">
-                                <input type="date" placeholder="Start Date" class="period-start" value="${period.startDate || ''}">
-                                <input type="date" placeholder="End Date" class="period-end" value="${period.endDate || ''}">
-                                <input type="number" placeholder="Hours/Day" class="period-hours" value="${period.hours || 0}" step="0.5">
-                                <button class="remove-period"><i class="fas fa-trash-alt"></i></button>
-                            </div>
-                        `).join('')}
-                    </div>
+                    <div class="form-group"><label>Hourly Rate (RM)</label><input type="number" id="hourlyRate" value="${parttimeHourlyRate}" step="0.5"></div>
+                    <div id="workPeriodsContainer">${parttimeWorkPeriods.map((period, idx) => `<div class="work-period"><input type="date" class="period-start" value="${period.startDate || ''}"><input type="date" class="period-end" value="${period.endDate || ''}"><input type="number" class="period-hours" value="${period.hours || 0}" step="0.5"><button class="remove-period"><i class="fas fa-trash-alt"></i></button></div>`).join('')}</div>
                     <button class="add-period-btn" id="addPeriodBtn"><i class="fas fa-plus"></i> Add Work Period</button>
-                    
-                    <div class="form-group" style="margin-top: 1rem;">
-                        <label>Adjustment (RM)</label>
-                        <input type="number" id="parttimeAdjustment" value="${parttimeAdjustment}" step="0.5">
-                        <div class="adjustment-hint">Positive = bonus, negative = deduction</div>
-                    </div>
-                    
-                    <div class="total-salary" id="parttimeTotal">
-                        <i class="fas fa-money-bill-wave"></i> Part Time Salary: <strong>RM ${parttimeSalary.toFixed(2)}</strong>
-                    </div>
+                    <div class="form-group" style="margin-top: 1rem;"><label>Adjustment (RM)</label><input type="number" id="parttimeAdjustment" value="${parttimeAdjustment}" step="0.5"></div>
+                    <div class="total-salary" id="parttimeTotal">Part Time Salary: <strong>RM ${parttimeSalary.toFixed(2)}</strong></div>
                 </div>
                 
                 <div id="fulltimeSection" class="salary-section ${currentEmploymentType === 'fulltime' ? 'active-section' : ''}">
-                    <div class="form-group">
-                        <label>Base Salary (RM)</label>
-                        <input type="number" id="baseSalary" value="${fulltimeBaseSalary}" step="50">
-                    </div>
-                    <div class="deduction-item">
-                        <input type="checkbox" id="leaveCheck" ${fulltimeLeave !== 0 ? 'checked' : ''}>
-                        <label>Leave Deduction (RM)</label>
-                        <input type="number" id="leaveAmount" value="${fulltimeLeave}" step="10" style="width:120px;" ${fulltimeLeave === 0 ? 'disabled' : ''}>
-                    </div>
-                    <div class="deduction-item">
-                        <input type="checkbox" id="epfCheck" ${fulltimeUseEpf ? 'checked' : ''}>
-                        <label>EPF (%)</label>
-                        <input type="number" id="epfPercent" value="${fulltimeEpf}" step="1" style="width:80px;" ${!fulltimeUseEpf ? 'disabled' : ''}> %
-                    </div>
-                    <div class="deduction-item">
-                        <input type="checkbox" id="socsoCheck" ${fulltimeUseSocso ? 'checked' : ''}>
-                        <label>SOCSO (RM)</label>
-                        <input type="number" id="socsoAmount" value="${fulltimeSocso}" step="5" style="width:120px;" ${!fulltimeUseSocso ? 'disabled' : ''}>
-                    </div>
-                    <div class="form-group">
-                        <label>Adjustment (RM)</label>
-                        <input type="number" id="fulltimeAdjustment" value="${fulltimeAdjustment}" step="10">
-                    </div>
-                    <div class="total-salary" id="fulltimeTotal">
-                        <i class="fas fa-money-bill-wave"></i> Full Time Salary: <strong>RM ${fulltimeSalary.toFixed(2)}</strong>
-                    </div>
+                    <div class="form-group"><label>Base Salary (RM)</label><input type="number" id="baseSalary" value="${fulltimeBaseSalary}" step="50"></div>
+                    <div class="deduction-item"><input type="checkbox" id="leaveCheck" ${fulltimeLeave !== 0 ? 'checked' : ''}><label>Leave Deduction (RM)</label><input type="number" id="leaveAmount" value="${fulltimeLeave}" step="10" style="width:120px;" ${fulltimeLeave === 0 ? 'disabled' : ''}></div>
+                    <div class="deduction-item"><input type="checkbox" id="epfCheck" ${fulltimeUseEpf ? 'checked' : ''}><label>EPF (%)</label><input type="number" id="epfPercent" value="${fulltimeEpf}" step="1" style="width:80px;"> %</div>
+                    <div class="deduction-item"><input type="checkbox" id="socsoCheck" ${fulltimeUseSocso ? 'checked' : ''}><label>SOCSO (RM)</label><input type="number" id="socsoAmount" value="${fulltimeSocso}" step="5" style="width:120px;"></div>
+                    <div class="form-group"><label>Adjustment (RM)</label><input type="number" id="fulltimeAdjustment" value="${fulltimeAdjustment}" step="10"></div>
+                    <div class="total-salary" id="fulltimeTotal">Full Time Salary: <strong>RM ${fulltimeSalary.toFixed(2)}</strong></div>
                 </div>
                 
                 <div id="tuitionSection" class="salary-section ${currentEmploymentType === 'tuition' ? 'active-section' : ''}">
-                    <div style="margin-bottom: 1rem;">
-                        <label>Subject Breakdown</label>
-                        ${(() => {
-                            const subjects = teacher.subjects || [];
-                            if (subjects.length === 0) {
-                                return '<div style="color:#8ba9c0; padding:1rem; text-align:center;">No subjects assigned to this teacher</div>';
-                            }
-                            return subjects.map(s => {
-                                const fee = s.fee || 0;
-                                const centerCut = s.centerCut || 0;
-                                const teacherShare = fee - centerCut;
-                                const studentCount = countStudentsForSubject(s.subjectName);
-                                return `
-                                    <div class="subject-salary-item">
-                                        <div class="subject-name">${escapeHtml(s.subjectName)}</div>
-                                        <div>Fee: RM ${fee} | Center Cut: RM ${centerCut} | Teacher Share: RM ${teacherShare}</div>
-                                        <div>Students: ${studentCount} | Total: RM ${(teacherShare * studentCount).toFixed(2)}</div>
-                                    </div>
-                                `;
-                            }).join('');
-                        })()}
-                    </div>
-                    <div class="form-group">
-                        <label>Adjustment (RM)</label>
-                        <input type="number" id="tuitionAdjustment" value="${tuitionAdjustment}" step="10">
-                    </div>
-                    <div class="total-salary" id="tuitionTotal">
-                        <i class="fas fa-money-bill-wave"></i> Tuition Salary: <strong>RM ${tuitionSalary.toFixed(2)}</strong>
-                    </div>
+                    <div><label>Subject Breakdown</label>${(() => {
+                        const subjects = teacher.subjects || [];
+                        if (subjects.length === 0) return '<div style="color:#8ba9c0; padding:1rem; text-align:center;">No subjects assigned</div>';
+                        return subjects.map(s => `<div class="subject-salary-item"><div class="subject-name">${escapeHtml(s.subjectName)}</div><div>Fee: RM ${s.fee} | Center Cut: RM ${s.centerCut} | Teacher Share: RM ${s.fee - s.centerCut}</div><div>Students: ${countStudentsForSubject(s.subjectName)} | Total: RM ${((s.fee - s.centerCut) * countStudentsForSubject(s.subjectName)).toFixed(2)}</div></div>`).join('');
+                    })()}</div>
+                    <div class="form-group"><label>Adjustment (RM)</label><input type="number" id="tuitionAdjustment" value="${tuitionAdjustment}" step="10"></div>
+                    <div class="total-salary" id="tuitionTotal">Tuition Salary: <strong>RM ${tuitionSalary.toFixed(2)}</strong></div>
                 </div>
                 
                 <button id="saveSalaryBtn" class="save-btn"><i class="fas fa-save"></i> Save Salary Settings</button>
+                <button id="viewSalarySlipBtn" class="save-btn view-slip-btn"><i class="fas fa-receipt"></i> View Salary Slip</button>
                 <div id="saveStatus" class="salary-updated"></div>
             `;
             
@@ -962,15 +946,11 @@
                     const startDate = period.querySelector('.period-start')?.value;
                     const endDate = period.querySelector('.period-end')?.value;
                     const hours = parseFloat(period.querySelector('.period-hours')?.value) || 0;
-                    if (startDate && endDate && hours > 0) {
-                        periods.push({ startDate, endDate, hours });
-                    }
+                    if (startDate && endDate && hours > 0) periods.push({ startDate, endDate, hours });
                 });
                 const total = calculateParttimeSalary(hourlyRate, periods, adjustment);
                 const totalDiv = document.getElementById('parttimeTotal');
-                if (totalDiv) {
-                    totalDiv.innerHTML = `<i class="fas fa-money-bill-wave"></i> Part Time Salary: <strong>RM ${total.toFixed(2)}</strong>`;
-                }
+                if (totalDiv) totalDiv.innerHTML = `Part Time Salary: <strong>RM ${total.toFixed(2)}</strong>`;
             };
             
             const updateFulltimeTotal = () => {
@@ -983,18 +963,14 @@
                 const adjustment = parseFloat(document.getElementById('fulltimeAdjustment')?.value) || 0;
                 const total = calculateFulltimeSalary(baseSalary, leave, useEpf, epf, useSocso, socso, adjustment);
                 const totalDiv = document.getElementById('fulltimeTotal');
-                if (totalDiv) {
-                    totalDiv.innerHTML = `<i class="fas fa-money-bill-wave"></i> Full Time Salary: <strong>RM ${total.toFixed(2)}</strong>`;
-                }
+                if (totalDiv) totalDiv.innerHTML = `Full Time Salary: <strong>RM ${total.toFixed(2)}</strong>`;
             };
             
             const updateTuitionTotal = () => {
                 const adjustment = parseFloat(document.getElementById('tuitionAdjustment')?.value) || 0;
                 const total = calculateTuitionSalary(teacher, adjustment);
                 const totalDiv = document.getElementById('tuitionTotal');
-                if (totalDiv) {
-                    totalDiv.innerHTML = `<i class="fas fa-money-bill-wave"></i> Tuition Salary: <strong>RM ${total.toFixed(2)}</strong>`;
-                }
+                if (totalDiv) totalDiv.innerHTML = `Tuition Salary: <strong>RM ${total.toFixed(2)}</strong>`;
             };
             
             // Type switching
@@ -1008,91 +984,54 @@
                 });
             });
             
-            // Part time periods
+            // Add period button
             const addPeriodBtn = document.getElementById('addPeriodBtn');
             if (addPeriodBtn) {
                 addPeriodBtn.addEventListener('click', () => {
-                    const periodsContainer = document.getElementById('workPeriodsContainer');
+                    const container = document.getElementById('workPeriodsContainer');
                     const newDiv = document.createElement('div');
                     newDiv.className = 'work-period';
-                    newDiv.innerHTML = `
-                        <input type="date" placeholder="Start Date" class="period-start">
-                        <input type="date" placeholder="End Date" class="period-end">
-                        <input type="number" placeholder="Hours/Day" class="period-hours" step="0.5">
-                        <button class="remove-period"><i class="fas fa-trash-alt"></i></button>
-                    `;
-                    newDiv.querySelector('.remove-period').addEventListener('click', () => {
-                        newDiv.remove();
-                        updateParttimeTotal();
-                    });
-                    newDiv.querySelectorAll('input').forEach(input => {
-                        input.addEventListener('input', () => updateParttimeTotal());
-                    });
-                    periodsContainer.appendChild(newDiv);
+                    newDiv.innerHTML = `<input type="date" class="period-start"><input type="date" class="period-end"><input type="number" class="period-hours" step="0.5"><button class="remove-period"><i class="fas fa-trash-alt"></i></button>`;
+                    newDiv.querySelector('.remove-period').addEventListener('click', () => newDiv.remove());
+                    container.appendChild(newDiv);
                     updateParttimeTotal();
                 });
             }
             
-            // Part time event listeners
+            // Event listeners for real-time updates
             const hourlyRateInput = document.getElementById('hourlyRate');
             if (hourlyRateInput) hourlyRateInput.addEventListener('input', () => updateParttimeTotal());
-            
             const parttimeAdjustmentInput = document.getElementById('parttimeAdjustment');
             if (parttimeAdjustmentInput) parttimeAdjustmentInput.addEventListener('input', () => updateParttimeTotal());
-            
             document.querySelectorAll('#workPeriodsContainer .work-period').forEach(period => {
-                period.querySelectorAll('input').forEach(input => {
-                    input.addEventListener('input', () => updateParttimeTotal());
-                });
+                period.querySelectorAll('input').forEach(input => input.addEventListener('input', () => updateParttimeTotal()));
                 const removeBtn = period.querySelector('.remove-period');
-                if (removeBtn) {
-                    removeBtn.addEventListener('click', () => {
-                        setTimeout(() => updateParttimeTotal(), 50);
-                    });
-                }
+                if (removeBtn) removeBtn.addEventListener('click', () => setTimeout(() => updateParttimeTotal(), 50));
             });
             
-            // Full time checkbox handlers
             const leaveCheck = document.getElementById('leaveCheck');
             const leaveAmount = document.getElementById('leaveAmount');
             if (leaveCheck && leaveAmount) {
-                leaveCheck.addEventListener('change', (e) => {
-                    leaveAmount.disabled = !e.target.checked;
-                    if (!e.target.checked) leaveAmount.value = '0';
-                    updateFulltimeTotal();
-                });
+                leaveCheck.addEventListener('change', (e) => { leaveAmount.disabled = !e.target.checked; if (!e.target.checked) leaveAmount.value = '0'; updateFulltimeTotal(); });
                 leaveAmount.addEventListener('input', () => updateFulltimeTotal());
             }
-            
             const epfCheck = document.getElementById('epfCheck');
             const epfPercent = document.getElementById('epfPercent');
             if (epfCheck && epfPercent) {
-                epfCheck.addEventListener('change', (e) => {
-                    epfPercent.disabled = !e.target.checked;
-                    updateFulltimeTotal();
-                });
+                epfCheck.addEventListener('change', () => updateFulltimeTotal());
                 epfPercent.addEventListener('input', () => updateFulltimeTotal());
             }
-            
             const socsoCheck = document.getElementById('socsoCheck');
             const socsoAmount = document.getElementById('socsoAmount');
             if (socsoCheck && socsoAmount) {
-                socsoCheck.addEventListener('change', (e) => {
-                    socsoAmount.disabled = !e.target.checked;
-                    if (!e.target.checked) socsoAmount.value = '0';
-                    updateFulltimeTotal();
-                });
+                socsoCheck.addEventListener('change', (e) => { socsoAmount.disabled = !e.target.checked; if (!e.target.checked) socsoAmount.value = '0'; updateFulltimeTotal(); });
                 socsoAmount.addEventListener('input', () => updateFulltimeTotal());
             }
-            
-            // Full time other inputs
             const baseSalaryInput = document.getElementById('baseSalary');
             if (baseSalaryInput) baseSalaryInput.addEventListener('input', () => updateFulltimeTotal());
-            
             const fulltimeAdjustmentInput = document.getElementById('fulltimeAdjustment');
             if (fulltimeAdjustmentInput) fulltimeAdjustmentInput.addEventListener('input', () => updateFulltimeTotal());
             
-            // Tuition real-time updates
             const tuitionAdjustmentInput = document.getElementById('tuitionAdjustment');
             if (tuitionAdjustmentInput) tuitionAdjustmentInput.addEventListener('input', () => updateTuitionTotal());
             
@@ -1104,67 +1043,152 @@
                     let salaryData = { employmentType: selectedType };
                     
                     if (selectedType === 'parttime') {
-                        const hourlyRate = parseFloat(document.getElementById('hourlyRate').value) || 0;
+                        salaryData.parttimeHourlyRate = parseFloat(document.getElementById('hourlyRate').value) || 0;
                         const workPeriods = [];
                         document.querySelectorAll('#workPeriodsContainer .work-period').forEach(period => {
                             const startDate = period.querySelector('.period-start')?.value;
                             const endDate = period.querySelector('.period-end')?.value;
                             const hours = parseFloat(period.querySelector('.period-hours')?.value) || 0;
-                            if (startDate && endDate && hours > 0) {
-                                workPeriods.push({ startDate, endDate, hours });
-                            }
+                            if (startDate && endDate && hours > 0) workPeriods.push({ startDate, endDate, hours });
                         });
-                        const adjustment = parseFloat(document.getElementById('parttimeAdjustment').value) || 0;
-                        salaryData.parttimeHourlyRate = hourlyRate;
                         salaryData.parttimeWorkPeriods = workPeriods;
-                        salaryData.parttimeAdjustment = adjustment;
+                        salaryData.parttimeAdjustment = parseFloat(document.getElementById('parttimeAdjustment').value) || 0;
                     }
                     
                     if (selectedType === 'fulltime') {
-                        const baseSalary = parseFloat(document.getElementById('baseSalary').value) || 0;
-                        const leaveAmountVal = parseFloat(document.getElementById('leaveAmount').value) || 0;
-                        const useEpf = document.getElementById('epfCheck').checked;
-                        const epfPercentVal = parseFloat(document.getElementById('epfPercent').value) || 11;
-                        const useSocso = document.getElementById('socsoCheck').checked;
-                        const socsoAmountVal = parseFloat(document.getElementById('socsoAmount').value) || 0;
-                        const adjustment = parseFloat(document.getElementById('fulltimeAdjustment').value) || 0;
-                        salaryData.fulltimeBaseSalary = baseSalary;
+                        salaryData.fulltimeBaseSalary = parseFloat(document.getElementById('baseSalary').value) || 0;
                         salaryData.fulltimeDeductions = {
-                            leave: leaveAmountVal,
-                            useEpf: useEpf,
-                            epf: epfPercentVal,
-                            useSocso: useSocso,
-                            socso: socsoAmountVal
+                            leave: parseFloat(document.getElementById('leaveAmount').value) || 0,
+                            useEpf: document.getElementById('epfCheck').checked,
+                            epf: parseFloat(document.getElementById('epfPercent').value) || 11,
+                            useSocso: document.getElementById('socsoCheck').checked,
+                            socso: parseFloat(document.getElementById('socsoAmount').value) || 0
                         };
-                        salaryData.fulltimeAdjustment = adjustment;
+                        salaryData.fulltimeAdjustment = parseFloat(document.getElementById('fulltimeAdjustment').value) || 0;
                     }
                     
                     if (selectedType === 'tuition') {
-                        const adjustment = parseFloat(document.getElementById('tuitionAdjustment').value) || 0;
-                        salaryData.adjustment = adjustment;
+                        salaryData.adjustment = parseFloat(document.getElementById('tuitionAdjustment').value) || 0;
                     }
                     
                     try {
                         await setDoc(doc(db, 'salarySettings', teacher.id), salaryData, { merge: true });
                         salarySettingsCache.set(teacher.id, salaryData);
                         const teacherInList = allTeachers.find(t => t.id === teacher.id);
-                        if (teacherInList) {
-                            teacherInList.salaryType = selectedType;
-                        }
+                        if (teacherInList) teacherInList.salaryType = selectedType;
                         renderTeacherList(allTeachers);
                         const statusDiv = document.getElementById('saveStatus');
                         if (statusDiv) {
-                            statusDiv.innerHTML = '<i class="fas fa-check-circle"></i> Saved successfully!';
-                            setTimeout(() => { statusDiv.innerHTML = ''; }, 3000);
+                            statusDiv.innerHTML = '<i class="fas fa-check-circle"></i> Saved!';
+                            setTimeout(() => statusDiv.innerHTML = '', 2000);
                         }
-                    } catch (e) {
-                        alert('Error saving: ' + e.message);
+                    } catch (e) { alert('Error: ' + e.message); }
+                });
+            }
+            
+            // View Salary Slip button
+            const viewSlipBtn = document.getElementById('viewSalarySlipBtn');
+            if (viewSlipBtn) {
+                viewSlipBtn.addEventListener('click', async () => {
+                    const selectedType = document.querySelector('.type-btn.active').dataset.type;
+                    let latestSettings = { employmentType: selectedType };
+                    
+                    if (selectedType === 'parttime') {
+                        latestSettings.parttimeHourlyRate = parseFloat(document.getElementById('hourlyRate').value) || 0;
+                        const workPeriods = [];
+                        document.querySelectorAll('#workPeriodsContainer .work-period').forEach(period => {
+                            const startDate = period.querySelector('.period-start')?.value;
+                            const endDate = period.querySelector('.period-end')?.value;
+                            const hours = parseFloat(period.querySelector('.period-hours')?.value) || 0;
+                            if (startDate && endDate && hours > 0) workPeriods.push({ startDate, endDate, hours });
+                        });
+                        latestSettings.parttimeWorkPeriods = workPeriods;
+                        latestSettings.parttimeAdjustment = parseFloat(document.getElementById('parttimeAdjustment').value) || 0;
+                    } else if (selectedType === 'fulltime') {
+                        latestSettings.fulltimeBaseSalary = parseFloat(document.getElementById('baseSalary').value) || 0;
+                        latestSettings.fulltimeDeductions = {
+                            leave: parseFloat(document.getElementById('leaveAmount').value) || 0,
+                            useEpf: document.getElementById('epfCheck').checked,
+                            epf: parseFloat(document.getElementById('epfPercent').value) || 11,
+                            useSocso: document.getElementById('socsoCheck').checked,
+                            socso: parseFloat(document.getElementById('socsoAmount').value) || 0
+                        };
+                        latestSettings.fulltimeAdjustment = parseFloat(document.getElementById('fulltimeAdjustment').value) || 0;
+                    } else if (selectedType === 'tuition') {
+                        latestSettings.adjustment = parseFloat(document.getElementById('tuitionAdjustment').value) || 0;
                     }
+                    
+                    const html = await generateSalarySlipHTML(teacher, latestSettings);
+                    document.getElementById('salarySlipBody').innerHTML = html;
+                    document.getElementById('salarySlipModal').classList.add('active');
                 });
             }
             
             updateFulltimeTotal();
         }
+        
+        // Salary Slip Modal actions
+        document.getElementById('closeSlipModalBtn')?.addEventListener('click', () => {
+            document.getElementById('salarySlipModal').classList.remove('active');
+        });
+        document.getElementById('salarySlipModal')?.addEventListener('click', (e) => {
+            if (e.target === document.getElementById('salarySlipModal')) {
+                document.getElementById('salarySlipModal').classList.remove('active');
+            }
+        });
+        
+        document.getElementById('backToSalaryBtn')?.addEventListener('click', () => {
+            document.getElementById('salarySlipModal').classList.remove('active');
+        });
+        
+        document.getElementById('downloadSlipBtn')?.addEventListener('click', async () => {
+            const slipElement = document.getElementById('salarySlipContent');
+            if (!slipElement) return;
+            try {
+                const canvas = await html2canvas(slipElement, { scale: 2, backgroundColor: '#ffffff' });
+                const link = document.createElement('a');
+                link.download = `salary_slip_${Date.now()}.png`;
+                link.href = canvas.toDataURL();
+                link.click();
+                alert('Salary slip downloaded!');
+            } catch (err) {
+                alert('Failed to download');
+            }
+        });
+        
+        document.getElementById('whatsappSlipBtn')?.addEventListener('click', async () => {
+            const slipElement = document.getElementById('salarySlipContent');
+            if (!slipElement) return;
+            const teacher = allTeachers.find(t => t.id === document.getElementById('modalTeacherName')?.dataset?.teacherId);
+            let phoneNumber = null;
+            // Find current teacher from the modal
+            for (const t of allTeachers) {
+                const modalTitle = document.getElementById('modalTeacherName')?.innerText;
+                if (modalTitle && t.name && modalTitle.includes(t.name)) {
+                    phoneNumber = t.phone;
+                    break;
+                }
+            }
+            
+            try {
+                const canvas = await html2canvas(slipElement, { scale: 2, backgroundColor: '#ffffff' });
+                const link = document.createElement('a');
+                link.download = `salary_slip.png`;
+                link.href = canvas.toDataURL();
+                link.click();
+                
+                if (phoneNumber) {
+                    const message = `Dear Teacher,\n\nPlease find attached your salary slip.\n\nThank you for your hard work!\n\nPusat Tuisyen Perintis Aspirasi`;
+                    const waLink = `https://wa.me/60${phoneNumber}?text=${encodeURIComponent(message)}`;
+                    window.open(waLink, '_blank');
+                    alert('Salary slip downloaded. WhatsApp opened. Please attach the image.');
+                } else {
+                    alert('Salary slip downloaded. No phone number found for this teacher.');
+                }
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        });
         
         // Modal close handlers
         document.getElementById('closeModalBtn')?.addEventListener('click', () => {
