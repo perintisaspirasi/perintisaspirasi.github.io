@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Teacher Management | Pusat Tuisyen Perintis Aspirasi</title>
     <link rel="icon" type="image/png" href="icon.png">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;40..32,400;40..32,500;40..32,600;40..32,700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         * {
@@ -227,6 +227,24 @@
             border-color: #2c7da0;
         }
 
+        .search-btn, .reset-btn {
+            padding: 12px 24px;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .search-btn {
+            background: #2c7da0;
+            color: white;
+            border: none;
+        }
+        .reset-btn {
+            background: #e8f4f8;
+            color: #2c7da0;
+            border: 1px solid #cde5ef;
+        }
+
         /* Card */
         .card {
             background: white;
@@ -394,7 +412,16 @@
             margin: 2px;
         }
 
-        /* Modal */
+        .bank-badge {
+            background: #e8f4f8;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            display: inline-block;
+            margin: 2px;
+        }
+
+        /* Modal - with scrollable content */
         .modal {
             display: none;
             position: fixed;
@@ -402,7 +429,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0, 0, 0, 0.5);
             z-index: 2000;
             align-items: center;
             justify-content: center;
@@ -412,14 +439,22 @@
             background: white;
             border-radius: 28px;
             padding: 1.8rem;
-            max-width: 500px;
+            max-width: 550px;
             width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;  /* Enables vertical scrolling */
+            overflow-x: hidden;
         }
 
         .modal-header {
             display: flex;
             justify-content: space-between;
             margin-bottom: 1rem;
+            position: sticky;
+            top: 0;
+            background: white;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #e4edf2;
         }
 
         .close-modal {
@@ -428,6 +463,19 @@
             font-size: 1.5rem;
             cursor: pointer;
             color: #999;
+        }
+
+        /* Custom scrollbar for modal */
+        .modal-content::-webkit-scrollbar {
+            width: 6px;
+        }
+        .modal-content::-webkit-scrollbar-track {
+            background: #eef3f7;
+            border-radius: 10px;
+        }
+        .modal-content::-webkit-scrollbar-thumb {
+            background: #2c7da0;
+            border-radius: 10px;
         }
 
         @media (max-width: 768px) {
@@ -439,6 +487,9 @@
             }
             .form-row {
                 flex-direction: column;
+            }
+            .modal-content {
+                max-height: 80vh;
             }
         }
     </style>
@@ -464,6 +515,7 @@
                 <a href="studentmanage.html" class="nav-item"><i class="fas fa-user-graduate"></i><span>Student Manage</span></a>
                 <a href="package.html" class="nav-item"><i class="fas fa-calendar-alt"></i><span>Package Manage</span></a>
                 <a href="invoice.html" class="nav-item"><i class="fas fa-file-invoice"></i><span>Invoice</span></a>
+                <a href="salarymanage.html" class="nav-item"><i class="fas fa-money-bill-wave"></i><span>Salary</span></a>
             </div>
             <div class="sidebar-footer"><div class="nav-item" id="logoutBtn"><i class="fas fa-sign-out-alt"></i><span>Log Out</span></div></div>
         </div>
@@ -473,9 +525,9 @@
             <div class="search-section">
                 <div class="search-box">
                     <i class="fas fa-search" style="color:#8ba9c0;"></i>
-                    <input type="text" id="searchTeacherInput" placeholder="Search by teacher name or subject...">
-                    <button id="searchBtn" class="secondary">Search</button>
-                    <button id="resetSearchBtn" class="secondary">Reset</button>
+                    <input type="text" id="searchTeacherInput" placeholder="Search by teacher name, subject, bank...">
+                    <button id="searchBtn" class="search-btn"><i class="fas fa-search"></i> Search</button>
+                    <button id="resetSearchBtn" class="reset-btn"><i class="fas fa-undo-alt"></i> Reset</button>
                 </div>
             </div>
 
@@ -483,8 +535,14 @@
             <div class="card">
                 <h3><i class="fas fa-user-plus"></i> Register New Teacher</h3>
                 <div class="form-row">
-                    <div class="form-group"><label>Full Name</label><input type="text" id="teacherName" placeholder="e.g., Mr. Ahmad"></div>
+                    <div class="form-group"><label>Full Name *</label><input type="text" id="teacherName" placeholder="e.g., Mr. Ahmad"></div>
                     <div class="form-group"><label>IC Number</label><input type="text" id="teacherIc" placeholder="IC Number"></div>
+                </div>
+                
+                <!-- Bank Details Section -->
+                <div class="form-row">
+                    <div class="form-group"><label>Bank Name</label><input type="text" id="teacherBankName" placeholder="e.g., Maybank, CIMB, Public Bank"></div>
+                    <div class="form-group"><label>Bank Account Number</label><input type="text" id="teacherBankAccount" placeholder="Bank Account Number"></div>
                 </div>
                 
                 <div class="subjects-container">
@@ -509,7 +567,7 @@
                 <div class="table-wrapper">
                     <table id="teachersTable">
                         <thead>
-                            <tr><th>Name</th><th>IC Number</th><th>Subjects</th><th>Actions</th></tr>
+                            <tr><th>Name</th><th>IC Number</th><th>Bank Info</th><th>Subjects</th><th>Actions</th></tr>
                         </thead>
                         <tbody id="teachersTableBody"></tbody>
                     </table>
@@ -518,12 +576,17 @@
         </div>
     </div>
 
-    <!-- Edit Modal -->
+    <!-- Edit Modal (scrollable) -->
     <div id="editModal" class="modal">
         <div class="modal-content">
-            <div class="modal-header"><h3>Edit Teacher</h3><button class="close-modal">&times;</button></div>
-            <div class="form-group"><label>Name</label><input type="text" id="editTeacherName"></div>
+            <div class="modal-header">
+                <h3>Edit Teacher</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="form-group"><label>Name *</label><input type="text" id="editTeacherName"></div>
             <div class="form-group"><label>IC Number</label><input type="text" id="editTeacherIc"></div>
+            <div class="form-group"><label>Bank Name</label><input type="text" id="editTeacherBankName" placeholder="e.g., Maybank, CIMB"></div>
+            <div class="form-group"><label>Bank Account Number</label><input type="text" id="editTeacherBankAccount" placeholder="Bank Account Number"></div>
             <div class="subjects-container" id="editSubjectsContainer"></div>
             <button id="updateTeacherBtn" style="margin-top:1rem; width:100%;">Update Teacher</button>
         </div>
@@ -591,12 +654,18 @@
             sidebarToggle.innerHTML = isCollapsed ? '<i class="fas fa-chevron-right"></i>' : '<i class="fas fa-chevron-left"></i>';
         });
 
+        // Helper function to convert string to uppercase
+        function toUppercase(str) {
+            if (!str) return str;
+            return str.toUpperCase();
+        }
+
         // Subjects management
         function addSubjectRow(container, data = null) {
             const div = document.createElement('div');
             div.className = 'subject-item';
             div.innerHTML = `
-                <input type="text" placeholder="Subject Name" class="subject-name" value="${data ? data.subjectName : ''}">
+                <input type="text" placeholder="Subject Name" class="subject-name" value="${data ? escapeHtml(data.subjectName) : ''}">
                 <input type="number" placeholder="Fee (RM)" class="subject-fee" value="${data ? data.fee : '0'}">
                 <input type="number" placeholder="Center Cut (RM)" class="subject-cut" value="${data ? data.centerCut : '0'}">
                 <input type="number" placeholder="Extra Fee (RM)" class="subject-extra" value="${data ? data.extraFee : '0'}">
@@ -607,24 +676,43 @@
             container.appendChild(div);
         }
 
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+
         document.getElementById('addSubjectBtn')?.addEventListener('click', () => {
             const container = document.getElementById('subjectsList');
             addSubjectRow(container);
-            // Show remove buttons for all if more than one
             document.querySelectorAll('#subjectsList .remove-subject').forEach(btn => btn.style.display = 'inline-block');
         });
 
-        // Save teacher
+        // Save teacher with bank details - convert to uppercase
         document.getElementById('saveTeacherBtn')?.addEventListener('click', async () => {
-            const name = document.getElementById('teacherName').value.trim();
-            const ic = document.getElementById('teacherIc').value.trim();
+            let name = document.getElementById('teacherName').value.trim();
+            let ic = document.getElementById('teacherIc').value.trim();
+            let bankName = document.getElementById('teacherBankName').value.trim();
+            let bankAccount = document.getElementById('teacherBankAccount').value.trim();
+            
+            // Convert to uppercase
+            name = toUppercase(name);
+            ic = toUppercase(ic);
+            bankName = toUppercase(bankName);
+            bankAccount = toUppercase(bankAccount);
+            
             if (!name) { alert('Please enter teacher name'); return; }
             
             const subjectItems = document.querySelectorAll('#subjectsList .subject-item');
             const subjects = [];
             subjectItems.forEach(item => {
-                const subjectName = item.querySelector('.subject-name').value.trim();
+                let subjectName = item.querySelector('.subject-name').value.trim();
                 if (subjectName) {
+                    subjectName = toUppercase(subjectName);
                     subjects.push({
                         subjectName: subjectName,
                         fee: parseFloat(item.querySelector('.subject-fee').value) || 0,
@@ -635,11 +723,18 @@
             });
             
             try {
-                await addDoc(collection(db, 'teachers'), { name, ic, subjects });
+                await addDoc(collection(db, 'teachers'), { 
+                    name, 
+                    ic: ic || null,
+                    bankName: bankName || null,
+                    bankAccount: bankAccount || null,
+                    subjects 
+                });
                 alert('Teacher registered successfully');
                 document.getElementById('teacherName').value = '';
                 document.getElementById('teacherIc').value = '';
-                // Reset subjects to one empty row
+                document.getElementById('teacherBankName').value = '';
+                document.getElementById('teacherBankAccount').value = '';
                 const container = document.getElementById('subjectsList');
                 container.innerHTML = '';
                 addSubjectRow(container);
@@ -670,12 +765,18 @@
             tbody.innerHTML = '';
             teachers.forEach(teacher => {
                 const subjectsHtml = (teacher.subjects || []).map(s => 
-                    `<span class="subject-badge">${s.subjectName} (RM${s.fee})</span>`
+                    `<span class="subject-badge">${escapeHtml(s.subjectName)} (RM${s.fee})</span>`
                 ).join('');
+                
+                const bankHtml = (teacher.bankName || teacher.bankAccount) ? 
+                    `<span class="bank-badge"><i class="fas fa-university"></i> ${escapeHtml(teacher.bankName || '')} ${teacher.bankAccount ? ' - ' + teacher.bankAccount : ''}</span>` : 
+                    '<span class="bank-badge" style="background:#eef3f7;">No bank info</span>';
+                
                 const row = tbody.insertRow();
                 row.innerHTML = `
-                    <td>${teacher.name || ''}</td>
-                    <td>${teacher.ic || '-'}</td>
+                    <td>${escapeHtml(teacher.name) || ''}</td>
+                    <td>${escapeHtml(teacher.ic) || '-'}</td>
+                    <td>${bankHtml}</td>
                     <td>${subjectsHtml || '-'}</td>
                     <td class="action-icons">
                         <i class="fas fa-edit edit-teacher" data-id="${teacher.id}"></i>
@@ -689,8 +790,11 @@
             });
             document.querySelectorAll('.delete-teacher').forEach(btn => {
                 btn.addEventListener('click', async () => {
-                    if (confirm('Delete this teacher? This will remove them from all packages.')) {
+                    if (confirm('Delete this teacher? This will remove them from all packages and salary settings.')) {
                         await deleteDoc(doc(db, 'teachers', btn.dataset.id));
+                        try {
+                            await deleteDoc(doc(db, 'salarySettings', btn.dataset.id));
+                        } catch(e) {}
                         loadTeachers();
                     }
                 });
@@ -703,7 +807,9 @@
             const filtered = allTeachers.filter(teacher => {
                 const matchesName = teacher.name?.toLowerCase().includes(searchTerm);
                 const matchesSubject = (teacher.subjects || []).some(s => s.subjectName.toLowerCase().includes(searchTerm));
-                return matchesName || matchesSubject;
+                const matchesBank = teacher.bankName?.toLowerCase().includes(searchTerm) || 
+                                    teacher.bankAccount?.includes(searchTerm);
+                return matchesName || matchesSubject || matchesBank;
             });
             renderTeacherTable(filtered);
         });
@@ -713,7 +819,7 @@
             renderTeacherTable(allTeachers);
         });
 
-        // Edit modal
+        // Edit modal with bank fields - convert to uppercase when saving
         let currentEditId = null;
         async function openEditModal(teacherId) {
             currentEditId = teacherId;
@@ -722,6 +828,8 @@
             
             document.getElementById('editTeacherName').value = teacher.name || '';
             document.getElementById('editTeacherIc').value = teacher.ic || '';
+            document.getElementById('editTeacherBankName').value = teacher.bankName || '';
+            document.getElementById('editTeacherBankAccount').value = teacher.bankAccount || '';
             
             const container = document.getElementById('editSubjectsContainer');
             container.innerHTML = '<label>Subjects & Fees</label><div id="editSubjectsList"></div><button type="button" class="add-subject-btn" id="editAddSubjectBtn">+ Add Subject</button>';
@@ -731,7 +839,7 @@
                 const div = document.createElement('div');
                 div.className = 'subject-item';
                 div.innerHTML = `
-                    <input type="text" placeholder="Subject Name" class="subject-name" value="${subj ? subj.subjectName : ''}">
+                    <input type="text" placeholder="Subject Name" class="subject-name" value="${subj ? escapeHtml(subj.subjectName) : ''}">
                     <input type="number" placeholder="Fee (RM)" class="subject-fee" value="${subj ? subj.fee : '0'}">
                     <input type="number" placeholder="Center Cut (RM)" class="subject-cut" value="${subj ? subj.centerCut : '0'}">
                     <input type="number" placeholder="Extra Fee (RM)" class="subject-extra" value="${subj ? subj.extraFee : '0'}">
@@ -752,13 +860,23 @@
         }
 
         document.getElementById('updateTeacherBtn')?.addEventListener('click', async () => {
-            const name = document.getElementById('editTeacherName').value.trim();
-            const ic = document.getElementById('editTeacherIc').value.trim();
+            let name = document.getElementById('editTeacherName').value.trim();
+            let ic = document.getElementById('editTeacherIc').value.trim();
+            let bankName = document.getElementById('editTeacherBankName').value.trim();
+            let bankAccount = document.getElementById('editTeacherBankAccount').value.trim();
+            
+            // Convert to uppercase
+            name = toUppercase(name);
+            ic = toUppercase(ic);
+            bankName = toUppercase(bankName);
+            bankAccount = toUppercase(bankAccount);
+            
             const subjectItems = document.querySelectorAll('#editSubjectsList .subject-item');
             const subjects = [];
             subjectItems.forEach(item => {
-                const subjectName = item.querySelector('.subject-name').value.trim();
+                let subjectName = item.querySelector('.subject-name').value.trim();
                 if (subjectName) {
+                    subjectName = toUppercase(subjectName);
                     subjects.push({
                         subjectName: subjectName,
                         fee: parseFloat(item.querySelector('.subject-fee').value) || 0,
@@ -769,7 +887,13 @@
             });
             
             try {
-                await updateDoc(doc(db, 'teachers', currentEditId), { name, ic, subjects });
+                await updateDoc(doc(db, 'teachers', currentEditId), { 
+                    name, 
+                    ic: ic || null,
+                    bankName: bankName || null,
+                    bankAccount: bankAccount || null,
+                    subjects 
+                });
                 alert('Teacher updated successfully');
                 document.getElementById('editModal').style.display = 'none';
                 loadTeachers();
