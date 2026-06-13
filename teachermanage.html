@@ -361,6 +361,26 @@
             background: #fdd;
         }
 
+        /* Phone prefix styling */
+        .phone-input-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .phone-prefix {
+            background: #e8f4f8;
+            padding: 10px 14px;
+            border: 2px solid #e0eef5;
+            border-radius: 30px;
+            font-weight: 600;
+            color: #1a5f7a;
+            white-space: nowrap;
+            font-size: 0.9rem;
+        }
+        .phone-input-group input {
+            flex: 1;
+        }
+
         /* Subjects Container */
         .subjects-container {
             background: #f8fbfd;
@@ -454,6 +474,15 @@
             margin: 2px;
         }
 
+        .contact-badge {
+            background: #e8f4f8;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            display: inline-block;
+            margin: 2px;
+        }
+
         /* Modal - with scrollable content */
         .modal {
             display: none;
@@ -472,7 +501,7 @@
             background: white;
             border-radius: 28px;
             padding: 1.8rem;
-            max-width: 550px;
+            max-width: 600px;
             width: 90%;
             max-height: 85vh;
             overflow-y: auto;
@@ -521,6 +550,13 @@
             .form-row {
                 flex-direction: column;
             }
+            .phone-input-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .phone-prefix {
+                text-align: center;
+            }
             .modal-content {
                 max-height: 80vh;
             }
@@ -558,7 +594,7 @@
             <div class="search-section">
                 <div class="search-box">
                     <i class="fas fa-search" style="color:#8ba9c0;"></i>
-                    <input type="text" id="searchTeacherInput" placeholder="Search by teacher name, subject, bank...">
+                    <input type="text" id="searchTeacherInput" placeholder="Search by name, phone, email, subject, bank...">
                     <button id="searchBtn" class="search-btn"><i class="fas fa-search"></i> Search</button>
                     <button id="resetSearchBtn" class="reset-btn"><i class="fas fa-undo-alt"></i> Reset</button>
                 </div>
@@ -575,8 +611,21 @@
                         <div class="form-group"><label>IC Number</label><input type="text" id="teacherIc" placeholder="IC Number"></div>
                     </div>
                     
-                    <!-- Bank Details Section -->
+                    <!-- Contact Details Section with Malaysia Phone Prefix -->
                     <div class="form-row">
+                        <div class="form-group">
+                            <label>Phone Number (Malaysia)</label>
+                            <div class="phone-input-group">
+                                <span class="phone-prefix">+60</span>
+                                <input type="tel" id="teacherPhone" placeholder="12 345 6789" maxlength="11">
+                            </div>
+                            <div class="subject-hint" style="font-size:0.65rem; color:#8ba9c0; margin-top:4px;">Enter numbers only (e.g., 123456789)</div>
+                        </div>
+                        <div class="form-group"><label>Email</label><input type="email" id="teacherEmail" placeholder="teacher@example.com"></div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group"><label>Join Date</label><input type="date" id="teacherJoinDate"></div>
                         <div class="form-group"><label>Bank Name</label><input type="text" id="teacherBankName" placeholder="e.g., Maybank, CIMB, Public Bank"></div>
                         <div class="form-group"><label>Bank Account Number</label><input type="text" id="teacherBankAccount" placeholder="Bank Account Number"></div>
                     </div>
@@ -607,7 +656,14 @@
                     <div id="teachersTableWrapper" class="table-wrapper">
                         <table id="teachersTable">
                             <thead>
-                                <tr><th>Name</th><th>IC Number</th><th>Bank Info</th><th>Subjects</th><th>Actions</th></tr>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Contact</th>
+                                    <th>Join Date</th>
+                                    <th>Bank Info</th>
+                                    <th>Subjects</th>
+                                    <th>Actions</th>
+                                </tr>
                             </thead>
                             <tbody id="teachersTableBody"></tbody>
                         </table>
@@ -626,6 +682,15 @@
             </div>
             <div class="form-group"><label>Name *</label><input type="text" id="editTeacherName"></div>
             <div class="form-group"><label>IC Number</label><input type="text" id="editTeacherIc"></div>
+            <div class="form-group">
+                <label>Phone Number (Malaysia)</label>
+                <div class="phone-input-group">
+                    <span class="phone-prefix">+60</span>
+                    <input type="tel" id="editTeacherPhone" placeholder="12 345 6789" maxlength="11">
+                </div>
+            </div>
+            <div class="form-group"><label>Email</label><input type="email" id="editTeacherEmail" placeholder="teacher@example.com"></div>
+            <div class="form-group"><label>Join Date</label><input type="date" id="editTeacherJoinDate"></div>
             <div class="form-group"><label>Bank Name</label><input type="text" id="editTeacherBankName" placeholder="e.g., Maybank, CIMB"></div>
             <div class="form-group"><label>Bank Account Number</label><input type="text" id="editTeacherBankAccount" placeholder="Bank Account Number"></div>
             <div class="subjects-container" id="editSubjectsContainer"></div>
@@ -709,6 +774,28 @@
             return groups ? groups.join(' ') : accountNumber;
         }
 
+        // Format phone number for display (add +60 prefix)
+        function formatPhoneNumber(phoneNumber) {
+            if (!phoneNumber) return null;
+            const cleaned = phoneNumber.replace(/\D/g, '');
+            if (cleaned.length === 0) return null;
+            return `+60 ${cleaned}`;
+        }
+
+        // Format date to display
+        function formatDate(dateString) {
+            if (!dateString) return '-';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-MY');
+        }
+
+        // Extract numbers only from phone input
+        function cleanPhoneNumber(phone) {
+            if (!phone) return null;
+            const cleaned = phone.replace(/\D/g, '');
+            return cleaned.length > 0 ? cleaned : null;
+        }
+
         // Subjects management
         function addSubjectRow(container, data = null) {
             const div = document.createElement('div');
@@ -741,18 +828,24 @@
             document.querySelectorAll('#subjectsList .remove-subject').forEach(btn => btn.style.display = 'inline-block');
         });
 
-        // Save teacher with bank details - convert to uppercase
+        // Save teacher with all details
         document.getElementById('saveTeacherBtn')?.addEventListener('click', async () => {
             let name = document.getElementById('teacherName').value.trim();
             let ic = document.getElementById('teacherIc').value.trim();
+            let phoneRaw = document.getElementById('teacherPhone').value.trim();
+            let email = document.getElementById('teacherEmail').value.trim();
+            let joinDate = document.getElementById('teacherJoinDate').value;
             let bankName = document.getElementById('teacherBankName').value.trim();
             let bankAccount = document.getElementById('teacherBankAccount').value.trim();
             
-            // Convert to uppercase
+            // Convert to uppercase for text fields
             name = toUppercase(name);
             ic = toUppercase(ic);
             bankName = toUppercase(bankName);
             bankAccount = toUppercase(bankAccount);
+            
+            // Clean phone number (store only digits)
+            let phone = cleanPhoneNumber(phoneRaw);
             
             if (!name) { alert('Please enter teacher name'); return; }
             
@@ -775,13 +868,20 @@
                 await addDoc(collection(db, 'teachers'), { 
                     name, 
                     ic: ic || null,
+                    phone: phone,
+                    email: email || null,
+                    joinDate: joinDate || null,
                     bankName: bankName || null,
                     bankAccount: bankAccount || null,
-                    subjects 
+                    subjects,
+                    createdAt: new Date()
                 });
                 alert('Teacher registered successfully');
                 document.getElementById('teacherName').value = '';
                 document.getElementById('teacherIc').value = '';
+                document.getElementById('teacherPhone').value = '';
+                document.getElementById('teacherEmail').value = '';
+                document.getElementById('teacherJoinDate').value = '';
                 document.getElementById('teacherBankName').value = '';
                 document.getElementById('teacherBankAccount').value = '';
                 const container = document.getElementById('subjectsList');
@@ -822,10 +922,27 @@
                     `<span class="bank-badge"><i class="fas fa-university"></i> ${escapeHtml(teacher.bankName || '')} ${formattedAccount ? ' - ' + formattedAccount : ''}</span>` : 
                     '<span class="bank-badge" style="background:#eef3f7;">No bank info</span>';
                 
+                // Contact info with formatted phone
+                let contactHtml = '';
+                if (teacher.phone) {
+                    const formattedPhone = formatPhoneNumber(teacher.phone);
+                    contactHtml += `<div class="contact-badge"><i class="fas fa-phone"></i> ${escapeHtml(formattedPhone)}</div>`;
+                }
+                if (teacher.email) {
+                    contactHtml += `<div class="contact-badge"><i class="fas fa-envelope"></i> ${escapeHtml(teacher.email)}</div>`;
+                }
+                if (!teacher.phone && !teacher.email) {
+                    contactHtml = '<span class="contact-badge" style="background:#eef3f7;">No contact</span>';
+                }
+                
+                const joinDateDisplay = teacher.joinDate ? formatDate(teacher.joinDate) : '-';
+                
                 const row = tbody.insertRow();
                 row.innerHTML = `
-                    <td>${escapeHtml(teacher.name) || ''}</td>
-                    <td>${escapeHtml(teacher.ic) || '-'}</td>
+                    <td><strong>${escapeHtml(teacher.name) || ''}</strong><br>
+                         <span style="font-size:0.7rem; color:#6b8ba0;">IC: ${escapeHtml(teacher.ic) || '-'}</span></td>
+                    <td>${contactHtml}</td>
+                    <td>${joinDateDisplay}</td>
                     <td>${bankHtml}</td>
                     <td>${subjectsHtml || '-'}</td>
                     <td class="action-icons">
@@ -851,15 +968,17 @@
             });
         }
 
-        // Search functionality
+        // Search functionality (includes phone and email)
         document.getElementById('searchBtn')?.addEventListener('click', () => {
             const searchTerm = document.getElementById('searchTeacherInput').value.toLowerCase();
             const filtered = allTeachers.filter(teacher => {
                 const matchesName = teacher.name?.toLowerCase().includes(searchTerm);
+                const matchesPhone = teacher.phone?.includes(searchTerm);
+                const matchesEmail = teacher.email?.toLowerCase().includes(searchTerm);
                 const matchesSubject = (teacher.subjects || []).some(s => s.subjectName.toLowerCase().includes(searchTerm));
                 const matchesBank = teacher.bankName?.toLowerCase().includes(searchTerm) || 
                                     teacher.bankAccount?.includes(searchTerm);
-                return matchesName || matchesSubject || matchesBank;
+                return matchesName || matchesPhone || matchesEmail || matchesSubject || matchesBank;
             });
             renderTeacherTable(filtered);
         });
@@ -869,7 +988,7 @@
             renderTeacherTable(allTeachers);
         });
 
-        // Edit modal with bank fields - convert to uppercase when saving
+        // Edit modal with all fields
         let currentEditId = null;
         async function openEditModal(teacherId) {
             currentEditId = teacherId;
@@ -878,6 +997,9 @@
             
             document.getElementById('editTeacherName').value = teacher.name || '';
             document.getElementById('editTeacherIc').value = teacher.ic || '';
+            document.getElementById('editTeacherPhone').value = teacher.phone || '';
+            document.getElementById('editTeacherEmail').value = teacher.email || '';
+            document.getElementById('editTeacherJoinDate').value = teacher.joinDate || '';
             document.getElementById('editTeacherBankName').value = teacher.bankName || '';
             document.getElementById('editTeacherBankAccount').value = teacher.bankAccount || '';
             
@@ -912,6 +1034,9 @@
         document.getElementById('updateTeacherBtn')?.addEventListener('click', async () => {
             let name = document.getElementById('editTeacherName').value.trim();
             let ic = document.getElementById('editTeacherIc').value.trim();
+            let phoneRaw = document.getElementById('editTeacherPhone').value.trim();
+            let email = document.getElementById('editTeacherEmail').value.trim();
+            let joinDate = document.getElementById('editTeacherJoinDate').value;
             let bankName = document.getElementById('editTeacherBankName').value.trim();
             let bankAccount = document.getElementById('editTeacherBankAccount').value.trim();
             
@@ -920,6 +1045,9 @@
             ic = toUppercase(ic);
             bankName = toUppercase(bankName);
             bankAccount = toUppercase(bankAccount);
+            
+            // Clean phone number
+            let phone = cleanPhoneNumber(phoneRaw);
             
             const subjectItems = document.querySelectorAll('#editSubjectsList .subject-item');
             const subjects = [];
@@ -940,6 +1068,9 @@
                 await updateDoc(doc(db, 'teachers', currentEditId), { 
                     name, 
                     ic: ic || null,
+                    phone: phone,
+                    email: email || null,
+                    joinDate: joinDate || null,
                     bankName: bankName || null,
                     bankAccount: bankAccount || null,
                     subjects 
