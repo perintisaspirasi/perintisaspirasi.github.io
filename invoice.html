@@ -120,7 +120,7 @@
         
         .invoice-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
             gap: 1.2rem;
             margin-bottom: 1.5rem;
         }
@@ -247,6 +247,7 @@
                 <a href="studentmanage.html" class="nav-item"><i class="fas fa-user-graduate"></i><span>Student Manage</span></a>
                 <a href="package.html" class="nav-item"><i class="fas fa-calendar-alt"></i><span>Package Manage</span></a>
                 <a href="invoice.html" class="nav-item active"><i class="fas fa-file-invoice"></i><span>Invoice</span></a>
+                <a href="salarymanage.html" class="nav-item"><i class="fas fa-money-bill-wave"></i><span>Salary</span></a>
             </div>
             <div class="sidebar-footer"><div class="nav-item" id="logoutBtn"><i class="fas fa-sign-out-alt"></i><span>Log Out</span></div></div>
         </div>
@@ -365,7 +366,6 @@
         let allInvoices = [];
         let studentsCache = new Map();
         let selectedInvoices = new Set();
-        let nextInvoiceNumber = 2026001; // Starting invoice number
         
         async function loadStudentsData() {
             try {
@@ -382,25 +382,6 @@
             }
         }
         
-        // Generate sequential invoice number
-        function generateInvoiceNumber() {
-            const current = nextInvoiceNumber;
-            nextInvoiceNumber++;
-            // Save to localStorage to persist across page loads
-            localStorage.setItem('nextInvoiceNumber', nextInvoiceNumber);
-            return current;
-        }
-        
-        // Load saved invoice counter
-        function loadInvoiceCounter() {
-            const saved = localStorage.getItem('nextInvoiceNumber');
-            if (saved) {
-                nextInvoiceNumber = parseInt(saved);
-            } else {
-                nextInvoiceNumber = 2026001;
-            }
-        }
-        
         // Helper function to format amount with proper sign
         function formatAmount(amount, isDiscount = false) {
             if (amount === 0) return 'RM 0.00';
@@ -413,23 +394,39 @@
             return `RM ${amount.toFixed(2)}`;
         }
         
+        // Helper to get subject display name (supports both old and new format)
+        function getSubjectName(subject) {
+            // 优先使用 packageName (新格式)，然后是 subjectName (旧格式)
+            return subject.packageName || subject.subjectName || 'Subject';
+        }
+        
+        // Helper to get teacher display (supports both old and new format)
+        function getTeacherDisplay(subject) {
+            // 新格式：teacherNames 是数组
+            if (subject.teacherNames && Array.isArray(subject.teacherNames) && subject.teacherNames.length > 0) {
+                return subject.teacherNames.join(', ');
+            }
+            // 旧格式：teacherName 是字符串
+            if (subject.teacherName) {
+                return subject.teacherName;
+            }
+            return 'Unknown';
+        }
+        
         async function generateInvoiceHTML(invoice) {
             const student = studentsCache.get(invoice.studentId) || { name: 'Unknown', phone: null, email: null };
-            // Use numeric invoice number if available, otherwise generate from month and student ID
-            let invoiceNumberDisplay = invoice.invoiceNumber;
-            if (!invoiceNumberDisplay) {
-                invoiceNumberDisplay = `INV-${invoice.monthKey?.replace('-', '')}-${invoice.studentId?.slice(-4)}`;
-            } else {
-                invoiceNumberDisplay = `INV-${invoiceNumberDisplay}`;
-            }
+            let invoiceNumberDisplay = invoice.invoiceNumber || `INV-${invoice.monthKey?.replace('-', '')}${invoice.studentId?.slice(-4)}`;
+            invoiceNumberDisplay = `INV-${invoiceNumberDisplay}`;
             const today = new Date();
             const formattedDate = today.toLocaleDateString('en-MY');
             
             const subjects = invoice.subjects || [];
             let subjectsHtml = '';
-            subjects.forEach(sub => {
-                subjectsHtml += `<tr><td style="padding: 8px 0;">${sub.subjectName} (${sub.teacherName || 'Unknown'})</td><td style="text-align: right;">${formatAmount(sub.fee || 0)}</td></tr>`;
-            });
+            for (const sub of subjects) {
+                const subjectName = getSubjectName(sub);
+                const teacherDisplay = getTeacherDisplay(sub);
+                subjectsHtml += `<tr><td style="padding: 8px 0;">${subjectName} (${teacherDisplay})</td><td style="text-align: right;">${formatAmount(sub.fee || 0)}</td></tr>`;
+            }
             
             const extras = invoice.extras || { registrationFee: 0, photocopyFee: 0, discount: 0 };
             let extrasHtml = '';
@@ -476,7 +473,6 @@
         
         async function loadAllInvoices() {
             try {
-                loadInvoiceCounter();
                 await loadStudentsData();
                 
                 const invoicesSnap = await getDocs(collection(db, 'invoices'));
@@ -511,7 +507,10 @@
             if (currentFilters.search) {
                 const searchLower = currentFilters.search.toLowerCase();
                 filtered = filtered.filter(inv => inv.studentName?.toLowerCase().includes(searchLower) ||
-                    (inv.subjects || []).some(s => s.subjectName?.toLowerCase().includes(searchLower)));
+                    (inv.subjects || []).some(s => {
+                        const subjectName = s.packageName || s.subjectName || '';
+                        return subjectName.toLowerCase().includes(searchLower);
+                    }));
             }
             if (currentFilters.status === 'paid') filtered = filtered.filter(inv => inv.paid === true);
             else if (currentFilters.status === 'unpaid') filtered = filtered.filter(inv => inv.paid !== true);
@@ -533,9 +532,7 @@
                 alert(`No phone number found for ${studentName}. Please add phone number in Student Management.`);
                 return;
             }
-            
             const message = `Dear ${studentName},\n\nThis is a friendly reminder that your tuition fee for ${monthKey} of RM ${amount.toFixed(2)} is still unpaid.\n\nPlease make the payment at your earliest convenience.\n\nThank you for your cooperation!\n\nPusat Tuisyen Perintis Aspirasi`;
-            
             const waLink = `https://wa.me/60${phoneNumber}?text=${encodeURIComponent(message)}`;
             window.open(waLink, '_blank');
         }
@@ -550,15 +547,13 @@
             invoices.forEach(inv => {
                 const isPaid = inv.paid === true;
                 const isSelected = selectedInvoices.has(inv.id);
-                // Use numeric invoice number if available
-                let invNumberDisplay = inv.invoiceNumber;
-                if (!invNumberDisplay) {
-                    invNumberDisplay = `INV-${inv.monthKey?.replace('-', '')}${inv.studentId?.slice(-4)}`;
-                } else {
-                    invNumberDisplay = `INV-${invNumberDisplay}`;
-                }
+                let invNumberDisplay = inv.invoiceNumber ? `INV-${inv.invoiceNumber}` : `INV-${inv.monthKey?.replace('-', '')}${inv.studentId?.slice(-4)}`;
                 const subjects = inv.subjects || [];
-                const packagesHtml = subjects.map(s => `<span class="package-tag">${s.subjectName} (RM${s.fee})</span>`).join('');
+                // 显示科目名称（使用 packageName 或 subjectName）
+                const packagesHtml = subjects.map(s => {
+                    const subjectName = s.packageName || s.subjectName || 'Subject';
+                    return `<span class="package-tag">${subjectName} (RM${s.fee})</span>`;
+                }).join('');
                 
                 const card = document.createElement('div');
                 card.className = `invoice-card ${isPaid ? 'paid' : 'unpaid'} ${isSelected ? 'selected' : ''}`;
@@ -587,15 +582,11 @@
                     if (checkbox) {
                         checkbox.addEventListener('change', (e) => {
                             e.stopPropagation();
-                            if (checkbox.checked) {
-                                selectedInvoices.add(inv.id);
-                            } else {
-                                selectedInvoices.delete(inv.id);
-                            }
+                            if (checkbox.checked) selectedInvoices.add(inv.id);
+                            else selectedInvoices.delete(inv.id);
                             document.getElementById('selectedCount').innerText = selectedInvoices.size;
                         });
                     }
-                    
                     const payBtn = card.querySelector('.pay');
                     if (payBtn) {
                         payBtn.addEventListener('click', (e) => {
@@ -604,7 +595,6 @@
                             window.location.href = 'payment.html';
                         });
                     }
-                    
                     const waBtn = card.querySelector('.whatsapp');
                     if (waBtn) {
                         waBtn.addEventListener('click', (e) => {
