@@ -23,7 +23,6 @@
             padding: 2rem;
         }
         
-        /* Loading & Error States */
         .loading-container, .error-container {
             text-align: center;
             padding: 3rem;
@@ -51,7 +50,6 @@
             margin-bottom: 1rem;
         }
         
-        /* A4 Invoice Container - 标准A4尺寸 */
         .invoice-wrapper {
             background: #e8eef3;
             padding: 20px;
@@ -65,7 +63,6 @@
             border-radius: 4px;
         }
         
-        /* A4 标准尺寸: 210mm x 297mm */
         .final-invoice {
             background: white;
             width: 210mm;
@@ -76,7 +73,6 @@
             box-sizing: border-box;
         }
         
-        /* 打印时使用精确尺寸 */
         @media print {
             body {
                 background: white;
@@ -94,7 +90,6 @@
             }
         }
         
-        /* 屏幕显示时允许滚动 */
         @media screen {
             .invoice-wrapper {
                 overflow-x: auto;
@@ -218,7 +213,6 @@
             margin-top: 4px;
         }
         
-        /* Action Buttons */
         .action-bar {
             position: fixed;
             bottom: 2rem;
@@ -372,9 +366,25 @@
             });
         }
 
+        // ========== 修复 Invoice Number 重复 INV- 的问题 ==========
+        function formatInvoiceNumber(invoice) {
+            if (invoice.invoiceNumber) {
+                let num = invoice.invoiceNumber.toString();
+                // 如果已经有 INV- 前缀，直接返回；否则添加
+                if (num.startsWith('INV-')) {
+                    return num;
+                }
+                return `INV-${num}`;
+            } else {
+                // 没有 invoiceNumber，生成新的
+                return `INV-${invoice.monthKey?.replace('-', '')}${invoice.studentId?.slice(-4)}`;
+            }
+        }
+        // =======================================================
+
         async function renderInvoice(invoice, student) {
-            let invoiceNumberDisplay = invoice.invoiceNumber || `INV-${invoice.monthKey?.replace('-', '')}${invoice.studentId?.slice(-4)}`;
-            invoiceNumberDisplay = `INV-${invoiceNumberDisplay}`;
+            // 使用修复后的函数
+            const invoiceNumberDisplay = formatInvoiceNumber(invoice);
             const today = new Date();
             const formattedDate = today.toLocaleDateString('en-MY', { year: 'numeric', month: 'long', day: 'numeric' });
             
@@ -453,11 +463,9 @@
 
         async function downloadAsA4PNG(element, filename) {
             try {
-                // 临时移除缩放
                 const wasZoomed = element.classList.contains('zoomed');
                 if (wasZoomed) element.classList.remove('zoomed');
                 
-                // 获取实际尺寸
                 const width = element.scrollWidth;
                 const height = element.scrollHeight;
                 
@@ -529,7 +537,6 @@
                     }
                 }, 100);
                 
-                // 添加双击缩放功能
                 const invoiceElement = document.getElementById('invoiceToSend');
                 if (invoiceElement && window.innerWidth > 768) {
                     invoiceElement.addEventListener('click', () => {
