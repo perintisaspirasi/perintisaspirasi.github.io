@@ -8,6 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Inter', sans-serif; background: #f0f7fc; color: #1a2c3e; }
@@ -178,6 +179,18 @@
             background: white;
             padding: 1.5rem;
             border-radius: 20px;
+            position: relative;
+        }
+        .qr-code-container {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            text-align: center;
+        }
+        .qr-code-container .qr-label {
+            font-size: 0.6rem;
+            color: #6b8ba0;
+            margin-top: 4px;
         }
         
         .discount-amount {
@@ -223,6 +236,8 @@
             .sidebar { width: 80px; }
             .main-content { margin-left: 80px; padding: 1rem; }
             .invoice-grid { grid-template-columns: 1fr; }
+            .qr-code-container { bottom: 8px; right: 8px; }
+            .qr-code-container img { width: 60px !important; height: 60px !important; }
         }
     </style>
 </head>
@@ -276,10 +291,14 @@
     <!-- View Invoice Modal -->
     <div id="viewModal" class="modal">
         <div class="modal-content">
-            <div class="modal-header"><h3>Invoice Details</h3><button class="close-modal">&times;</button></div>
+            <div class="modal-header">
+                <h3>Invoice Details</h3>
+                <button class="close-modal">&times;</button>
+            </div>
             <div id="viewInvoiceContent"></div>
             <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1rem; flex-wrap: wrap;">
                 <button id="downloadFromModalBtn" class="action-icon download"><i class="fas fa-download"></i> Download PNG</button>
+                <button id="shareWhatsAppBtn" class="action-icon whatsapp"><i class="fab fa-whatsapp"></i> Share via WhatsApp</button>
                 <button id="gmailFromModalBtn" class="action-icon gmail"><i class="fab fa-google"></i> Send via Gmail</button>
             </div>
         </div>
@@ -382,7 +401,6 @@
             }
         }
         
-        // Helper function to format amount with proper sign
         function formatAmount(amount, isDiscount = false) {
             if (amount === 0) return 'RM 0.00';
             if (isDiscount && amount < 0) {
@@ -394,23 +412,41 @@
             return `RM ${amount.toFixed(2)}`;
         }
         
-        // Helper to get subject display name (supports both old and new format)
         function getSubjectName(subject) {
-            // 优先使用 packageName (新格式)，然后是 subjectName (旧格式)
             return subject.packageName || subject.subjectName || 'Subject';
         }
         
-        // Helper to get teacher display (supports both old and new format)
         function getTeacherDisplay(subject) {
-            // 新格式：teacherNames 是数组
             if (subject.teacherNames && Array.isArray(subject.teacherNames) && subject.teacherNames.length > 0) {
                 return subject.teacherNames.join(', ');
             }
-            // 旧格式：teacherName 是字符串
             if (subject.teacherName) {
                 return subject.teacherName;
             }
             return 'Unknown';
+        }
+        
+        // Generate QR code for e-invoice link
+        function generateQRCodeForInvoice(invoiceId, containerId) {
+            const eInvoiceUrl = `${window.location.origin}/einvoice.html?id=${invoiceId}`;
+            const container = document.getElementById(containerId);
+            if (container) {
+                container.innerHTML = '';
+                try {
+                    new QRCode(container, {
+                        text: eInvoiceUrl,
+                        width: 80,
+                        height: 80,
+                        colorDark: "#000000",
+                        colorLight: "#ffffff",
+                        correctLevel: QRCode.CorrectLevel.M
+                    });
+                } catch(e) {
+                    console.warn("QR Code error:", e);
+                    container.innerHTML = '<div style="width:80px; height:80px; background:#eee; display:flex; align-items:center; justify-content:center; border-radius:8px;">QR</div>';
+                }
+            }
+            return eInvoiceUrl;
         }
         
         async function generateInvoiceHTML(invoice) {
@@ -425,23 +461,26 @@
             for (const sub of subjects) {
                 const subjectName = getSubjectName(sub);
                 const teacherDisplay = getTeacherDisplay(sub);
-                subjectsHtml += `<tr><td style="padding: 8px 0;">${subjectName} (${teacherDisplay})</td><td style="text-align: right;">${formatAmount(sub.fee || 0)}</td></tr>`;
+                subjectsHtml += `<tr><td style="padding: 8px 0;">${subjectName} (${teacherDisplay})<\/td><td style="text-align: right;">${formatAmount(sub.fee || 0)}<\/td><\/tr>`;
             }
             
             const extras = invoice.extras || { registrationFee: 0, photocopyFee: 0, discount: 0 };
             let extrasHtml = '';
             if (extras.registrationFee && extras.registrationFee !== 0) {
-                extrasHtml += `<tr><td style="padding: 8px 0;">Registration Fee</td><td style="text-align: right;">${formatAmount(extras.registrationFee)}</td></tr>`;
+                extrasHtml += `<tr><td style="padding: 8px 0;">Registration Fee<\/td><td style="text-align: right;">${formatAmount(extras.registrationFee)}<\/td><\/tr>`;
             }
             if (extras.photocopyFee && extras.photocopyFee !== 0) {
-                extrasHtml += `<tr><td style="padding: 8px 0;">Photocopy Fee</td><td style="text-align: right;">${formatAmount(extras.photocopyFee)}</td></tr>`;
+                extrasHtml += `<tr><td style="padding: 8px 0;">Photocopy Fee<\/td><td style="text-align: right;">${formatAmount(extras.photocopyFee)}<\/td><\/tr>`;
             }
             if (extras.discount && extras.discount !== 0) {
-                extrasHtml += `<tr><td style="padding: 8px 0;">Discount / Adjustment</td><td style="text-align: right; color: #e67e22;">${formatAmount(extras.discount, true)}</td></tr>`;
+                extrasHtml += `<tr><td style="padding: 8px 0;">Discount / Adjustment<\/td><td style="text-align: right; color: #e67e22;">${formatAmount(extras.discount, true)}<\/td><\/tr>`;
             }
             
+            // Generate unique ID for QR code container
+            const qrContainerId = `qr_${invoice.id}_${Date.now()}`;
+            
             return `
-                <div class="final-invoice" id="invoiceToSend">
+                <div class="final-invoice" id="invoiceToSend" style="position: relative; min-height: 400px;">
                     <div style="text-align: center; margin-bottom: 1rem;">
                         <img src="icon.png" alt="Logo" style="width: 60px; margin-bottom: 8px;" onerror="this.style.display='none'">
                         <h2 style="color: #1a5f7a; margin: 0;">Pusat Tuisyen Perintis Aspirasi</h2>
@@ -459,13 +498,20 @@
                         <div><strong>Student:</strong> ${student.name}</div>
                         <div><strong>Month:</strong> ${invoice.monthKey || 'N/A'}</div>
                         ${student.email ? `<div><strong>Email:</strong> ${student.email}</div>` : ''}
+                        ${student.phone ? `<div><strong>Phone:</strong> +60 ${student.phone}</div>` : ''}
+                    </div>
+                    <div class="payment-status" style="margin-bottom: 1rem; padding: 8px; background: ${invoice.paid ? '#e0f3e8' : '#fff3e0'}; border-radius: 8px; text-align: center;">
+                        <strong>Status:</strong> ${invoice.paid ? '✓ PAID' : '○ UNPAID'}
                     </div>
                     <table style="width: 100%; border-collapse: collapse;">
-                        <thead><tr style="border-bottom: 1px solid #cde5ef;"><th style="text-align: left; padding: 8px 0;">Description</th><th style="text-align: right; padding: 8px 0;">Amount (RM)</th></tr></thead>
-                        <tbody>${subjectsHtml}${extrasHtml}<tr style="border-top: 2px solid #2c7da0; font-weight: 700;"><td style="padding: 12px 0;">TOTAL</td><td style="text-align: right;">${formatAmount(invoice.totalAmount || 0)}</td></tr></tbody>
+                        <thead><tr style="border-bottom: 1px solid #cde5ef;"><th style="text-align: left; padding: 8px 0;">Description</th><th style="text-align: right; padding: 8px 0;">Amount (RM)</th><\/tr></thead>
+                        <tbody>${subjectsHtml}${extrasHtml}<tr style="border-top: 2px solid #2c7da0; font-weight: 700;"><td style="padding: 12px 0;">TOTAL<\/td><td style="text-align: right;">${formatAmount(invoice.totalAmount || 0)}<\/td><\/tr></tbody>
                     </table>
                     <div style="text-align: center; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #cde5ef; font-size: 0.7rem; color: #8ba9c0;">
-                        PerintisAspirasi123@gmail.com
+                        This is an electronically generated invoice.<br>PerintisAspirasi123@gmail.com
+                    </div>
+                    <div class="qr-code-container" id="${qrContainerId}">
+                        <div class="qr-label">Scan to view e-Invoice</div>
                     </div>
                 </div>
             `;
@@ -526,7 +572,6 @@
             bulkSection.style.display = unpaidInView > 0 ? 'flex' : 'none';
         }
         
-        // WhatsApp reminder function
         function sendWhatsAppReminder(phoneNumber, studentName, monthKey, amount) {
             if (!phoneNumber) {
                 alert(`No phone number found for ${studentName}. Please add phone number in Student Management.`);
@@ -549,7 +594,6 @@
                 const isSelected = selectedInvoices.has(inv.id);
                 let invNumberDisplay = inv.invoiceNumber ? `INV-${inv.invoiceNumber}` : `INV-${inv.monthKey?.replace('-', '')}${inv.studentId?.slice(-4)}`;
                 const subjects = inv.subjects || [];
-                // 显示科目名称（使用 packageName 或 subjectName）
                 const packagesHtml = subjects.map(s => {
                     const subjectName = s.packageName || s.subjectName || 'Subject';
                     return `<span class="package-tag">${subjectName} (RM${s.fee})</span>`;
@@ -627,6 +671,7 @@
         }
         
         let currentViewInvoiceId = null;
+        
         async function openViewModal(invoiceId) {
             currentViewInvoiceId = invoiceId;
             const invoice = allInvoices.find(i => i.id === invoiceId);
@@ -634,6 +679,14 @@
                 const html = await generateInvoiceHTML(invoice);
                 document.getElementById('viewInvoiceContent').innerHTML = html;
                 document.getElementById('viewModal').style.display = 'flex';
+                
+                // Generate QR code after modal is shown
+                setTimeout(() => {
+                    const qrContainer = document.querySelector('#viewInvoiceContent .qr-code-container');
+                    if (qrContainer) {
+                        generateQRCodeForInvoice(invoice.id, qrContainer.id);
+                    }
+                }, 100);
             }
         }
         
@@ -647,8 +700,16 @@
             tempDiv.style.left = '-9999px';
             tempDiv.style.top = '-9999px';
             document.body.appendChild(tempDiv);
+            
+            // Generate QR code in temp div
+            const qrContainer = tempDiv.querySelector('.qr-code-container');
+            if (qrContainer) {
+                generateQRCodeForInvoice(invoice.id, qrContainer.id);
+                await new Promise(resolve => setTimeout(resolve, 200));
+            }
+            
             try {
-                const canvas = await html2canvas(tempDiv.querySelector('.final-invoice') || tempDiv, { scale: 2, backgroundColor: '#ffffff' });
+                const canvas = await html2canvas(tempDiv.querySelector('.final-invoice'), { scale: 3, backgroundColor: '#ffffff', logging: false });
                 const link = document.createElement('a');
                 link.download = `invoice_${invoice.studentName}_${invoice.monthKey}.png`;
                 link.href = canvas.toDataURL();
@@ -657,6 +718,48 @@
             } catch (err) {
                 console.error('Download error:', err);
                 alert('Failed to download invoice');
+            }
+            document.body.removeChild(tempDiv);
+        }
+        
+        // WhatsApp share function for paid invoices
+        async function shareViaWhatsApp(invoiceId) {
+            const invoice = allInvoices.find(i => i.id === invoiceId);
+            if (!invoice) return;
+            const studentPhone = invoice.studentPhone;
+            if (!studentPhone) {
+                alert('No phone number found for this student.');
+                return;
+            }
+            
+            const html = await generateInvoiceHTML(invoice);
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = html;
+            tempDiv.style.position = 'absolute';
+            tempDiv.style.left = '-9999px';
+            tempDiv.style.top = '-9999px';
+            document.body.appendChild(tempDiv);
+            
+            const qrContainer = tempDiv.querySelector('.qr-code-container');
+            if (qrContainer) {
+                generateQRCodeForInvoice(invoice.id, qrContainer.id);
+                await new Promise(resolve => setTimeout(resolve, 200));
+            }
+            
+            try {
+                const canvas = await html2canvas(tempDiv.querySelector('.final-invoice'), { scale: 2, backgroundColor: '#ffffff', logging: false });
+                const link = document.createElement('a');
+                const filename = `invoice_${invoice.studentName}_${invoice.monthKey}.png`;
+                link.download = filename;
+                link.href = canvas.toDataURL();
+                link.click();
+                
+                const message = `Dear ${invoice.studentName},\n\nPlease find attached your invoice for ${invoice.monthKey}.\n\nTotal Amount: ${formatAmount(invoice.totalAmount || 0)}\n\nThank you!`;
+                const waLink = `https://wa.me/60${studentPhone}?text=${encodeURIComponent(message)}`;
+                window.open(waLink, '_blank');
+                alert('Invoice downloaded. WhatsApp opened. Please attach the image.');
+            } catch (err) {
+                alert('Error: ' + err.message);
             }
             document.body.removeChild(tempDiv);
         }
@@ -701,7 +804,13 @@
                 tempDiv.style.top = '-9999px';
                 document.body.appendChild(tempDiv);
                 
-                const canvas = await html2canvas(tempDiv.querySelector('.final-invoice') || tempDiv, { scale: 2, backgroundColor: '#ffffff' });
+                const qrContainer = tempDiv.querySelector('.qr-code-container');
+                if (qrContainer) {
+                    generateQRCodeForInvoice(invoice.id, qrContainer.id);
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                }
+                
+                const canvas = await html2canvas(tempDiv.querySelector('.final-invoice'), { scale: 3, backgroundColor: '#ffffff', logging: false });
                 document.body.removeChild(tempDiv);
                 
                 const link = document.createElement('a');
@@ -713,7 +822,7 @@
                 const gmailComposeUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(to)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body + '\n\n---\nInvoice attached: ' + filename)}`;
                 window.open(gmailComposeUrl, '_blank');
                 
-                alert(`Invoice downloaded as "${filename}".\n\nPlease attach this file to your Gmail message.`);
+                alert(`Invoice downloaded. Please attach the file to your Gmail message.`);
                 
                 document.getElementById('gmailModal').style.display = 'none';
                 document.getElementById('gmailTo').value = '';
@@ -729,6 +838,12 @@
         
         document.getElementById('downloadFromModalBtn')?.addEventListener('click', async () => {
             if (currentViewInvoiceId) await downloadInvoice(currentViewInvoiceId);
+        });
+        
+        document.getElementById('shareWhatsAppBtn')?.addEventListener('click', async () => {
+            if (currentViewInvoiceId) {
+                await shareViaWhatsApp(currentViewInvoiceId);
+            }
         });
         
         document.getElementById('gmailFromModalBtn')?.addEventListener('click', async () => {
