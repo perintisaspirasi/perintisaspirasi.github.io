@@ -13,7 +13,7 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
             font-family: 'Inter', sans-serif; 
-            background: #f0f7fc; 
+            background: #e8eef3; 
             color: #1a2c3e;
             min-height: 100vh;
             display: flex;
@@ -51,33 +51,169 @@
             margin-bottom: 1rem;
         }
         
-        /* A4 Invoice Container */
+        /* A4 Invoice Container - 标准A4尺寸 */
+        .invoice-wrapper {
+            background: #e8eef3;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
         .invoice-container {
             background: white;
-            border-radius: 16px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
-            overflow: auto;
-            max-width: 100%;
-            max-height: 90vh;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+            border-radius: 4px;
         }
         
+        /* A4 标准尺寸: 210mm x 297mm */
         .final-invoice {
             background: white;
             width: 210mm;
             min-height: 297mm;
-            padding: 15mm;
-            margin: 0 auto;
+            padding: 12mm 15mm;
+            margin: 0;
             position: relative;
+            box-sizing: border-box;
+        }
+        
+        /* 打印时使用精确尺寸 */
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+                margin: 0;
+            }
+            .action-bar, .invoice-wrapper {
+                display: none;
+            }
+            .final-invoice {
+                width: 100%;
+                min-height: auto;
+                padding: 12mm 15mm;
+                box-shadow: none;
+            }
+        }
+        
+        /* 屏幕显示时允许滚动 */
+        @media screen {
+            .invoice-wrapper {
+                overflow-x: auto;
+                max-width: 100%;
+            }
+            .final-invoice {
+                transform: scale(0.95);
+                transform-origin: top center;
+            }
+        }
+        
+        .final-invoice-header {
+            text-align: center;
+            margin-bottom: 1.2rem;
+        }
+        .final-invoice-header img {
+            width: 60px;
+            margin-bottom: 8px;
+        }
+        .final-invoice-header h2 {
+            color: #1a5f7a;
+            font-size: 1.3rem;
+            margin: 0;
+        }
+        .final-invoice-header p {
+            font-size: 0.7rem;
+            color: #6b8ba0;
+            margin: 2px 0;
+        }
+        
+        .invoice-title {
+            border-top: 2px solid #2c7da0;
+            border-bottom: 2px solid #2c7da0;
+            padding: 8px 0;
+            text-align: center;
+            margin: 1rem 0;
+        }
+        .invoice-title h3 {
+            margin: 0;
+            font-size: 1.2rem;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 0.8rem 0;
+        }
+        
+        .student-info {
+            margin-bottom: 1rem;
+            line-height: 1.6;
+        }
+        .student-info div {
+            margin: 4px 0;
+        }
+        
+        .payment-status {
+            margin-bottom: 1rem;
+            padding: 8px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 500;
+        }
+        .payment-status.paid {
+            background: #e0f3e8;
+            color: #2cae6c;
+        }
+        .payment-status.unpaid {
+            background: #fff3e0;
+            color: #e67e22;
+        }
+        
+        .invoice-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+        .invoice-table th,
+        .invoice-table td {
+            padding: 10px 5px;
+            text-align: left;
+            border-bottom: 1px solid #eef3f7;
+        }
+        .invoice-table th {
+            border-bottom: 1px solid #cde5ef;
+            font-weight: 600;
+            color: #2c7da0;
+        }
+        .invoice-table td:last-child,
+        .invoice-table th:last-child {
+            text-align: right;
+        }
+        
+        .total-row {
+            border-top: 2px solid #2c7da0;
+            font-weight: 700;
+        }
+        .total-row td {
+            padding-top: 12px;
+            font-size: 1.1rem;
+        }
+        
+        .footer-note {
+            text-align: center;
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid #cde5ef;
+            font-size: 0.7rem;
+            color: #8ba9c0;
         }
         
         .qr-code-container {
             position: absolute;
-            bottom: 15mm;
+            bottom: 12mm;
             right: 15mm;
             text-align: center;
         }
         .qr-code-container .qr-label {
-            font-size: 0.6rem;
+            font-size: 0.55rem;
             color: #6b8ba0;
             margin-top: 4px;
         }
@@ -104,6 +240,7 @@
             gap: 8px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             transition: 0.2s;
+            font-size: 0.9rem;
         }
         .action-btn:hover {
             background: #1a5f7a;
@@ -116,33 +253,25 @@
             background: #1da15a;
         }
         
-        /* Print styles */
-        @media print {
-            body {
-                background: white;
-                padding: 0;
-                margin: 0;
-            }
-            .action-bar {
-                display: none;
-            }
-            .invoice-container {
-                box-shadow: none;
-                border-radius: 0;
-            }
-            .final-invoice {
-                padding: 0;
-                margin: 0;
-                width: 100%;
-                min-height: auto;
-            }
-        }
-        
         @media (max-width: 768px) {
-            body { padding: 1rem; }
-            .final-invoice { width: 100%; padding: 10mm; }
+            body { padding: 0.5rem; }
+            .final-invoice { width: 100%; padding: 8mm 10mm; transform: scale(1); }
             .action-bar { bottom: 1rem; right: 1rem; flex-direction: column; }
             .action-btn { padding: 10px 16px; font-size: 0.8rem; }
+            .qr-code-container { bottom: 8mm; right: 10mm; }
+            .qr-code-container img { width: 60px !important; height: 60px !important; }
+        }
+        
+        @media (min-width: 769px) {
+            .final-invoice {
+                transform: scale(0.95);
+                transform-origin: top center;
+                cursor: zoom-in;
+            }
+            .final-invoice.zoomed {
+                transform: scale(1);
+                cursor: zoom-out;
+            }
         }
     </style>
 </head>
@@ -156,14 +285,14 @@
     </div>
     
     <div class="action-bar" id="actionBar" style="display: none;">
-        <button id="downloadBtn" class="action-btn"><i class="fas fa-download"></i> Download PNG</button>
+        <button id="downloadBtn" class="action-btn"><i class="fas fa-download"></i> Download A4 PNG</button>
         <button id="printBtn" class="action-btn"><i class="fas fa-print"></i> Print</button>
-        <button id="whatsappBtn" class="action-btn whatsapp"><i class="fab fa-whatsapp"></i> Share</button>
+        <button id="whatsappBtn" class="action-btn whatsapp"><i class="fab fa-whatsapp"></i> Share via WhatsApp</button>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCkfEdLDlHW7DvGxLpbDY7Us2nb3j7oTjQ",
@@ -178,13 +307,11 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Get invoice ID from URL
         function getInvoiceIdFromURL() {
             const params = new URLSearchParams(window.location.search);
             return params.get('id');
         }
 
-        // Format amount
         function formatAmount(amount, isDiscount = false) {
             if (amount === 0) return 'RM 0.00';
             if (isDiscount && amount < 0) {
@@ -210,25 +337,22 @@
             return 'Unknown';
         }
 
-        // Generate QR code for this e-invoice URL (using global QRCode)
         function generateQRCode(element, url) {
             if (!element) return false;
             element.innerHTML = '';
             try {
-                // Check if QRCode is available globally
                 if (typeof QRCode !== 'undefined') {
                     new QRCode(element, {
                         text: url,
                         width: 80,
                         height: 80,
-                        colorDark: "#000000",
+                        colorDark: "#1a5f7a",
                         colorLight: "#ffffff",
                         correctLevel: QRCode.CorrectLevel.M
                     });
                     return true;
                 } else {
-                    // Fallback: create simple div
-                    element.innerHTML = `<div style="width:80px; height:80px; background:#f0f7fc; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:10px; color:#2c7da0;">QR</div>`;
+                    element.innerHTML = `<div style="width:80px; height:80px; background:#f0f7fc; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:10px; color:#2c7da0;">QR Code</div>`;
                     return false;
                 }
             } catch(e) {
@@ -238,12 +362,21 @@
             }
         }
 
-        // Render invoice HTML
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+
         async function renderInvoice(invoice, student) {
             let invoiceNumberDisplay = invoice.invoiceNumber || `INV-${invoice.monthKey?.replace('-', '')}${invoice.studentId?.slice(-4)}`;
             invoiceNumberDisplay = `INV-${invoiceNumberDisplay}`;
             const today = new Date();
-            const formattedDate = today.toLocaleDateString('en-MY');
+            const formattedDate = today.toLocaleDateString('en-MY', { year: 'numeric', month: 'long', day: 'numeric' });
             
             const subjects = invoice.subjects || [];
             let subjectsHtml = '';
@@ -265,60 +398,93 @@
                 extrasHtml += `<tr><td style="padding: 8px 0;">Discount / Adjustment<\/td><td style="text-align: right; color: #e67e22;">${formatAmount(extras.discount, true)}<\/td><\/tr>`;
             }
             
-            // Current page URL for QR code
-            const currentUrl = window.location.href;
+            const totalAmount = invoice.totalAmount || invoice.grandTotal || 0;
+            const statusClass = invoice.paid ? 'paid' : 'unpaid';
+            const statusText = invoice.paid ? '✓ PAID' : '○ UNPAID';
             
             return `
                 <div class="final-invoice" id="invoiceToSend">
-                    <div style="text-align: center; margin-bottom: 1rem;">
-                        <img src="icon.png" alt="Logo" style="width: 60px; margin-bottom: 8px;" onerror="this.style.display='none'">
-                        <h2 style="color: #1a5f7a; margin: 0;">Pusat Tuisyen Perintis Aspirasi</h2>
-                        <p style="font-size: 0.7rem; color: #6b8ba0; margin: 4px 0;">No. 21, Lorong 1, Taman Perlis, Kangar, Malaysia</p>
-                        <p style="font-size: 0.7rem; color: #6b8ba0;">TEL/FAX: 012-520 0919 | RA 095223949</p>
+                    <div class="final-invoice-header">
+                        <img src="icon.png" alt="Logo" onerror="this.style.display='none'">
+                        <h2>Pusat Tuisyen Perintis Aspirasi</h2>
+                        <p>No. 21, Lorong 1, Taman Perlis, Kangar, Malaysia</p>
+                        <p>TEL/FAX: 012-520 0919 | RA 095223949</p>
                     </div>
-                    <div style="border-top: 2px solid #2c7da0; border-bottom: 2px solid #2c7da0; padding: 8px 0; text-align: center;">
-                        <h3 style="margin: 0;">E-INVOICE</h3>
+                    <div class="invoice-title">
+                        <h3>E-INVOICE</h3>
                     </div>
-                    <div style="display: flex; justify-content: space-between; margin: 1rem 0;">
+                    <div class="info-row">
                         <div><strong>Invoice No:</strong> ${invoiceNumberDisplay}</div>
                         <div><strong>Date:</strong> ${formattedDate}</div>
                     </div>
-                    <div style="margin-bottom: 1rem;">
+                    <div class="student-info">
                         <div><strong>Student:</strong> ${escapeHtml(student.name)}</div>
                         <div><strong>Month:</strong> ${invoice.monthKey || 'N/A'}</div>
                         ${student.email ? `<div><strong>Email:</strong> ${escapeHtml(student.email)}</div>` : ''}
                         ${student.phone ? `<div><strong>Phone:</strong> +60 ${student.phone}</div>` : ''}
                     </div>
-                    <div class="payment-status" style="margin-bottom: 1rem; padding: 8px; background: ${invoice.paid ? '#e0f3e8' : '#fff3e0'}; border-radius: 8px; text-align: center;">
-                        <strong>Status:</strong> ${invoice.paid ? '✓ PAID' : '○ UNPAID'}
+                    <div class="payment-status ${statusClass}">
+                        <strong>Status:</strong> ${statusText}
                     </div>
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <thead><tr style="border-bottom: 1px solid #cde5ef;"><th style="text-align: left; padding: 8px 0;">Description</th><th style="text-align: right; padding: 8px 0;">Amount (RM)</th><\/tr></thead>
-                        <tbody>${subjectsHtml}${extrasHtml}<tr style="border-top: 2px solid #2c7da0; font-weight: 700;"><td style="padding: 12px 0;">TOTAL<\/td><td style="text-align: right;">${formatAmount(invoice.totalAmount || invoice.grandTotal || 0)}<\/td><\/tr></tbody>
+                    <table class="invoice-table">
+                        <thead>
+                            <tr><th>Description</th><th>Amount (RM)</th></tr>
+                        </thead>
+                        <tbody>
+                            ${subjectsHtml}
+                            ${extrasHtml}
+                            <tr class="total-row">
+                                <td style="padding-top: 12px;"><strong>TOTAL</strong></td>
+                                <td style="text-align: right; padding-top: 12px;"><strong>${formatAmount(totalAmount)}</strong></td>
+                            </tr>
+                        </tbody>
                     </table>
-                    <div style="text-align: center; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #cde5ef; font-size: 0.7rem; color: #8ba9c0;">
+                    <div class="footer-note">
                         This is an electronically generated invoice. No signature required.
                         <br>PerintisAspirasi123@gmail.com
                     </div>
-                    <div class="qr-code-container" id="qrCodeContainer">
+                    <div class="qr-code-container">
                         <div id="qrCodePlaceholder"></div>
                         <div class="qr-label">Scan to verify</div>
                     </div>
                 </div>
             `;
         }
-        
-        function escapeHtml(str) {
-            if (!str) return '';
-            return str.replace(/[&<>]/g, function(m) {
-                if (m === '&') return '&amp;';
-                if (m === '<') return '&lt;';
-                if (m === '>') return '&gt;';
-                return m;
-            });
+
+        async function downloadAsA4PNG(element, filename) {
+            try {
+                // 临时移除缩放
+                const wasZoomed = element.classList.contains('zoomed');
+                if (wasZoomed) element.classList.remove('zoomed');
+                
+                // 获取实际尺寸
+                const width = element.scrollWidth;
+                const height = element.scrollHeight;
+                
+                const canvas = await html2canvas(element, {
+                    scale: 3,
+                    backgroundColor: '#ffffff',
+                    logging: false,
+                    width: width,
+                    height: height,
+                    windowWidth: width,
+                    windowHeight: height
+                });
+                
+                if (wasZoomed) element.classList.add('zoomed');
+                
+                const link = document.createElement('a');
+                link.download = filename;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                return true;
+            } catch (err) {
+                console.error('Download error:', err);
+                alert('Failed to download invoice');
+                return false;
+            }
         }
 
-        // Load and display invoice
         async function loadAndDisplayInvoice() {
             const invoiceId = getInvoiceIdFromURL();
             const contentDiv = document.getElementById('content');
@@ -337,14 +503,12 @@
             }
             
             try {
-                // Load invoice data
                 const invoiceDoc = await getDoc(doc(db, 'invoices', invoiceId));
                 if (!invoiceDoc.exists()) {
                     throw new Error('Invoice not found');
                 }
                 const invoice = { id: invoiceDoc.id, ...invoiceDoc.data() };
                 
-                // Load student data
                 let student = { name: 'Unknown Student' };
                 try {
                     const studentDoc = await getDoc(doc(db, 'students', invoice.studentId));
@@ -355,11 +519,9 @@
                     console.warn("Student not found:", e);
                 }
                 
-                // Render invoice
                 const invoiceHtml = await renderInvoice(invoice, student);
-                contentDiv.innerHTML = `<div class="invoice-container">${invoiceHtml}</div>`;
+                contentDiv.innerHTML = `<div class="invoice-wrapper"><div class="invoice-container">${invoiceHtml}</div></div>`;
                 
-                // Generate QR code pointing to this same page
                 setTimeout(() => {
                     const qrContainer = document.getElementById('qrCodePlaceholder');
                     if (qrContainer) {
@@ -367,35 +529,27 @@
                     }
                 }, 100);
                 
-                // Show action buttons
+                // 添加双击缩放功能
+                const invoiceElement = document.getElementById('invoiceToSend');
+                if (invoiceElement && window.innerWidth > 768) {
+                    invoiceElement.addEventListener('click', () => {
+                        invoiceElement.classList.toggle('zoomed');
+                    });
+                }
+                
                 actionBar.style.display = 'flex';
                 
-                // Setup download button
                 const downloadBtn = document.getElementById('downloadBtn');
                 if (downloadBtn) {
                     downloadBtn.addEventListener('click', async () => {
-                        const invoiceElement = document.getElementById('invoiceToSend');
-                        if (invoiceElement) {
-                            try {
-                                const canvas = await html2canvas(invoiceElement, { 
-                                    scale: 3,
-                                    backgroundColor: '#ffffff',
-                                    logging: false
-                                });
-                                const link = document.createElement('a');
-                                link.download = `einvoice_${(student.name || 'unknown').replace(/[^a-zA-Z0-9]/g, '_')}_${invoice.monthKey}.png`;
-                                link.href = canvas.toDataURL();
-                                link.click();
-                                alert('e-Invoice downloaded successfully!');
-                            } catch (err) {
-                                console.error('Download error:', err);
-                                alert('Failed to download invoice');
-                            }
+                        const element = document.getElementById('invoiceToSend');
+                        if (element) {
+                            const filename = `einvoice_${(student.name || 'unknown').replace(/[^a-zA-Z0-9]/g, '_')}_${invoice.monthKey}.png`;
+                            await downloadAsA4PNG(element, filename);
                         }
                     });
                 }
                 
-                // Setup print button
                 const printBtn = document.getElementById('printBtn');
                 if (printBtn) {
                     printBtn.addEventListener('click', () => {
@@ -403,11 +557,10 @@
                     });
                 }
                 
-                // Setup WhatsApp share button
                 const whatsappBtn = document.getElementById('whatsappBtn');
                 if (whatsappBtn) {
                     whatsappBtn.addEventListener('click', async () => {
-                        const invoiceElement = document.getElementById('invoiceToSend');
+                        const element = document.getElementById('invoiceToSend');
                         const phone = student.phone;
                         
                         if (!phone) {
@@ -415,19 +568,13 @@
                             return;
                         }
                         
-                        try {
-                            const canvas = await html2canvas(invoiceElement, { scale: 2, backgroundColor: '#ffffff' });
-                            const link = document.createElement('a');
-                            link.download = `einvoice_${(student.name || 'unknown').replace(/[^a-zA-Z0-9]/g, '_')}.png`;
-                            link.href = canvas.toDataURL();
-                            link.click();
-                            
-                            const message = `Dear ${student.name},\n\nYour e-Invoice for ${invoice.monthKey} is attached.\n\nTotal Amount: ${formatAmount(invoice.totalAmount || invoice.grandTotal || 0)}\n\nThank you!`;
+                        const success = await downloadAsA4PNG(element, `einvoice_${(student.name || 'unknown').replace(/[^a-zA-Z0-9]/g, '_')}.png`);
+                        if (success) {
+                            const totalAmount = invoice.totalAmount || invoice.grandTotal || 0;
+                            const message = `Dear ${student.name},\n\nYour e-Invoice for ${invoice.monthKey} is attached.\n\nTotal Amount: ${formatAmount(totalAmount)}\n\nThank you!`;
                             const waLink = `https://wa.me/60${phone}?text=${encodeURIComponent(message)}`;
                             window.open(waLink, '_blank');
                             alert('Invoice downloaded. WhatsApp opened. Please attach the image.');
-                        } catch (err) {
-                            alert('Error: ' + err.message);
                         }
                     });
                 }
@@ -445,7 +592,6 @@
             }
         }
 
-        // Start
         loadAndDisplayInvoice();
     </script>
 </body>
