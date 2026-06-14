@@ -175,7 +175,6 @@
         .modal-header { display: flex; justify-content: space-between; margin-bottom: 1rem; }
         .close-modal { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #999; }
         
-        /* 优化 Invoice 样式 - A4 友好 */
         .final-invoice {
             background: white;
             padding: 1.5rem;
@@ -284,7 +283,6 @@
         }
         .pay-bulk-btn:hover { background: #229954; transform: translateY(-1px); }
         
-        /* A4 打印样式 */
         @media print {
             .sidebar, .search-section, .bulk-pay-section, .invoice-actions, .modal-header, .close-modal, .action-bar {
                 display: none !important;
@@ -528,6 +526,16 @@
             }
         }
         
+        // 计算发票总金额（包含科目费用 + extras）
+        function calculateTotalAmountWithExtras(invoice) {
+            let total = invoice.totalAmount || 0;
+            const extras = invoice.extras || {};
+            if (extras.registrationFee) total += extras.registrationFee;
+            if (extras.photocopyFee) total += extras.photocopyFee;
+            if (extras.discount) total += extras.discount;
+            return total;
+        }
+        
         async function generateInvoiceHTML(invoice) {
             const student = studentsCache.get(invoice.studentId) || { name: 'Unknown', phone: null, email: null };
             const invoiceNumberDisplay = formatInvoiceNumber(invoice);
@@ -556,7 +564,8 @@
             
             const statusClass = invoice.paid ? 'paid' : 'unpaid';
             const statusText = invoice.paid ? '✓ PAID' : '○ UNPAID';
-            const totalAmount = invoice.totalAmount || 0;
+            // 使用包含 extras 的总金额
+            const totalAmount = calculateTotalAmountWithExtras(invoice);
             
             const qrContainerId = `qr_${invoice.id}_${Date.now()}`;
             
@@ -584,16 +593,16 @@
                     <div class="payment-status ${statusClass}">
                         <strong>Status:</strong> ${statusText}
                     </div>
-                    <table>
+                    <table style="width: 100%; border-collapse: collapse;">
                         <thead>
-                            <tr><th>Description</th><th>Amount (RM)</th></tr>
+                            <tr><th style="text-align: left; padding: 8px 0;">Description</th><th style="text-align: right; padding: 8px 0;">Amount (RM)</th></tr>
                         </thead>
                         <tbody>
                             ${subjectsHtml}
                             ${extrasHtml}
                             <tr class="total-row">
-                                <td><strong>TOTAL</strong></td>
-                                <td style="text-align: right;"><strong>${formatAmount(totalAmount)}</strong></td>
+                                <td style="padding: 12px 0;"><strong>TOTAL</strong></td>
+                                <td style="text-align: right; padding: 12px 0;"><strong>${formatAmount(totalAmount)}</strong></td>
                             </tr>
                         </tbody>
                     </table>
@@ -849,7 +858,8 @@
                 link.href = canvas.toDataURL();
                 link.click();
                 
-                const message = `Dear ${invoice.studentName},\n\nPlease find attached your invoice for ${invoice.monthKey}.\n\nTotal Amount: ${formatAmount(invoice.totalAmount || 0)}\n\nThank you!`;
+                const totalAmount = calculateTotalAmountWithExtras(invoice);
+                const message = `Dear ${invoice.studentName},\n\nPlease find attached your invoice for ${invoice.monthKey}.\n\nTotal Amount: ${formatAmount(totalAmount)}\n\nThank you!`;
                 const waLink = `https://wa.me/60${studentPhone}?text=${encodeURIComponent(message)}`;
                 window.open(waLink, '_blank');
                 alert('Invoice downloaded. WhatsApp opened. Please attach the image.');
@@ -868,7 +878,7 @@
             
             document.getElementById('gmailTo').value = studentEmail || '';
             document.getElementById('gmailSubject').value = `Invoice from Pusat Tuisyen Perintis Aspirasi - ${studentName} (${invoice.monthKey})`;
-            document.getElementById('gmailBody').value = `Dear ${studentName},\n\nPlease find attached your invoice for ${invoice.monthKey}.\n\nTotal Amount: ${formatAmount(invoice.totalAmount || 0)}\n\nThank you for your continued support!\n\nBest regards,\nPusat Tuisyen Perintis Aspirasi`;
+            document.getElementById('gmailBody').value = `Dear ${studentName},\n\nPlease find attached your invoice for ${invoice.monthKey}.\n\nTotal Amount: ${formatAmount(calculateTotalAmountWithExtras(invoice))}\n\nThank you for your continued support!\n\nBest regards,\nPusat Tuisyen Perintis Aspirasi`;
             document.getElementById('gmailModal').style.display = 'flex';
         }
         
