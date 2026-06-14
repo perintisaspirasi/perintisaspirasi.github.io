@@ -366,24 +366,29 @@
             });
         }
 
-        // ========== 修复 Invoice Number 重复 INV- 的问题 ==========
         function formatInvoiceNumber(invoice) {
             if (invoice.invoiceNumber) {
                 let num = invoice.invoiceNumber.toString();
-                // 如果已经有 INV- 前缀，直接返回；否则添加
                 if (num.startsWith('INV-')) {
                     return num;
                 }
                 return `INV-${num}`;
             } else {
-                // 没有 invoiceNumber，生成新的
                 return `INV-${invoice.monthKey?.replace('-', '')}${invoice.studentId?.slice(-4)}`;
             }
         }
-        // =======================================================
+
+        // 计算包含 extras 的总金额
+        function calculateTotalAmountWithExtras(invoice) {
+            let total = invoice.totalAmount || invoice.grandTotal || 0;
+            const extras = invoice.extras || {};
+            if (extras.registrationFee) total += extras.registrationFee;
+            if (extras.photocopyFee) total += extras.photocopyFee;
+            if (extras.discount) total += extras.discount;
+            return total;
+        }
 
         async function renderInvoice(invoice, student) {
-            // 使用修复后的函数
             const invoiceNumberDisplay = formatInvoiceNumber(invoice);
             const today = new Date();
             const formattedDate = today.toLocaleDateString('en-MY', { year: 'numeric', month: 'long', day: 'numeric' });
@@ -408,7 +413,8 @@
                 extrasHtml += `<tr><td style="padding: 8px 0;">Discount / Adjustment<\/td><td style="text-align: right; color: #e67e22;">${formatAmount(extras.discount, true)}<\/td><\/tr>`;
             }
             
-            const totalAmount = invoice.totalAmount || invoice.grandTotal || 0;
+            // 使用包含 extras 的总金额
+            const totalAmount = calculateTotalAmountWithExtras(invoice);
             const statusClass = invoice.paid ? 'paid' : 'unpaid';
             const statusText = invoice.paid ? '✓ PAID' : '○ UNPAID';
             
@@ -577,7 +583,7 @@
                         
                         const success = await downloadAsA4PNG(element, `einvoice_${(student.name || 'unknown').replace(/[^a-zA-Z0-9]/g, '_')}.png`);
                         if (success) {
-                            const totalAmount = invoice.totalAmount || invoice.grandTotal || 0;
+                            const totalAmount = calculateTotalAmountWithExtras(invoice);
                             const message = `Dear ${student.name},\n\nYour e-Invoice for ${invoice.monthKey} is attached.\n\nTotal Amount: ${formatAmount(totalAmount)}\n\nThank you!`;
                             const waLink = `https://wa.me/60${phone}?text=${encodeURIComponent(message)}`;
                             window.open(waLink, '_blank');
