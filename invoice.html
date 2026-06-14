@@ -449,10 +449,24 @@
             return eInvoiceUrl;
         }
         
+        // 修复 Invoice Number 重复 INV- 的问题
+        function formatInvoiceNumber(invoice) {
+            if (invoice.invoiceNumber) {
+                let num = invoice.invoiceNumber.toString();
+                // 如果已经有 INV- 前缀，直接返回；否则添加
+                if (num.startsWith('INV-')) {
+                    return num;
+                }
+                return `INV-${num}`;
+            } else {
+                // 没有 invoiceNumber，生成新的
+                return `INV-${invoice.monthKey?.replace('-', '')}${invoice.studentId?.slice(-4)}`;
+            }
+        }
+        
         async function generateInvoiceHTML(invoice) {
             const student = studentsCache.get(invoice.studentId) || { name: 'Unknown', phone: null, email: null };
-            let invoiceNumberDisplay = invoice.invoiceNumber || `INV-${invoice.monthKey?.replace('-', '')}${invoice.studentId?.slice(-4)}`;
-            invoiceNumberDisplay = `INV-${invoiceNumberDisplay}`;
+            const invoiceNumberDisplay = formatInvoiceNumber(invoice);
             const today = new Date();
             const formattedDate = today.toLocaleDateString('en-MY');
             
@@ -467,7 +481,7 @@
             const extras = invoice.extras || { registrationFee: 0, photocopyFee: 0, discount: 0 };
             let extrasHtml = '';
             if (extras.registrationFee && extras.registrationFee !== 0) {
-                extrasHtml += `<tr><td style="padding: 8px 0;">Registration Fee<\/td><td style="text-align: right;">${formatAmount(extras.registrationFee)}<\/td><\/tr>`;
+                extrasHtml += `<td><td style="padding: 8px 0;">Registration Fee<\/td><td style="text-align: right;">${formatAmount(extras.registrationFee)}<\/td><\/tr>`;
             }
             if (extras.photocopyFee && extras.photocopyFee !== 0) {
                 extrasHtml += `<tr><td style="padding: 8px 0;">Photocopy Fee<\/td><td style="text-align: right;">${formatAmount(extras.photocopyFee)}<\/td><\/tr>`;
@@ -592,7 +606,17 @@
             invoices.forEach(inv => {
                 const isPaid = inv.paid === true;
                 const isSelected = selectedInvoices.has(inv.id);
-                let invNumberDisplay = inv.invoiceNumber ? `INV-${inv.invoiceNumber}` : `INV-${inv.monthKey?.replace('-', '')}${inv.studentId?.slice(-4)}`;
+                let invNumberDisplay;
+                if (inv.invoiceNumber) {
+                    let num = inv.invoiceNumber.toString();
+                    if (num.startsWith('INV-')) {
+                        invNumberDisplay = num;
+                    } else {
+                        invNumberDisplay = `INV-${num}`;
+                    }
+                } else {
+                    invNumberDisplay = `INV-${inv.monthKey?.replace('-', '')}${inv.studentId?.slice(-4)}`;
+                }
                 const subjects = inv.subjects || [];
                 const packagesHtml = subjects.map(s => {
                     const subjectName = s.packageName || s.subjectName || 'Subject';
