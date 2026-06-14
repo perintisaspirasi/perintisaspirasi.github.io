@@ -472,6 +472,25 @@
             return `RM ${amount.toFixed(2)}`;
         }
         
+        // Helper to get subject name (supports both old and new format)
+        function getSubjectName(subject) {
+            return subject.packageName || subject.subjectName || 'Subject';
+        }
+        
+        // Helper to get teacher display (supports both old and new format)
+        function getTeacherDisplay(subject) {
+            // 新格式：teacherNames 是数组
+            if (subject.teacherNames && Array.isArray(subject.teacherNames) && subject.teacherNames.length > 0) {
+                return subject.teacherNames.join(', ');
+            }
+            // 旧格式：teacherName 是字符串
+            if (subject.teacherName) {
+                return subject.teacherName;
+            }
+            // 兼容：如果有 teacherId，可以尝试查询，但这里简化处理
+            return 'Unknown';
+        }
+        
         async function loadPaymentData() {
             const storedIds = sessionStorage.getItem('selectedInvoices');
             if (!storedIds) {
@@ -500,7 +519,8 @@
                     const subjects = inv.subjects || [];
                     inv.subjectsWithDetails = subjects.map(s => ({
                         ...s,
-                        teacherName: s.teacherName || 'Unknown'
+                        subjectName: getSubjectName(s),
+                        teacherName: getTeacherDisplay(s)
                     }));
                     
                     invoicesData.push(inv);
@@ -622,17 +642,17 @@
             invoicesData.forEach(inv => {
                 (inv.subjectsWithDetails || []).forEach(sub => {
                     subjectsHtml += `<tr><td style="padding: 8px 0;">${sub.subjectName} (${sub.teacherName}) - ${inv.monthKey}</td>
-                                    <td style="padding: 8px 0; text-align: right;">${formatAmount(sub.fee || 0)}</td></tr>`;
+                                    <td style="padding: 8px 0; text-align: right;">${formatAmount(sub.fee || 0)}<\/td><\/tr>`;
                 });
             });
             
             let extrasHtml = '';
-            if (reg !== 0) extrasHtml += `<tr><td style="padding: 8px 0;">Registration Fee</td>
-                                        <td style="text-align: right;">${formatAmount(reg)}</td></tr>`;
-            if (photo !== 0) extrasHtml += `<tr><td style="padding: 8px 0;">Photocopy Fee</td>
-                                        <td style="text-align: right;">${formatAmount(photo)}</td></tr>`;
-            if (disc !== 0) extrasHtml += `<tr><td style="padding: 8px 0; color: #e67e22;">Discount / Adjustment</td>
-                                        <td style="text-align: right; color: #e67e22;">-RM ${disc.toFixed(2)}</td></tr>`;
+            if (reg !== 0) extrasHtml += `<tr><td style="padding: 8px 0;">Registration Fee<\/td>
+                                        <td style="text-align: right;">${formatAmount(reg)}<\/td><\/tr>`;
+            if (photo !== 0) extrasHtml += `<tr><td style="padding: 8px 0;">Photocopy Fee<\/td>
+                                        <td style="text-align: right;">${formatAmount(photo)}<\/td><\/tr>`;
+            if (disc !== 0) extrasHtml += `<tr><td style="padding: 8px 0; color: #e67e22;">Discount / Adjustment<\/td>
+                                        <td style="text-align: right; color: #e67e22;">-RM ${disc.toFixed(2)}<\/td><\/tr>`;
             
             return `
                 <div id="invoiceToSend" style="background: white; padding: 1.5rem; border-radius: 20px;">
@@ -657,14 +677,14 @@
                         <thead><tr style="border-bottom: 1px solid #cde5ef;">
                             <th style="padding: 8px 0; text-align: left;">Description</th>
                             <th style="padding: 8px 0; text-align: right;">Amount (RM)</th>
-                        </tr></thead>
+                        <\/tr></thead>
                         <tbody>
                             ${subjectsHtml}
                             ${extrasHtml}
                             <tr style="border-top: 2px solid #2c7da0; font-weight: 700;">
-                                <td style="padding: 12px 0;">TOTAL</td>
-                                <td style="padding: 12px 0; text-align: right;">${formatAmount(grandTotal)}</td>
-                            </tr>
+                                <td style="padding: 12px 0;">TOTAL<\/td>
+                                <td style="padding: 12px 0; text-align: right;">${formatAmount(grandTotal)}<\/td>
+                            <\/tr>
                         </tbody>
                     </table>
                     <div style="text-align: center; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #cde5ef; font-size: 0.75rem; color: #8ba9c0;">
@@ -688,8 +708,6 @@
             const grandTotal = baseTotal + extrasTotal;
             
             const invoiceNumber = `INV-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-            const today = new Date();
-            const formattedDate = today.toLocaleDateString('en-MY');
             
             const invoiceHtml = generateFinalInvoiceHTML(reg, photo, disc, grandTotal);
             document.getElementById('finalInvoice').innerHTML = invoiceHtml;
